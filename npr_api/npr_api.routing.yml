@@ -1,0 +1,21 @@
+npr_api.config_form:
+  path: /admin/config/services/npr/api_config
+  defaults:
+    _title: 'API Settings'
+    _form: \Drupal\npr_api\Form\NprApiConfigForm
+  requirements:
+    _permission: 'administer npr api'
+npr_api.test_api:
+  path: /admin/config/services/npr/npr_api_test
+  defaults:
+    _title: 'API Pull Test'
+    _controller: '\Drupal\npr_api\Controller\ApiTestController::testConnection'
+  requirements:
+    _permission: 'administer npr api'
+npr_api.nprapi_help_form:
+  path: /admin/config/services/npr/help
+  defaults:
+    _title: Help
+    _form: \Drupal\npr_api\Form\NprApiHelpForm
+  requirements:
+    _permission: 'administer npr api'

@@ -1,68 +1,131 @@
 <?php
 
-/**
- * @file
- * Defines basic OOP containers for NPRML.
- */
+namespace Drupal\npr_api;
+
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\HandlerStack;
+use Psr\Http\Message\RequestInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a class for NPRML creation/transmission and retreival/parsing, for any PHP-based system.
+ * Defines a class for NPRML creation/transmission and retreival/parsing, for
+ * any PHP-based system.
  */
-class NPRAPI {
+class NprClient implements ClientInterface {
 
   // HTTP status code = OK
   const NPRAPI_STATUS_OK = 200;
+  const BASE_URI = 'http://api.npr.org/query/';
 
-  // Default URL for pulling stories
-  const NPRAPI_PULL_URL = 'http://api.npr.org';
 
   // NPRML CONSTANTS
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
-  const NPRML_NAMESPACE = 'xmlns:nprml=http://api.npr.org/nprml';
+  const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
   const NPRML_VERSION = '0.92.2';
 
   /**
-   * Initializes an NPRML object.
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
    */
-  function __construct() {
-    $this->request = new stdClass;
-    $this->request->method = NULL;
-    $this->request->params = NULL;
-    $this->request->data = NULL;
-    $this->request->path = NULL;
-    $this->request->base = NULL;
+  protected $client;
 
+  /**
+   * Constructs a NprClient object.
+   *
+   * @param \GuzzleHttp\ClientInterface $client
+   *   The HTTP client.
+   */
+  public function __construct(ClientInterface $client) {
+    $this->client = $client;
 
-    $this->response = new stdClass;
+    // TODO: Is this needed?
+    $this->response = new \stdClass;
     $this->response->code = NULL;
   }
 
-  function request() {
-
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('http_client'),
+    );
   }
 
-  function prepare_request() {
-
+  /**
+    * {@inheritdoc}
+    */
+  public function request($method = 'GET', $url, array $options = []) {
+    return $this->client->request($method, $url, $options);
   }
 
-  function send_request() {
-
+  /**
+   * {@inheritdoc}
+   */
+  public function send(RequestInterface $request, array $options = []) {
+    return $this->client->send($request, $options);
   }
 
-  function parse_response() {
-    $xml = simplexml_load_string($this->response->data);
-    if (!empty($xml->list->story)) {
-      $id = $this->get_attribute($xml->list->story, 'id');
+  /**
+   * {@inheritdoc}
+   */
+  public function sendAsync(RequestInterface $request, array $options = []) {
+    return $this->client->sendAsync($request, $options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function requestAsync($method, $uri, array $options = []) {
+    return $this->client->requestAsync($method, $uri, $options);
+  }
+
+  /**
+    * {@inheritdoc}
+    */
+  public function getConfig($option = null) {
+    return $this->client->getConfig($option);
+  }
+
+  /**
+   * Get the default Guzzle client configuration array.
+   *
+   * @return array An array of configuration options suitable for use with Guzzle.
+   */
+  public static function getDefaultConfiguration() {
+    $config = [
+      'headers' => [
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+      ],
+    ];
+    if (empty($handler)) {
+      $handler = HandlerStack::create();
     }
-    $this->response->id = !empty($id) ? $id : NULL;
+    $config['handler'] = $handler;
+    return $config;
   }
 
-  function flatten() {
+  /**
+   * Make a GET request without needing the BASE_URI.
+   *
+   * @return array An array of configuration options suitable for use with Guzzle.
+   */
+  public function getXmlStories($options) {
 
-  }
+    $this->options = $options;
+    // Add the API key. It feels icky using the Drupal class, but it also
+    // seems to simplify things.
+    $key = \Drupal::config('npr_api.settings')->get('npr_api_api_key');
+    $options['apiKey'] = $key;
 
-  function create_NPRML($node) {
+    // TODO: Store these for the report function.
+    $this->response = $this->request('GET', self::BASE_URI, ['query' => $options]);
+    $this->params = $options;
 
+    $this->xml = $this->response->getBody()->getContents();
   }
 
   /**
@@ -92,7 +155,7 @@ class NPRAPI {
         $this->add_simplexml_attributes($story, $parsed);
 
         //Iterate trough the XML document and list all the children
-        $xml_iterator = new SimpleXMLIterator($story->asXML());
+        $xml_iterator = new \SimpleXMLIterator($story->asXML());
         $key = NULL;
         $current = NULL;
         for($xml_iterator->rewind(); $xml_iterator->valid(); $xml_iterator->next()) {
@@ -174,7 +237,7 @@ class NPRAPI {
             $NPRMLElement->$i = $this->parse_simplexml_element($child);
           }
           else {
-            // If $NPRMLElement->$i exists and it's not an array, create an array
+            // If $NPRMLElement->$i exists and is not an array, create an array
             // out of the existing element
             if (!is_array($NPRMLElement->$i)) {
               $NPRMLElement->$i = array($NPRMLElement->$i);
@@ -221,45 +284,39 @@ class NPRAPI {
     $msg = array();
 
     $xml = simplexml_load_string($this->xml);
-    if (!empty($xml->messages)) {
-      foreach($xml->messages->children() as $message) {
-        $id = ($this->get_attribute($message, 'id')) ? $this->get_attribute($message, 'id') : 'NULL';
-        $level = ($this->get_attribute($message, 'level')) ? $this->get_attribute($message, 'level') : 'NULL';
-        $text = ($message->text) ? (string) $message->text : 'NULL';
-        $args = array('%id' => $id, '%level' => $level, '@text' => $text);
-        $msg[] = t("Message [ID: %id LEVEL: %level]: @text", $args);
-      }
-    }
 
     $params = '';
-    if (isset($this->request->params)) {
-      foreach ($this->request->params as $k => $v) {
+    if (isset($this->params)) {
+      foreach ($this->params as $k => $v) {
         $params .= " [$k => $v]";
       }
       $msg[] =  'Request params were: ' . $params;
     }
-
     else {
       $msg[] = 'Request had no parameters.';
     }
 
-    if ($this->response->code == self::NPRAPI_STATUS_OK) {
-      $msg[] = 'Response code was ' . $this->response->code . '.';
-      if (isset($this->stories)) {
-        $msg[] = ' Request returned ' . count($this->stories) . ' stories.';
+    if ($this->response->getStatusCode()) {
+      $msg[] = 'Response code was ' . $this->response->getStatusCode() . '.';
+    }
+    if (!empty($this->stories)) {
+      $msg[] = 'Request returned ' . count($this->stories) . ' stories:';
+      foreach ($this->stories as $story) {
+        if (!empty($story->title) && !empty($story->id)) {
+          $msg[] = "$story->title (ID: $story->id)";
+        }
       }
     }
-    elseif ($this->response->code != self::NPRAPI_STATUS_OK) {
-      $msg[] = 'Return code was ' . $this->response->code . '.';
-    }
     else {
-      $msg[] = 'No info available.';
+      $msg[] = 'The API key is probably incorrect';
     }
+
     return $msg;
   }
 
   /**
-   * Takes attributes of a SimpleXML element and adds them to an object (as properties).
+   * Takes attributes of a SimpleXML element and adds them to an object (as
+   * properties).
    *
    * @param object $element
    *   A SimpleXML element.
@@ -274,20 +331,5 @@ class NPRAPI {
       }
     }
   }
-}
 
-/**
- * Basic OOP container for NPR entity (story, author, etc.).
- */
-class NPRMLEntity {
-
-}
-
-/**
- * Basic OOP container for NPRML element.
- */
-class NPRMLElement {
-  function __toString() {
-    return $this->value;
-  }
 }

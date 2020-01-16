@@ -1,0 +1,5 @@
+npr_api.config_form:
+  route_name: npr_api.config_form
+  title: 'NPR API'
+  parent: system.admin_config_services
+  description: 'Control your NPR API settings'

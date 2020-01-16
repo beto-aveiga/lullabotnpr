@@ -1,0 +1,14 @@
+npr_api.config_form:
+  route_name: npr_api.config_form
+  title: 'API Settings'
+  weight: -20
+  base_route: npr_api.config_form
+npr_api.test_api:
+  route_name: npr_api.test_api
+  title: 'API Pull Test'
+  base_route: npr_api.config_form
+npr_api.nprapi_help_form:
+  route_name: npr_api.nprapi_help_form
+  title: 'Help'
+  weight: 50
+  base_route: npr_api.config_form

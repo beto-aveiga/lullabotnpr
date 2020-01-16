@@ -1,0 +1,6 @@
+name: 'NPR API'
+description: 'Utility module for accessing the NPR API'
+core: 8.x
+package: NPR
+type: module
+dependencies: {  }
