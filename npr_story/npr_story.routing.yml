@@ -1,0 +1,7 @@
+npr_story.config_form:
+  path: /admin/config/services/npr/story_config
+  defaults:
+    _title: 'Story Settings'
+    _form: \Drupal\npr_story\Form\NprStoryConfigForm
+  requirements:
+    _permission: 'administer npr api'

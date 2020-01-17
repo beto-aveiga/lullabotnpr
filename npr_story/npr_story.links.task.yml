@@ -1,0 +1,4 @@
+npr_story.config_form:
+  route_name: npr_story.config_form
+  title: 'Story Settings'
+  base_route: npr_api.config_form

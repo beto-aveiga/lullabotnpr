@@ -1,0 +1,8 @@
+name: 'NPR API Story'
+description: 'Configure a content type that can pull from and/or push to the NPR API'
+core: 8.x
+package: NPR
+type: module
+configure: npr_story.config_form
+dependencies:
+  - npr_api

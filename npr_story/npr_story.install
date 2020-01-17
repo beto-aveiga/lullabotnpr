@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the npr_story module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function npr_story_uninstall() {
+  \Drupal::configFactory()->reset('npr_story.settings');
+}
