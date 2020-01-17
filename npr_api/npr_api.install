@@ -9,5 +9,5 @@
  * Implements hook_uninstall().
  */
 function npr_api_uninstall() {
-  \Drupal::config('npr_api.settings')->clear('npr_api_api_key')->save();
+  \Drupal::configFactory()->reset('npr_api.settings');
 }
