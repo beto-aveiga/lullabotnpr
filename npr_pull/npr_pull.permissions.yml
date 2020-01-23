@@ -1,0 +1,3 @@
+'pull NPR content':
+  title: 'Pull NPR content'
+  description: 'Pull NPR content to create local nodes on the site.'

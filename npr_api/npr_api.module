@@ -5,6 +5,8 @@
  * Creates basic calls to NPR API; creates and parses NPR's flavor of XML (NPRML).
  */
 
+use Drupal\npr_api\NprClient;
+
 /**
  * Returns a nested array of info about all NPRML "fields".
  *
@@ -50,4 +52,27 @@ function npr_api_get_nprml_fields() {
     ),
   );
   return $nprml_fields;
+}
+
+/**
+ * Creates an NprClient object, narrowed by query-type parameters.
+ *
+ * @param $params
+ *   An array of query-type parameters.
+ *
+ * @return
+ *   An NPRAPIDrupal object.
+ */
+
+function npr_api_fetch_object($params) {
+
+  // Create a new NprClient with the default configuration.
+  $defaults = NprClient::getDefaultConfiguration();
+  $client = new NprClient(new \GuzzleHttp\Client($defaults));
+
+  // Make a request.
+  $client->getXmlStories($params);
+  $client->parse();
+
+  return $client;
 }

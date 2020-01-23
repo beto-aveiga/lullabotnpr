@@ -63,4 +63,3 @@ class NprApiConfigForm extends ConfigFormBase {
   }
 
 }
-?>

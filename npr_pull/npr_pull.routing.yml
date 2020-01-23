@@ -1,0 +1,7 @@
+npr_pull.get_story:
+  path: /admin/content/npr
+  defaults:
+    _title: 'Pull NPR Story'
+    _form: \Drupal\npr_pull\Form\NprPullGetStory
+  requirements:
+    _permission: 'pull NPR content'

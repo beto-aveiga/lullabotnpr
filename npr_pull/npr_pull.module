@@ -1,0 +1,203 @@
+<?php
+
+/**
+ * @file
+ * Allows admins to pull content from the NPR API, and turn NPR articles into
+   (locally-stored, independent) drupal nodes.
+ */
+
+define('NPR_PULL_STAGE_URL', 'https://api-s2.npr.org');
+define('NPR_PULL_PRODUCTION_URL', 'https://api.npr.org');
+
+/**
+ * The content type to which pulled stories will be mapped.
+ */
+define('NPR_PULL_MAPPING_CONTENT_TYPE', 'npr_story');
+
+/**
+ * Implements hook_permission().
+ */
+function npr_pull_permission() {
+  return array(
+    'pull NPR content' => array(
+      'title' => t('Pull NPR content'),
+      'description' => t('Pull NPR content to create local nodes on the site.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function npr_pull_menu() {
+  $items = array();
+
+  $items['admin/content/npr'] = array(
+    'title' => 'Pull NPR Story',
+    'description' => 'Retrieve a single story from the NPR API.',
+    'access arguments' => array('pull NPR content'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('npr_pull_get_story'),
+    'file' => 'npr_pull.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/npr/cron'] = array(
+    'title' => 'Cron settings',
+    'description' => 'Retrieve the following types of stories from NPR at every cron.',
+    'access arguments' => array('administer npr api'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('npr_pull_cron_config'),
+    'file' => 'npr_pull.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/npr/tags'] = array(
+    'title' => 'Tag settings',
+    'description' => 'Map retrieved story tags to local terms.',
+    'access arguments' => array('administer npr api'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('npr_pull_tags_config'),
+    'file' => 'npr_pull.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id) {
+
+  $form['npr_pull_config'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('NPR Pull'),
+  );
+
+  // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
+$form['npr_pull_config']['npr_pull_api_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('NPR Pull URL'),
+    '#default_value' => \Drupal::config('npr_pull.settings')->get('npr_pull_api_url'),
+  );
+
+  $users = \Drupal::entityTypeManager()->getStorage('user');
+  $all_users = array();
+  foreach ($users as $uid => $user) {
+    $all_users[$uid] = $user->name;
+  }
+
+  unset($all_users[0]);
+  asort($all_users);
+  $all_users = array(0 => 'Anonymous') + $all_users;
+
+  $form['npr_pull_config']['npr_pull_author'] = array(
+    '#type' => 'select',
+    '#title' => 'Drupal author of pulled stories',
+    '#default_value' => \Drupal::config('npr_pull.settings')->get('npr_pull_author'),
+    '#options' => $all_users,
+  );
+}
+
+// /**
+ // * Implements hook_cron().
+ // */
+// function npr_pull_cron() {
+  // npr_pull_pull_stories();
+// }
+
+/**
+ * Pulls NPR stories (according to config settings).
+ */
+function npr_pull_pull_stories() {
+  // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
+$ids = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_query_ids');
+  $today = format_date(REQUEST_TIME, 'custom', 'Y-m-d');
+  $pub = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_publish_flag');
+  foreach ($ids as $id) {
+    if ($id) {
+      $params = array(
+        'id' => $id,
+        'startDate' => $today,
+      );
+      $NPR = npr_api_fetch_object($params);
+      if (!empty($NPR->stories)) {
+        foreach ($NPR->stories as $story) {
+          $story->status = $pub;
+          npr_pull_insert_story($story);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Creates a new npr_story node from NPRMLEntity object
+ */
+function npr_pull_insert_story($story) {
+  $nid = npr_pull_get_nid_from_story_id($story->id);
+  if ($nid) {
+    // using the date modified field from API
+    $story->nid = $nid;
+  }
+  npr_pull_save_story($story);
+}
+
+/**
+ * Determines if a (drupal) NPR story node with a certain NPR ID already exists.
+ *
+ * @param string $npr_id
+ *   The NPR ID in question
+ *
+ * @return boolean
+ *  TRUE if nor story already exists locally, FALSE otherwise.
+ */
+function npr_pull_story_exists($npr_id) {
+  return npr_pull_get_nid_from_story_id($npr_id) > 0;
+}
+
+/**
+ * Given a NPR ID, finds a matching nid.
+ *
+ * @param string $npr_id
+ *
+ * @return integer/FALSE
+ *   The nid of the node, or FALSE, if no node exists.
+ */
+function npr_pull_get_nid_from_story_id($npr_id) {
+
+  $story_config = \Drupal::config('npr_story.settings');
+  $story_content_type = $story_config->get('drupal_story_content');
+  $story_id_field = $story_config->get('mappings.id');
+
+  $result = \Drupal::entityQuery('node')
+    ->condition('status', 1)
+    ->condition('type', $story_content_type)
+    ->condition($story_id_field, $npr_id)
+    ->execute();
+
+  if (!empty($result)) {
+    // This assumes there is not more than one.
+    return array_key_first($result);
+  }
+}
+
+/**
+ * Retrieves the directory in which to store pulled images.
+ *
+ * @return string
+ *   The URI directory in which to save files. Includes trailing slash.
+ */
+function _npr_pull_get_image_dir_uri() {
+  $field_instance_info = field_info_instance('node', 'field_npr_image', 'npr_story');
+  $field_info = field_info_field('field_npr_image');
+  $dir_uri = $field_info['settings']['uri_scheme'] . '://' . $field_instance_info['settings']['file_directory'] . '/';
+  return $dir_uri;
+}

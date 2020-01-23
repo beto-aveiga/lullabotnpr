@@ -8,8 +8,6 @@
 namespace Drupal\npr_api\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\npr_api\NprClient;
 
 /**
  * NPR API test controller for the npr_api module.
@@ -23,14 +21,10 @@ class ApiTestController extends ControllerBase {
    */
   public function testConnection() {
 
-    // Create a new NprClient with the default configuration.
-    $defaults = NprClient::getDefaultConfiguration();
-    $client = new NprClient(new \GuzzleHttp\Client($defaults));
-
     // Make a request.
-    $options = ['id' => 1126];
-    $client->getXmlStories($options);
-    $client->parse();
+    $params = ['id' => 1126];
+    $client = npr_api_fetch_object($params);
+
     $result = $client->report();
 
     return [

@@ -2,6 +2,7 @@
 
 namespace Drupal\npr_api;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
@@ -9,8 +10,7 @@ use Psr\Http\Message\RequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a class for NPRML creation/transmission and retreival/parsing, for
- * any PHP-based system.
+ * Retrieves and parses NPRML.
  */
 class NprClient implements ClientInterface {
 
@@ -32,13 +32,23 @@ class NprClient implements ClientInterface {
   protected $client;
 
   /**
+   * The media manager settings config.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The HTTP client.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    */
-  public function __construct(ClientInterface $client) {
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory) {
     $this->client = $client;
+    $this->config = $config_factory;
 
     // TODO: Is this needed?
     $this->response = new \stdClass;
@@ -51,6 +61,7 @@ class NprClient implements ClientInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('http_client'),
+      $container->get('config.factory'),
     );
   }
 
@@ -142,17 +153,17 @@ class NprClient implements ClientInterface {
     }
 
     $object = simplexml_load_string($xml);
-    $this->add_simplexml_attributes($object, $this);
+    $this->addSimplexmlAttributes($object, $this);
 
     if (!empty($object->message)) {
-      $this->message->id = $this->get_attribute($object->message, 'id');
-      $this->message->level = $this->get_attribute($object->message, 'level');
+      $this->message->id = $this->getAttribute($object->message, 'id');
+      $this->message->level = $this->getAttribute($object->message, 'level');
     }
 
     if (!empty($object->list->story)) {
       foreach ($object->list->story as $story) {
         $parsed = new NPRMLEntity();
-        $this->add_simplexml_attributes($story, $parsed);
+        $this->addSimplexmlAttributes($story, $parsed);
 
         //Iterate trough the XML document and list all the children
         $xml_iterator = new \SimpleXMLIterator($story->asXML());
@@ -165,24 +176,24 @@ class NprClient implements ClientInterface {
           if ($key == 'image' || $key == 'audio' || $key == 'link') {
             // images
             if ($key == 'image') {
-              $parsed->{$key}[] = $this->parse_simplexml_element($current);
+              $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
 
             // audio
             if ($key == 'audio') {
-              $parsed->{$key}[] = $this->parse_simplexml_element($current);
+              $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
 
             // links
             if ($key == 'link') {
-              $type = $this->get_attribute($current, 'type');
-              $parsed->{$key}[$type] = $this->parse_simplexml_element($current);
+              $type = $this->getAttribute($current, 'type');
+              $parsed->{$key}[$type] = $this->parseSimplexmlElement($current);
             }
           }
           else {
             if (empty($parsed->{$key})){
               // The $key wasn't parsed already, so just add the current element.
-              $parsed->{$key} = $this->parse_simplexml_element($current);
+              $parsed->{$key} = $this->parseSimplexmlElement($current);
             }
             else {
               // If $parsed->$key exists and it's not an array, create an array
@@ -191,7 +202,7 @@ class NprClient implements ClientInterface {
                 $parsed->{$key} = array($parsed->{$key});
               }
               // Add the new child
-              $parsed->{$key}[] = $this->parse_simplexml_element($current);
+              $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
           }
         }
@@ -216,25 +227,25 @@ class NprClient implements ClientInterface {
    * @return object
    *   An NPRML element.
    */
-  function parse_simplexml_element($element) {
+  function parseSimplexmlElement($element) {
     $NPRMLElement = new NPRMLElement();
-    $this->add_simplexml_attributes($element, $NPRMLElement);
+    $this->addSimplexmlAttributes($element, $NPRMLElement);
     if (count($element->children())) { // works for PHP5.2
       foreach ($element->children() as $i => $child) {
         if ($i == 'paragraph' || $i == 'mp3') {
           if ($i == 'paragraph') {
-            $paragraph = $this->parse_simplexml_element($child);
+            $paragraph = $this->parseSimplexmlElement($child);
             $NPRMLElement->paragraphs[$paragraph->num] = $paragraph;
           }
           if ($i == 'mp3') {
-            $mp3 = $this->parse_simplexml_element($child);
+            $mp3 = $this->parseSimplexmlElement($child);
             $NPRMLElement->mp3[$mp3->type] = $mp3;
           }
         }
         else {
           // If $i wasn't parsed already, so just add the current element.
           if (empty($NPRMLElement->$i)){
-            $NPRMLElement->$i = $this->parse_simplexml_element($child);
+            $NPRMLElement->$i = $this->parseSimplexmlElement($child);
           }
           else {
             // If $NPRMLElement->$i exists and is not an array, create an array
@@ -243,7 +254,7 @@ class NprClient implements ClientInterface {
               $NPRMLElement->$i = array($NPRMLElement->$i);
             }
             // Add the new child.
-            $NPRMLElement->{$i}[] = $this->parse_simplexml_element($child);
+            $NPRMLElement->{$i}[] = $this->parseSimplexmlElement($child);
           }
         }
       }
@@ -266,7 +277,7 @@ class NprClient implements ClientInterface {
    * @return string
    *   The value of the attribute (if it exists in element).
    */
-  function get_attribute($element, $attribute) {
+  function getAttribute($element, $attribute) {
     foreach ($element->attributes() as $k => $v) {
       if ($k == $attribute) {
         return (string)$v;
@@ -324,7 +335,7 @@ class NprClient implements ClientInterface {
    * @param object $object
    *   Any PHP object.
    */
-  function add_simplexml_attributes($element, $object) {
+  function addSimplexmlAttributes($element, $object) {
     if (count($element->attributes())) {
       foreach ($element->attributes() as $attr => $value) {
         $object->$attr = (string)$value;
@@ -332,4 +343,16 @@ class NprClient implements ClientInterface {
     }
   }
 
+  /**
+   * Helper function to "flatten" the NPR story.
+   */
+  function flatten() {
+    foreach($this->stories as $i => $story) {
+      foreach($story->parent as $parent) {
+        if ($parent->type == 'tag') {
+          $this->stories[$i]->tags[] = $parent->title->value;
+        }
+      }
+    }
+  }
 }

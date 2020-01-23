@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\npr_pull\Form\NprPullGetStory.
+ */
+
+namespace Drupal\npr_pull\Form;
+
+use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Render\Element;
+use Drupal\npr_pull\NprPullClient;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+class NprPullGetStory extends ConfigFormBase {
+
+  /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The NPR Pull service.
+   *
+   * @var \Drupal\npr_pull\NprPullClient
+   */
+  protected $client;
+
+  /**
+   * MyModuleService constructor.
+   *
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
+   * @param \Drupal\npr_pull\NprPullClient $client
+   *   The NPR client.
+   *
+   */
+  public function __construct(MessengerInterface $messenger, NprPullClient $client) {
+    $this->messenger = $messenger;
+    $this->client = $client;
+  }
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('messenger'),
+      $container->get('npr_pull.client')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames() {
+    return ['npr_pull.settings'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'npr_pull_get_story';
+  }
+
+  public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+
+    $key = $this->config('npr_api.settings')->get('npr_api_api_key');
+
+    $form['url'] = [
+      '#type' => 'textfield',
+      '#title' => t('NPR API story URL'),
+      '#required' => TRUE,
+      '#description' => t('Full URL for a story on NPR.org.'),
+    ];
+
+    $form['date_flag'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Publish stories upon retrieval?'),
+      '#default_value' => '',
+      '#description' => $this->t('If checked stories will automatically be published. If not, stories will still be retrieved and saved in your database - but not published.'),
+    ];
+
+    $form['submit'] = [
+      '#type' => 'submit',
+      '#value' => t('Get story'),
+    ];
+
+    return $form;
+  }
+
+  public function validateForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+
+    $url_value = $form_state->getValue(['url']);
+
+    if (!UrlHelper::isValid($url_value, TRUE)) {
+      $form_state->setErrorByName('url', t('Does not appear to be a valid URL.'));
+      return;
+    }
+
+    if (!$this->client->extractId($url_value)) {
+      $form_state->setErrorByName('url', t('Could not extract an NPR ID from given URL.'));
+    }
+  }
+
+  public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+
+    // Get the ID of the story.
+    $story_id = 0;
+    $url_value = $form_state->getValue(['url']);
+    $story_id = $this->client->extractId($url_value);
+
+    $this->client->saveOrUpdateNode($story_id);
+    // $failure = !empty($NPR->message) && $NPR->message->id == 201;
+
+    // if (is_object($NPR) && !empty($NPR->stories) && !$failure) {
+      // $NPR->flatten();
+      // $story = array_shift($NPR->stories);
+      // $date_flag = $form_state->getValue(['date_flag']);
+      // $story->created = ($date_flag) ? strtotime($story->pubDate->value) : REQUEST_TIME;
+      // npr_pull_insert_story($story);
+    // }
+    // else {
+      // \Drupal::messenger()->addMessage(t('No story could be found in the NPR API.'));
+    // }
+  }
+
+
+
+
+}

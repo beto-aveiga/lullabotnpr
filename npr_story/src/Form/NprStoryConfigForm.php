@@ -104,6 +104,12 @@ class NprStoryConfigForm extends ConfigFormBase {
         ];
       }
     }
+    else {
+      $form['field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save Drupal Story content typ to choose field mappings.',
+      ];
+    }
 
     return parent::buildForm($form, $form_state);
   }
@@ -119,7 +125,9 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $npr_story_fields = $config->get('mappings');
     foreach ($npr_story_fields as $field_name => $field_value) {
-      $config->set('mappings.' . $field_name, $values[$field_name]);
+      if (isset($values[$field_name])) {
+        $config->set('mappings.' . $field_name, $values[$field_name]);
+      }
     }
     $config->save();
 
