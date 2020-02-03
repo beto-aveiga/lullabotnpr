@@ -72,11 +72,22 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config = $this->config('npr_story.settings');
 
+    // Get a list of potential media types.
+    $media_types = array_keys($this->entityTypeManager->getStorage('media_type')->loadMultiple());
+    $media_type_options = array_combine($media_types, $media_types);
+    $form['image_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal image media type'),
+      '#default_value' => $config->get('image_media_type'),
+      '#options' => $media_type_options,
+    ];
+
+    // Get a list of potential node types.
     $drupal_content_types = array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple());
     $content_type_options = array_combine($drupal_content_types, $drupal_content_types);
     $form['drupal_story_content'] = [
       '#type' => 'select',
-      '#title' => $this->t('Drupal Story content type'),
+      '#title' => $this->t('Drupal story node type'),
       '#default_value' => $config->get('drupal_story_content'),
       '#options' => $content_type_options,
     ];
@@ -121,6 +132,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $values = $form_state->getValues();
     $config = $this->config('npr_story.settings');
 
+    $config->set('image_media_type', $values['image_media_type']);
     $config->set('drupal_story_content', $values['drupal_story_content']);
 
     $npr_story_fields = $config->get('mappings');
