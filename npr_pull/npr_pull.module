@@ -174,7 +174,7 @@ function npr_pull_story_exists($npr_id) {
 function npr_pull_get_nid_from_story_id($npr_id) {
 
   $story_config = \Drupal::config('npr_story.settings');
-  $story_content_type = $story_config->get('drupal_story_content');
+  $story_content_type = $story_config->get('story_node_type');
   $story_id_field = $story_config->get('mappings.id');
 
   $result = \Drupal::entityQuery('node')

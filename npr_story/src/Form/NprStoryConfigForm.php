@@ -72,6 +72,46 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config = $this->config('npr_story.settings');
 
+    // Get a list of potential node types.
+    $drupal_node_types = array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple());
+    $node_type_options = array_combine($drupal_node_types, $drupal_node_types);
+    $form['story_node_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal story node type'),
+      '#default_value' => $config->get('story_node_type'),
+      '#options' => $node_type_options,
+    ];
+
+    // Story content field mappings.
+    $form['story_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Story field mappings'),
+      '#open' => TRUE,
+    ];
+    $story_node_type = $config->get('story_node_type');
+    if (!empty($story_node_type)) {
+      $story_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('node', $story_node_type));
+      $story_field_options = ['unused' => 'unused'] + array_combine($story_fields, $story_fields);
+      $npr_story_fields = $config->get('story_field_mappings');
+      foreach ($npr_story_fields as $field_name => $field_value) {
+        $default = !empty($npr_story_fields[$field_name]) ?? 'unused';
+        $form['story_field_mappings'][$field_name] = [
+          '#type' => 'select',
+          '#title' => $field_name,
+          '#options' => $story_field_options,
+          '#default_value' => $npr_story_fields[$field_name],
+        ];
+      }
+    }
+    else {
+      $form['story_field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save Drupal story node type to choose field mappings.',
+      ];
+    }
+
     // Get a list of potential media types.
     $media_types = array_keys($this->entityTypeManager->getStorage('media_type')->loadMultiple());
     $media_type_options = array_combine($media_types, $media_types);
@@ -82,45 +122,37 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#options' => $media_type_options,
     ];
 
-    // Get a list of potential node types.
-    $drupal_content_types = array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple());
-    $content_type_options = array_combine($drupal_content_types, $drupal_content_types);
-    $form['drupal_story_content'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Drupal story node type'),
-      '#default_value' => $config->get('drupal_story_content'),
-      '#options' => $content_type_options,
-    ];
-
-    // Field Mappings.
-    $form['field_mappings'] = [
+    // Media image field mappings.
+    $form['image_field_mappings'] = [
       '#type' => 'details',
-      '#title' => $this->t('Story field mappings'),
+      '#title' => $this->t('Image field mappings'),
       '#open' => TRUE,
     ];
-    $story_content_type = $config->get('drupal_story_content');
-    if (!empty($story_content_type)) {
-      $story_fields = array_keys($this
+    $image_media_type = $config->get('image_media_type');
+    if (!empty($image_media_type)) {
+      $image_media_fields = array_keys($this
         ->entityFieldManager
-        ->getFieldDefinitions('node', $story_content_type));
-      $story_field_options = ['unused' => 'unused'] + array_combine($story_fields, $story_fields);
-      $npr_story_fields = $config->get('mappings');
-      foreach ($npr_story_fields as $field_name => $field_value) {
-        $default = !empty($npr_story_fields[$field_name]) ?? 'unused';
-        $form['field_mappings'][$field_name] = [
+        ->getFieldDefinitions('media', $image_media_type));
+      $image_field_options = ['unused' => 'unused'] +
+        array_combine($image_media_fields, $image_media_fields);
+      $npr_image_fields = $config->get('image_field_mappings');
+      foreach ($npr_image_fields as $npr_image_field => $field_value) {
+        $default = !empty($npr_image_fields[$npr_image_field]) ?? 'unused';
+        $form['image_field_mappings'][$npr_image_field] = [
           '#type' => 'select',
-          '#title' => $field_name,
-          '#options' => $story_field_options,
-          '#default_value' => $npr_story_fields[$field_name],
+          '#title' => $npr_image_field,
+          '#options' => $image_field_options,
+          '#default_value' => $npr_image_fields[$npr_image_field],
         ];
       }
     }
     else {
-      $form['field_mappings']['mappings_required'] = [
+      $form['image_field_mappings']['mappings_required'] = [
         '#type' => 'item',
-        '#markup' => 'Select and save Drupal Story content typ to choose field mappings.',
+        '#markup' => 'Select and save the Drupal image media type to choose field mappings.',
       ];
     }
+
 
     return parent::buildForm($form, $form_state);
   }
@@ -133,12 +165,18 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config = $this->config('npr_story.settings');
 
     $config->set('image_media_type', $values['image_media_type']);
-    $config->set('drupal_story_content', $values['drupal_story_content']);
+    $config->set('story_node_type', $values['story_node_type']);
 
-    $npr_story_fields = $config->get('mappings');
+    $npr_story_fields = $config->get('story_field_mappings');
     foreach ($npr_story_fields as $field_name => $field_value) {
       if (isset($values[$field_name])) {
-        $config->set('mappings.' . $field_name, $values[$field_name]);
+        $config->set('story_field_mappings.' . $field_name, $values[$field_name]);
+      }
+    }
+    $npr_image_fields = $config->get('image_field_mappings');
+    foreach ($npr_image_fields as $field_name => $field_value) {
+      if (isset($values[$field_name])) {
+        $config->set('image_field_mappings.' . $field_name, $values[$field_name]);
       }
     }
     $config->save();

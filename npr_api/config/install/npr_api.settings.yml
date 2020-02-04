@@ -1,15 +1,1 @@
 npr_api_api_key: ''
-stories:
-  queue:
-    autoupdate: false
-    autoupdate_interval: 21600
-  last_update: 0
-  drupal_story_content: ''
-  mappings:
-    id: ''
-    subtitle: ''
-    shortTitle: ''
-    miniTease: ''
-    slug: ''
-    image: ''
-    audio: ''

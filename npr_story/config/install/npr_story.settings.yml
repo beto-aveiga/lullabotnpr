@@ -1,6 +1,5 @@
-image_media_type: ''
-drupal_story_content: ''
-mappings:
+story_node_type: ''
+story_field_mappings:
   id: ''
   subtitle: ''
   shortTitle: ''
@@ -8,3 +7,13 @@ mappings:
   slug: ''
   image: ''
   audio: ''
+image_media_type: ''
+image_field_mappings:
+  title: ''
+  type: ''
+  caption: ''
+  credit: ''
+  producer: ''
+  provider: ''
+  copyright: ''
+  image_field: ''
