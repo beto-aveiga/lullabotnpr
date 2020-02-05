@@ -6,6 +6,10 @@
    (locally-stored, independent) drupal nodes.
  */
 
+use Drupal\user\Entity\User;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+
 define('NPR_PULL_STAGE_URL', 'https://api-s2.npr.org');
 define('NPR_PULL_PRODUCTION_URL', 'https://api.npr.org');
 
@@ -70,38 +74,55 @@ function npr_pull_menu() {
  */
 function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id) {
 
-  $form['npr_pull_config'] = array(
+  $config = \Drupal::config('npr_pull.settings');
+
+  // Add a NPR Pull section to the API Settings configuration page.
+  $form['npr_pull_config'] = [
     '#type' => 'fieldset',
     '#title' => t('NPR Pull'),
-  );
-
-  // @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
-$form['npr_pull_config']['npr_pull_api_url'] = array(
-    '#type' => 'textfield',
+  ];
+  $form['npr_pull_config']['npr_pull_api_url'] = [
+    '#type' => 'select',
     '#title' => t('NPR Pull URL'),
-    '#default_value' => \Drupal::config('npr_pull.settings')->get('npr_pull_api_url'),
-  );
+    '#default_value' => $config->get('npr_pull_api_url'),
+    '#options' => [
+      'staging' => NPR_PULL_STAGE_URL . " (staging)",
+      'production' => NPR_PULL_PRODUCTION_URL . " (production)",
+    ],
+  ];
 
-  $users = \Drupal::entityTypeManager()->getStorage('user');
-  $all_users = array();
-  foreach ($users as $uid => $user) {
-    $all_users[$uid] = $user->name;
+  // Create an array of all Drupal users.
+  $users = User::loadMultiple();
+  $all_users = [];
+  foreach ($users as $user) {
+    $all_users[$user->id()] = $user->getUsername();
   }
-
   unset($all_users[0]);
   asort($all_users);
-  $all_users = array(0 => 'Anonymous') + $all_users;
 
   $form['npr_pull_config']['npr_pull_author'] = array(
     '#type' => 'select',
     '#title' => 'Drupal author of pulled stories',
-    '#default_value' => \Drupal::config('npr_pull.settings')->get('npr_pull_author'),
+    '#default_value' => $config->get('npr_pull_author'),
     '#options' => $all_users,
   );
+
+  // Add a custom submit handler to save the configuration.
+  $form['actions']['submit']['#submit'][] = 'npr_pull_api_config_submit';
 }
+
+/**
+ * Submit handler for the form_alter().
+ */
+function npr_pull_api_config_submit(array &$form, FormStateInterface $form_state) {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('npr_pull.settings');
+  $values = $form_state->getValues();
+  $config->set('npr_pull_api_url', $values['npr_pull_api_url']);
+  $config->set('npr_pull_author', $values['npr_pull_author']);
+  $config->save();
+}
+
 
 // /**
  // * Implements hook_cron().
@@ -115,10 +136,10 @@ $form['npr_pull_config']['npr_pull_api_url'] = array(
  */
 function npr_pull_pull_stories() {
   // @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
-$ids = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_query_ids');
+  // Could not extract the default value because it is either indeterminate, or
+  // not scalar. You'll need to provide a default value in
+  // config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
+  $ids = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_query_ids');
   $today = format_date(REQUEST_TIME, 'custom', 'Y-m-d');
   $pub = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_publish_flag');
   foreach ($ids as $id) {

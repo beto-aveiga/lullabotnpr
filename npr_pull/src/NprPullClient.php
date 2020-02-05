@@ -6,10 +6,10 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\node\Entity\Node;
-use GuzzleHttp\ClientInterface;
-use Drupal\npr_api\NprClient;
 use Drupal\media\Entity\Media;
+use Drupal\node\Entity\Node;
+use Drupal\npr_api\NprClient;
+use GuzzleHttp\ClientInterface;
 
 /**
  * Performs CRUD opertions on Drupal nodes using data from the NPR API.

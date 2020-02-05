@@ -5,7 +5,7 @@ npr_api.config_form:
   base_route: npr_api.config_form
 npr_api.test_api:
   route_name: npr_api.test_api
-  title: 'API Pull Test'
+  title: 'API Test'
   base_route: npr_api.config_form
 npr_api.nprapi_help_form:
   route_name: npr_api.nprapi_help_form
