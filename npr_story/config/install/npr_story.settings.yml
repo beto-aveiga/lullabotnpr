@@ -8,9 +8,9 @@ story_field_mappings:
   image: ''
   audio: ''
 image_media_type: ''
+image_crop_size: 'standard'
 image_field_mappings:
   title: ''
-  type: ''
   caption: ''
   credit: ''
   producer: ''

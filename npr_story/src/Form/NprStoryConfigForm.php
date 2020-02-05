@@ -121,6 +121,14 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('image_media_type'),
       '#options' => $media_type_options,
     ];
+    $image_sizes = ['standard', 'square', 'wide', 'enlargement', 'custom'];
+    $image_options = array_combine($image_sizes, $image_sizes);
+    $form['image_crop_size'] = [
+      '#type' => 'select',
+      '#title' => 'Image crop size',
+      '#options' => $image_options,
+      '#default_value' => $config->get('image_crop_size'),
+    ];
 
     // Media image field mappings.
     $form['image_field_mappings'] = [
@@ -164,8 +172,9 @@ class NprStoryConfigForm extends ConfigFormBase {
     $values = $form_state->getValues();
     $config = $this->config('npr_story.settings');
 
-    $config->set('image_media_type', $values['image_media_type']);
     $config->set('story_node_type', $values['story_node_type']);
+    $config->set('image_media_type', $values['image_media_type']);
+    $config->set('image_crop_size', $values['image_crop_size']);
 
     $npr_story_fields = $config->get('story_field_mappings');
     foreach ($npr_story_fields as $field_name => $field_value) {

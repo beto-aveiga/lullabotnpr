@@ -17,7 +17,7 @@ use Drupal\media\Entity\Media;
 class NprPullClient extends NprClient {
 
   /**
-   * Constructs a NprClient object.
+   * Constructs a NprPullClient object.
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The HTTP client.
@@ -138,44 +138,62 @@ class NprPullClient extends NprClient {
    */
   function createMediaImage($story) {
 
-    $image_media_type = $this->config->get('npr_story.settings')->get('image_media_type');
+    $story_config = $this->config->get('npr_story.settings');
+    $image_media_type = $story_config->get('image_media_type');
+    $crop_selected = $story_config->get('image_crop_size');
     // Create variables for each field mapping.
     extract($this->config->get('npr_story.settings')->get('image_field_mappings'));
 
-    $file_data = file_get_contents($story->image[0]->crop[0]->src);
-    // TODO Pick an image directory for all NPR news images.
-    $file = file_save_data($file_data, 'public://' . $story->image[0]->id . ".jpg", FILE_EXISTS_REPLACE);
+    // We will only get the first image (at least for now).
+    $image = $story->image[0];
+
+    // Get the URL of the image size requested.
+    if (!is_array($image->crop)) {
+      $image->crop = [$image->crop];
+    }
+    if (!empty($image->crop)) {
+      foreach ($image->crop as $crop) {
+        if (!empty($crop->type) && $crop->type == $crop_selected) {
+          $image_url = $crop->src;
+          continue;
+        }
+      }
+    }
+
+    $file_data = file_get_contents($image_url);
+    // TODO: Pick an image directory for all NPR news images.
+    $file = file_save_data($file_data, 'public://' . $image->id . ".jpg", FILE_EXISTS_REPLACE);
 
     $story_config = $this->config->get('npr_story.settings');
     // Create a media entity.
     $media = Media::create([
-      $title => $story->image[0]->title->value,
+      $title => $image->title->value,
       'bundle' => $image_media_type,
       'uid' => $this->currentUser->id(),
       'langcode' => Language::LANGCODE_NOT_SPECIFIED,
       'status' => 1,
       $image_field => [
         'target_id' => $file->id(),
-        'alt' => $story->image[0]->title->value,
+        'alt' => $image->caption->value,
       ],
     ]);
 
     // Map the remaining fields.
-    // TODO: There might be a fancier way to do the first 5 of these.
-    if (!empty($caption) && $caption !== 'unused' && !empty($story->image[0]->caption->value)) {
-      $media->set($caption, $story->image[0]->caption->value);
+    // TODO: This is not the fanciest way to do this.
+    if (!empty($caption) && $caption !== 'unused' && !empty($image->caption->value)) {
+      $media->set($caption, $image->caption->value);
     }
-    if (!empty($credit) && $credit !== 'unused' && !empty($story->image[0]->credit->value)) {
-      $media->set($credit, $story->image[0]->credit->value);
+    if (!empty($credit) && $credit !== 'unused' && !empty($image->credit->value)) {
+      $media->set($credit, $image->credit->value);
     }
-    if (!empty($producer) && $producer !== 'unused' && !empty($story->image[0]->producer->value)) {
-      $media->set($producer, $story->image[0]->producer->value);
+    if (!empty($producer) && $producer !== 'unused' && !empty($image->producer->value)) {
+      $media->set($producer, $image->producer->value);
     }
-    if (!empty($provider) && $provider !== 'unused' && !empty($story->image[0]->provider->value)) {
-      $media->set($provider, $story->image[0]->provider->value);
+    if (!empty($provider) && $provider !== 'unused' && !empty($image->provider->value)) {
+      $media->set($provider, $image->provider->value);
     }
-    if (!empty($copyright) && $copyright !== 'unused' && !empty($story->image[0]->copyright->value)) {
-      $media->set($copyright, $story->image[0]->copyright->value);
+    if (!empty($copyright) && $copyright !== 'unused' && !empty($image->copyright->value)) {
+      $media->set($copyright, $image->copyright->value);
     }
     $media->save();
 
