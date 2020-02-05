@@ -77,7 +77,7 @@ class NprPullGetStory extends ConfigFormBase {
       '#description' => t('Full URL for a story on NPR.org.'),
     ];
 
-    $form['date_flag'] = [
+    $form['publish_flag'] = [
       '#type' => 'checkbox',
       '#title' => t('Publish stories upon retrieval?'),
       '#default_value' => '',
@@ -113,11 +113,11 @@ class NprPullGetStory extends ConfigFormBase {
     $url_value = $form_state->getValue(['url']);
     $story_id = $this->client->extractId($url_value);
 
+    // Get the publish flag.
+    $published = $form_state->getValue(['publish_flag']);
+
     // Save or update the story.
-    $this->client->saveOrUpdateNode($story_id);
+    $this->client->saveOrUpdateNode($story_id, $published);
   }
-
-
-
 
 }

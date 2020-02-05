@@ -36,8 +36,10 @@ class NprPullClient extends NprClient {
    *
    * @param string $story_id
    *   The ID of an NPR story.
+   * @param bool $published
+   *   Story should be published immediately.
    */
-  function saveOrUpdateNode($story_id) {
+  function saveOrUpdateNode($story_id, $published) {
 
     // Make a request.
     $this->getXmlStories(['id' => $story_id]);
@@ -72,7 +74,7 @@ class NprPullClient extends NprClient {
           'title' => $story->title,
           'language' => 'en',
           'uid' => 1,
-          'status' => 1,
+          'status' => $published,
           $id => $story->id,
         ]);
         if (!empty($subtitle) && $subtitle !== 'unused' && !empty($story->subtitle->value)) {
