@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\Element;
 use Drupal\npr_pull\NprPullClient;
+use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NprPullGetStory extends ConfigFormBase {
@@ -69,12 +70,21 @@ class NprPullGetStory extends ConfigFormBase {
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
 
     $key = $this->config('npr_api.settings')->get('npr_api_api_key');
+    $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
+    $user = User::load($author_id);
 
     $form['url'] = [
       '#type' => 'textfield',
       '#title' => t('NPR API story URL'),
       '#required' => TRUE,
       '#description' => t('Full URL for a story on NPR.org.'),
+    ];
+
+    $form['author'] = [
+      '#type' => 'item',
+      '#markup' => $this->t('The story author will be the Drupal user: %author',
+        ['%author' => $user->getUsername()]
+      ),
     ];
 
     $form['publish_flag'] = [
