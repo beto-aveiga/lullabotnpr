@@ -3,10 +3,13 @@
 namespace Drupal\npr_pull;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Entity\Node;
 use GuzzleHttp\ClientInterface;
 use Drupal\npr_api\NprClient;
+use Drupal\media\Entity\Media;
 
 /**
  * Performs CRUD opertions on Drupal nodes using data from the NPR API.
@@ -20,9 +23,11 @@ class NprPullClient extends NprClient {
    *   The HTTP client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current logged in user.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory) {
-    parent::__construct($client, $config_factory);
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user) {
+    parent::__construct($client, $config_factory, $current_user);
   }
 
   /**
@@ -39,12 +44,13 @@ class NprPullClient extends NprClient {
     $this->parse();
 
     $story_config = $this->config->get('npr_story.settings');
-    $story_content_type = $story_config->get('drupal_story_content');
-    $story_id_field = $story_config->get('mappings.id');
+    $story_node_type = $story_config->get('story_node_type');
+    // Create variables for each story field mapping.
+    extract($this->config->get('npr_story.settings')->get('story_field_mappings'));
 
     foreach($this->stories as $story) {
       // Impersonate the proper user.
-      $user = \Drupal::currentUser();
+      $user = $this->currentUser;
       // $original_user = $user;
       // $user = \drupal::entitytypemanager()
       //   ->getstorage('user')
@@ -59,15 +65,31 @@ class NprPullClient extends NprClient {
         $nodes_updated[] = $node;
       }
       else {
+        $media_id = $this->createMediaImage($story);
         // Create a new story if this is new.
         $node = Node::create([
-          'type' => $story_content_type,
+          'type' => $story_node_type,
           'title' => $story->title,
           'language' => 'en',
           'uid' => 1,
           'status' => 1,
-          $story_id_field => $story->id,
+          $id => $story->id,
         ]);
+        if (!empty($subtitle) && $subtitle !== 'unused' && !empty($story->subtitle->value)) {
+          $node->set($subtitle, $story->subtitle->value);
+        }
+        if (!empty($miniTeaser) && $miniTeaser !== 'unused' && !empty($story->miniTeaser->value)) {
+          $node->set($miniTeaser, $story->miniTeaser->value);
+        }
+        if (!empty($shortTitle) && $shortTitle !== 'unused' && !empty($story->shortTitle->value)) {
+          $node->set($shortTitle, $story->shortTitle->value);
+        }
+        if (!empty($slug) && $slug !== 'unused' && !empty($story->slug->value)) {
+          $node->set($slug, $story->slug->value);
+        }
+        if (!empty($image) && $image !== 'unused' && !empty($media_id)) {
+          $node->{$image}->target_id = $media_id;
+        }
       }
       $node->save();
       $nodes_created[] = $node;
@@ -103,6 +125,61 @@ class NprPullClient extends NprClient {
         return $matches[2];
       }
     }
+  }
+
+  /**
+   * Creates a image media item based on the configured field values.
+   *
+   * @param object $story
+   *   A single NPRMLEntity.
+   *
+   * @return string $media
+   *   A media image.
+   */
+  function createMediaImage($story) {
+
+    $image_media_type = $this->config->get('npr_story.settings')->get('image_media_type');
+    // Create variables for each field mapping.
+    extract($this->config->get('npr_story.settings')->get('image_field_mappings'));
+
+    $file_data = file_get_contents($story->image[0]->crop[0]->src);
+    // TODO Pick an image directory for all NPR news images.
+    $file = file_save_data($file_data, 'public://' . $story->image[0]->id . ".jpg", FILE_EXISTS_REPLACE);
+
+    $story_config = $this->config->get('npr_story.settings');
+    // Create a media entity.
+    $media = Media::create([
+      $title => $story->image[0]->title->value,
+      'bundle' => $image_media_type,
+      'uid' => $this->currentUser->id(),
+      'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+      'status' => 1,
+      $image_field => [
+        'target_id' => $file->id(),
+        'alt' => $story->image[0]->title->value,
+      ],
+    ]);
+
+    // Map the remaining fields.
+    // TODO: There might be a fancier way to do the first 5 of these.
+    if (!empty($caption) && $caption !== 'unused' && !empty($story->image[0]->caption->value)) {
+      $media->set($caption, $story->image[0]->caption->value);
+    }
+    if (!empty($credit) && $credit !== 'unused' && !empty($story->image[0]->credit->value)) {
+      $media->set($credit, $story->image[0]->credit->value);
+    }
+    if (!empty($producer) && $producer !== 'unused' && !empty($story->image[0]->producer->value)) {
+      $media->set($producer, $story->image[0]->producer->value);
+    }
+    if (!empty($provider) && $provider !== 'unused' && !empty($story->image[0]->provider->value)) {
+      $media->set($provider, $story->image[0]->provider->value);
+    }
+    if (!empty($copyright) && $copyright !== 'unused' && !empty($story->image[0]->copyright->value)) {
+      $media->set($copyright, $story->image[0]->copyright->value);
+    }
+    $media->save();
+
+    return $media->id();
   }
 
 

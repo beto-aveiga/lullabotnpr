@@ -3,6 +3,7 @@
 namespace Drupal\npr_api;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Session\AccountInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
@@ -39,16 +40,26 @@ class NprClient implements ClientInterface {
   protected $config;
 
   /**
+   * The current logged in user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The HTTP client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current logged in user.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory) {
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user) {
     $this->client = $client;
     $this->config = $config_factory;
+    $this->currentUser = $current_user;
 
     // TODO: Is this needed?
     $this->response = new \stdClass;
@@ -62,6 +73,7 @@ class NprClient implements ClientInterface {
     return new static(
       $container->get('http_client'),
       $container->get('config.factory'),
+      $container->get('current_user')
     );
   }
 
