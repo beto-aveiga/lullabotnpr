@@ -45,19 +45,10 @@ class NprPullClient extends NprClient {
     $this->getXmlStories(['id' => $story_id]);
     $this->parse();
 
-    $story_config = $this->config->get('npr_story.settings');
-    $story_node_type = $story_config->get('story_node_type');
     // Create variables for each story field mapping.
     extract($this->config->get('npr_story.settings')->get('story_field_mappings'));
 
     foreach($this->stories as $story) {
-      // Impersonate the proper user.
-      $user = $this->currentUser;
-      // $original_user = $user;
-      // $user = \drupal::entitytypemanager()
-      //   ->getstorage('user')
-      //   ->load(\drupal::config('npr_pull.settings')
-      //   ->get('npr_pull_author'));
 
       $is_update = FALSE;
 
@@ -70,10 +61,10 @@ class NprPullClient extends NprClient {
         $media_id = $this->createMediaImage($story);
         // Create a new story if this is new.
         $node = Node::create([
-          'type' => $story_node_type,
+          'type' => $this->config->get('npr_story.settings')->get('story_node_type'),
           'title' => $story->title,
           'language' => 'en',
-          'uid' => 1,
+          'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'status' => $published,
           $id => $story->id,
         ]);
