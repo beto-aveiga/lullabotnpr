@@ -113,19 +113,8 @@ class NprPullGetStory extends ConfigFormBase {
     $url_value = $form_state->getValue(['url']);
     $story_id = $this->client->extractId($url_value);
 
+    // Save or update the story.
     $this->client->saveOrUpdateNode($story_id);
-    // $failure = !empty($NPR->message) && $NPR->message->id == 201;
-
-    // if (is_object($NPR) && !empty($NPR->stories) && !$failure) {
-      // $NPR->flatten();
-      // $story = array_shift($NPR->stories);
-      // $date_flag = $form_state->getValue(['date_flag']);
-      // $story->created = ($date_flag) ? strtotime($story->pubDate->value) : REQUEST_TIME;
-      // npr_pull_insert_story($story);
-    // }
-    // else {
-      // \Drupal::messenger()->addMessage(t('No story could be found in the NPR API.'));
-    // }
   }
 
 
