@@ -186,17 +186,12 @@ class NprClient implements ClientInterface {
           $key = $xml_iterator->key();
 
           if ($key == 'image' || $key == 'audio' || $key == 'link') {
-            // images
             if ($key == 'image') {
               $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
-
-            // audio
             if ($key == 'audio') {
               $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
-
-            // links
             if ($key == 'link') {
               $type = $this->getAttribute($current, 'type');
               $parsed->{$key}[$type] = $this->parseSimplexmlElement($current);
@@ -242,7 +237,7 @@ class NprClient implements ClientInterface {
   function parseSimplexmlElement($element) {
     $NPRMLElement = new NPRMLElement();
     $this->addSimplexmlAttributes($element, $NPRMLElement);
-    if (count($element->children())) { // works for PHP5.2
+    if (count($element->children())) {
       foreach ($element->children() as $i => $child) {
         if ($i == 'paragraph' || $i == 'mp3') {
           if ($i == 'paragraph') {

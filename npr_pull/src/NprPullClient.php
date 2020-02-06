@@ -145,7 +145,12 @@ class NprPullClient extends NprClient {
     $crop_selected = $story_config->get('image_crop_size');
 
     // We will only get the first image (at least for now).
-    $image = $story->image[0];
+    if (!empty($story->image[0])) {
+      $image = $story->image[0];
+    }
+    else {
+      return NULL;
+    }
 
     // Get the URL of the image size requested.
     if (!is_array($image->crop)) {
