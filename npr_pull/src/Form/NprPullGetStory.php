@@ -72,6 +72,7 @@ class NprPullGetStory extends ConfigFormBase {
     $key = $this->config('npr_api.settings')->get('npr_api_api_key');
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
     $user = User::load($author_id);
+    $username = $user->getUsername() ?: 'Anonymous';
 
     $form['url'] = [
       '#type' => 'textfield',
@@ -83,7 +84,7 @@ class NprPullGetStory extends ConfigFormBase {
     $form['author'] = [
       '#type' => 'item',
       '#markup' => $this->t('The story author will be the Drupal user: %author',
-        ['%author' => $user->getUsername()]
+        ['%author' => $username]
       ),
     ];
 
