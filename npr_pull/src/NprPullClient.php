@@ -45,8 +45,8 @@ class NprPullClient extends NprClient {
     $this->getXmlStories(['id' => $story_id]);
     $this->parse();
 
-    // Create variables for each story field mapping.
-    extract($this->config->get('npr_story.settings')->get('story_field_mappings'));
+    // Get the story field mappings.
+    $story_mappings = $this->config->get('npr_story.settings')->get('story_field_mappings');
 
     foreach($this->stories as $story) {
 
@@ -59,30 +59,38 @@ class NprPullClient extends NprClient {
       }
       else {
         $media_id = $this->createMediaImage($story);
-        // Create a new story if this is new.
+        // Create a new story node if this is new.
         $node = Node::create([
           'type' => $this->config->get('npr_story.settings')->get('story_node_type'),
           'title' => $story->title,
           'language' => 'en',
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'status' => $published,
-          $id => $story->id,
         ]);
-        if (!empty($subtitle) && $subtitle !== 'unused' && !empty($story->subtitle->value)) {
-          $node->set($subtitle, $story->subtitle->value);
+
+        // Add a reference to the image field.
+        $image_field = $story_mappings['image'];
+        if (!empty($image_field) && $image_field !== 'unused' && !empty($media_id)) {
+          $node->{$image_field}->target_id = $media_id;
         }
-        if (!empty($miniTeaser) && $miniTeaser !== 'unused' && !empty($story->miniTeaser->value)) {
-          $node->set($miniTeaser, $story->miniTeaser->value);
+
+        // Add a reference to the audio field.
+        // TODO.
+
+        // Add data to the remaining fields except image and audio.
+        foreach ($story_mappings as $key => $value) {
+          if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
+            // ID doesn't have a "value" key.
+            if ($key == 'id') {
+              $node->set($value, $story->id);
+            }
+            // All of the other fields do have a "value."
+            elseif (!empty($story->{$key}->value)) {
+              $node->set($value, $story->{$key}->value);
+            }
+          }
         }
-        if (!empty($shortTitle) && $shortTitle !== 'unused' && !empty($story->shortTitle->value)) {
-          $node->set($shortTitle, $story->shortTitle->value);
-        }
-        if (!empty($slug) && $slug !== 'unused' && !empty($story->slug->value)) {
-          $node->set($slug, $story->slug->value);
-        }
-        if (!empty($image) && $image !== 'unused' && !empty($media_id)) {
-          $node->{$image}->target_id = $media_id;
-        }
+
       }
       $node->save();
       $nodes_created[] = $node;
@@ -181,7 +189,7 @@ class NprPullClient extends NprClient {
         $media->set($value, $image->{$key}->value);
       }
     }
-   $media->save();
+    $media->save();
 
     return $media->id();
   }
