@@ -161,8 +161,12 @@ class NprPullClient extends NprClient {
 
     // Download the image file contents.
     $file_data = file_get_contents($image_url);
+
+    // Get the filename.
+    $filename = basename($image_url);
+
     // TODO: Pick an image directory for all NPR news images.
-    $file = file_save_data($file_data, 'public://' . $image->id . ".jpg", FILE_EXISTS_REPLACE);
+    $file = file_save_data($file_data, 'public://' . $filename, FILE_EXISTS_REPLACE);
 
     // Create a media entity.
     $mappings = $this->config->get('npr_story.settings')->get('image_field_mappings');
