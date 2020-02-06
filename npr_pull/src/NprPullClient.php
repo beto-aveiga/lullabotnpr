@@ -134,8 +134,6 @@ class NprPullClient extends NprClient {
     $story_config = $this->config->get('npr_story.settings');
     $image_media_type = $story_config->get('image_media_type');
     $crop_selected = $story_config->get('image_crop_size');
-    // Create variables for each field mapping.
-    extract($this->config->get('npr_story.settings')->get('image_field_mappings'));
 
     // We will only get the first image (at least for now).
     $image = $story->image[0];
@@ -153,42 +151,37 @@ class NprPullClient extends NprClient {
       }
     }
 
+    // Download the image file contents.
     $file_data = file_get_contents($image_url);
     // TODO: Pick an image directory for all NPR news images.
     $file = file_save_data($file_data, 'public://' . $image->id . ".jpg", FILE_EXISTS_REPLACE);
 
-    $story_config = $this->config->get('npr_story.settings');
     // Create a media entity.
+    $mappings = $this->config->get('npr_story.settings')->get('image_field_mappings');
     $media = Media::create([
-      $title => $image->title->value,
+      $mappings['title'] => $image->title->value,
       'bundle' => $image_media_type,
       'uid' => $this->currentUser->id(),
       'langcode' => Language::LANGCODE_NOT_SPECIFIED,
       'status' => 1,
-      $image_field => [
+      $mappings['image_field'] => [
         'target_id' => $file->id(),
         'alt' => $image->caption->value,
       ],
     ]);
 
-    // Map the remaining fields.
-    // TODO: This is not the fanciest way to do this.
-    if (!empty($caption) && $caption !== 'unused' && !empty($image->caption->value)) {
-      $media->set($caption, $image->caption->value);
+    // Map all of the remaining fields except title and image_field, which are
+    // used above.
+    foreach ($mappings as $key => $value) {
+      if (!empty($value) &&
+          $value !== 'unused' &&
+          !empty($image->{$key}->value) &&
+          !in_array($key, ['title', 'image_field'])
+      ) {
+        $media->set($value, $image->{$key}->value);
+      }
     }
-    if (!empty($credit) && $credit !== 'unused' && !empty($image->credit->value)) {
-      $media->set($credit, $image->credit->value);
-    }
-    if (!empty($producer) && $producer !== 'unused' && !empty($image->producer->value)) {
-      $media->set($producer, $image->producer->value);
-    }
-    if (!empty($provider) && $provider !== 'unused' && !empty($image->provider->value)) {
-      $media->set($provider, $image->provider->value);
-    }
-    if (!empty($copyright) && $copyright !== 'unused' && !empty($image->copyright->value)) {
-      $media->set($copyright, $image->copyright->value);
-    }
-    $media->save();
+   $media->save();
 
     return $media->id();
   }
