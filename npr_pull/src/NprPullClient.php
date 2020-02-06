@@ -3,6 +3,7 @@
 namespace Drupal\npr_pull;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
@@ -165,8 +166,13 @@ class NprPullClient extends NprClient {
     // Get the filename.
     $filename = basename($image_url);
 
-    // TODO: Pick an image directory for all NPR news images.
-    $file = file_save_data($file_data, 'public://' . $filename, FILE_EXISTS_REPLACE);
+    // Get the directory in the form of YYYY/MM/DD and make sure it exists.
+    $full_directory = dirname($image_url);
+    $directory_uri = 'public://npr_story_images/' . substr($full_directory, -10);
+    \Drupal::service('file_system')->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
+
+    // Save the image.
+    $file = file_save_data($file_data, $directory_uri . "/" . $filename, FILE_EXISTS_REPLACE);
 
     // Create a media entity.
     $mappings = $this->config->get('npr_story.settings')->get('image_field_mappings');
