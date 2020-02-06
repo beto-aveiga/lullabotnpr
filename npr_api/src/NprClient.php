@@ -4,6 +4,7 @@ namespace Drupal\npr_api;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
@@ -47,6 +48,13 @@ class NprClient implements ClientInterface {
   protected $currentUser;
 
   /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \GuzzleHttp\ClientInterface $client
@@ -55,11 +63,15 @@ class NprClient implements ClientInterface {
    *   The config factory.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current logged in user.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user) {
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
+
     $this->client = $client;
     $this->config = $config_factory;
     $this->currentUser = $current_user;
+    $this->messenger = $messenger;
 
     // TODO: Is this needed?
     $this->response = new \stdClass;

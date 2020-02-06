@@ -1,6 +1,8 @@
 story_node_type: ''
 story_field_mappings:
   id: ''
+  body: ''
+  body_text_format: ''
   subtitle: ''
   shortTitle: ''
   miniTeaser: ''

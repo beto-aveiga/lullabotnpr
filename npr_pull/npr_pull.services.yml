@@ -1,4 +1,4 @@
 services:
   npr_pull.client:
     class: Drupal\npr_pull\NprPullClient
-    arguments: ['@http_client', '@config.factory', '@current_user']
+    arguments: ['@http_client', '@config.factory', '@current_user', '@messenger']

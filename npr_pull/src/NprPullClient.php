@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
@@ -26,9 +27,11 @@ class NprPullClient extends NprClient {
    *   The config factory.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current logged in user.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user) {
-    parent::__construct($client, $config_factory, $current_user);
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
+    parent::__construct($client, $config_factory, $current_user, $messenger);
   }
 
   /**
@@ -47,7 +50,15 @@ class NprPullClient extends NprClient {
     $this->parse();
 
     // Get the story field mappings.
-    $story_mappings = $this->config->get('npr_story.settings')->get('story_field_mappings');
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+    $text_format = $story_config->get('body_text_format');
+
+    if (empty($text_format)) {
+      // TODO: Add a link to the config page.
+      $this->messenger->addError('You must select a body text format.');
+      return;
+    }
 
     foreach($this->stories as $story) {
 
@@ -62,7 +73,7 @@ class NprPullClient extends NprClient {
         $media_id = $this->createMediaImage($story);
         // Create a new story node if this is new.
         $node = Node::create([
-          'type' => $this->config->get('npr_story.settings')->get('story_node_type'),
+          'type' => $story_config->get('story_node_type'),
           'title' => $story->title,
           'language' => 'en',
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
@@ -84,6 +95,12 @@ class NprPullClient extends NprClient {
             // ID doesn't have a "value" key.
             if ($key == 'id') {
               $node->set($value, $story->id);
+            }
+            elseif ($key == 'body') {
+              $node->set($value, [
+                'value' => $story->body,
+                'format' => $text_format,
+              ]);
             }
             // All of the other fields do have a "value."
             elseif (!empty($story->{$key}->value)) {

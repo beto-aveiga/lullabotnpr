@@ -82,6 +82,18 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#options' => $node_type_options,
     ];
 
+    // Get body text format.
+    foreach (filter_formats() as $format) {
+      $formats[$format->get('format')] = $format->get('name');
+    }
+    $form['body_text_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Body text format'),
+      '#description' => $this->t('The body field is selected below.'),
+      '#default_value' => $config->get('body_text_format'),
+      '#options' => $formats,
+    ];
+
     // Story content field mappings.
     $form['story_field_mappings'] = [
       '#type' => 'details',
@@ -173,6 +185,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config = $this->config('npr_story.settings');
 
     $config->set('story_node_type', $values['story_node_type']);
+    $config->set('body_text_format', $values['body_text_format']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
 
