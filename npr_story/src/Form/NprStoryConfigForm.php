@@ -72,30 +72,33 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config = $this->config('npr_story.settings');
 
-    // Get a list of potential node types.
+    // Node type configuration.
+    $form['node_type_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Node type settings'),
+      '#open' => TRUE,
+    ];
     $drupal_node_types = array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple());
     $node_type_options = array_combine($drupal_node_types, $drupal_node_types);
-    $form['story_node_type'] = [
+    $form['node_type_settings']['story_node_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Drupal story node type'),
       '#default_value' => $config->get('story_node_type'),
       '#options' => $node_type_options,
     ];
-
-    // Get body text format.
+    // Create a list of text formats.
     foreach (filter_formats() as $format) {
       $formats[$format->get('format')] = $format->get('name');
     }
-    $form['body_text_format'] = [
+    $form['node_type_settings']['body_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Body text format'),
       '#description' => $this->t('The body field is selected below.'),
       '#default_value' => $config->get('body_text_format'),
       '#options' => $formats,
     ];
-
-    // Story content field mappings.
-    $form['story_field_mappings'] = [
+    // Story node field mappings.
+    $form['node_type_settings']['story_field_mappings'] = [
       '#type' => 'details',
       '#title' => $this->t('Story field mappings'),
       '#open' => TRUE,
@@ -109,7 +112,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       $npr_story_fields = $config->get('story_field_mappings');
       foreach ($npr_story_fields as $field_name => $field_value) {
         $default = !empty($npr_story_fields[$field_name]) ?? 'unused';
-        $form['story_field_mappings'][$field_name] = [
+        $form['node_type_settings']['story_field_mappings'][$field_name] = [
           '#type' => 'select',
           '#title' => $field_name,
           '#options' => $story_field_options,
@@ -118,16 +121,21 @@ class NprStoryConfigForm extends ConfigFormBase {
       }
     }
     else {
-      $form['story_field_mappings']['mappings_required'] = [
+      $form['node_type_settings']['story_field_mappings']['mappings_required'] = [
         '#type' => 'item',
         '#markup' => 'Select and save Drupal story node type to choose field mappings.',
       ];
     }
 
-    // Get a list of potential media types.
+    // Image media type configuration
+    $form['image_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Image settings'),
+      '#open' => TRUE,
+    ];
     $media_types = array_keys($this->entityTypeManager->getStorage('media_type')->loadMultiple());
     $media_type_options = array_combine($media_types, $media_types);
-    $form['image_media_type'] = [
+    $form['image_settings']['image_media_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Drupal image media type'),
       '#default_value' => $config->get('image_media_type'),
@@ -135,15 +143,14 @@ class NprStoryConfigForm extends ConfigFormBase {
     ];
     $image_sizes = ['standard', 'square', 'wide', 'enlargement', 'custom'];
     $image_options = array_combine($image_sizes, $image_sizes);
-    $form['image_crop_size'] = [
+    $form['image_settings']['image_crop_size'] = [
       '#type' => 'select',
       '#title' => 'Image crop size',
       '#options' => $image_options,
       '#default_value' => $config->get('image_crop_size'),
     ];
-
     // Media image field mappings.
-    $form['image_field_mappings'] = [
+    $form['image_settings']['image_field_mappings'] = [
       '#type' => 'details',
       '#title' => $this->t('Image field mappings'),
       '#open' => TRUE,
@@ -158,7 +165,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       $npr_image_fields = $config->get('image_field_mappings');
       foreach ($npr_image_fields as $npr_image_field => $field_value) {
         $default = !empty($npr_image_fields[$npr_image_field]) ?? 'unused';
-        $form['image_field_mappings'][$npr_image_field] = [
+        $form['image_settings']['image_field_mappings'][$npr_image_field] = [
           '#type' => 'select',
           '#title' => $npr_image_field,
           '#options' => $image_field_options,
@@ -167,12 +174,62 @@ class NprStoryConfigForm extends ConfigFormBase {
       }
     }
     else {
-      $form['image_field_mappings']['mappings_required'] = [
+      $form['image_settings']['image_field_mappings']['mappings_required'] = [
         '#type' => 'item',
         '#markup' => 'Select and save the Drupal image media type to choose field mappings.',
       ];
     }
 
+    // Audio media type configuration
+    $form['audio_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Audio settings'),
+      '#open' => TRUE,
+    ];
+    $form['audio_settings']['audio_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal remote audio media type'),
+      '#default_value' => $config->get('audio_media_type'),
+      '#description' => 'Out of the box, Drupal does not come with a "remote audio" media type, and neither the default "audio " format nor "remote video" should be used. Rather, the npr_story module includes a plugin so that provides the ability to create a media type of source "NPR Remote Audio" that can be used.',
+      '#options' => $media_type_options,
+    ];
+    $formats = ['mp3', 'm3u', 'mp4', 'hlsOnDemand', 'mediastream'];
+    $format_options = array_combine($formats, $formats);
+    $form['audio_settings']['audio_format'] = [
+      '#type' => 'select',
+      '#title' => 'Audio format',
+      '#options' => $format_options,
+      '#default_value' => $config->get('audio_format'),
+    ];
+    $audio_media_type = $config->get('audio_media_type');
+    $form['audio_settings']['audio_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Audio field mappings'),
+      '#open' => TRUE,
+    ];
+    if (!empty($audio_media_type)) {
+      $audio_media_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('media', $audio_media_type));
+      $audio_field_options = ['unused' => 'unused'] +
+        array_combine($audio_media_fields, $audio_media_fields);
+      $audio_field_mappings = $config->get('audio_field_mappings');
+      foreach ($audio_field_mappings as $npr_audio_field => $audio_field_value) {
+        $default = !empty($audio_field_mappings[$npr_audio_field]) ?? 'unused';
+        $form['audio_settings']['audio_field_mappings'][$npr_audio_field] = [
+          '#type' => 'select',
+          '#title' => $npr_audio_field,
+          '#options' => $audio_field_options,
+          '#default_value' => $audio_field_mappings[$npr_audio_field],
+        ];
+      }
+    }
+    else {
+      $form['audio_settings']['audio_field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save the Drupal audio media type to choose field mappings.',
+      ];
+    }
 
     return parent::buildForm($form, $form_state);
   }
@@ -188,6 +245,8 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('body_text_format', $values['body_text_format']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
+    $config->set('audio_media_type', $values['audio_media_type']);
+    $config->set('audio_format', $values['audio_format']);
 
     $npr_story_fields = $config->get('story_field_mappings');
     foreach ($npr_story_fields as $field_name => $field_value) {
@@ -199,6 +258,12 @@ class NprStoryConfigForm extends ConfigFormBase {
     foreach ($npr_image_fields as $field_name => $field_value) {
       if (isset($values[$field_name])) {
         $config->set('image_field_mappings.' . $field_name, $values[$field_name]);
+      }
+    }
+    $npr_audio_fields = $config->get('audio_field_mappings');
+    foreach ($npr_audio_fields as $field_name => $field_value) {
+      if (isset($values[$field_name])) {
+        $config->set('audio_field_mappings.' . $field_name, $values[$field_name]);
       }
     }
     $config->save();

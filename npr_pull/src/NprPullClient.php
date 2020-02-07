@@ -67,6 +67,9 @@ class NprPullClient extends NprClient {
 
     foreach($this->stories as $story) {
 
+      // Add the published flag to the story object.
+      $story->published = $published;
+
       $is_update = FALSE;
 
       if (!empty($story->nid)) {
@@ -75,7 +78,6 @@ class NprPullClient extends NprClient {
         $nodes_updated[] = $node;
       }
       else {
-        $media_id = $this->createMediaImage($story);
         // Create a new story node if this is new.
         $node = Node::create([
           'type' => $story_config->get('story_node_type'),
@@ -85,14 +87,25 @@ class NprPullClient extends NprClient {
           'status' => $published,
         ]);
 
-        // Add a reference to the image field.
+        // Add a reference to the media image.
+        $media_image_id = $this->createMediaImage($story);
         $image_field = $story_mappings['image'];
-        if (!empty($image_field) && $image_field !== 'unused' && !empty($media_id)) {
-          $node->{$image_field}->target_id = $media_id;
+        if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
+          $node->{$image_field}->target_id = $media_image_id;
         }
 
-        // Add a reference to the audio field.
-        // TODO.
+        // Add a reference to the media audio.
+        $media_audio_ids = $this->createMediaAudio($story);
+        $audio_field = $story_mappings['audio'];
+        if ($audio_field == 'unused') {
+          $this->messenger->addError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+          return;
+        }
+        if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
+          foreach ($media_audio_ids as $audio_id) {
+            $node->{$audio_field}[] = ['target_id' => $audio_id];
+          }
+        }
 
         // Add data to the remaining fields except image and audio.
         foreach ($story_mappings as $key => $value) {
@@ -183,12 +196,17 @@ class NprPullClient extends NprClient {
     $image_media_type = $story_config->get('image_media_type');
     $crop_selected = $story_config->get('image_crop_size');
 
+    if (empty($image_media_type) || empty($crop_selected)) {
+      $this->messenger->addError('Please configure the NPR story image settings.');
+      return;
+    }
+
     // We will only get the first image (at least for now).
     if (!empty($story->image[0])) {
       $image = $story->image[0];
     }
     else {
-      return NULL;
+      return;
     }
 
     // Get the URL of the image size requested.
@@ -220,12 +238,16 @@ class NprPullClient extends NprClient {
 
     // Create a media entity.
     $mappings = $this->config->get('npr_story.settings')->get('image_field_mappings');
+    if ($mappings['title'] == 'unused' || $mappings['image_field'] == 'unused') {
+      $this->messenger->addError('Please configure the title and image field settings for media images.');
+      return;
+    }
     $media = Media::create([
       $mappings['title'] => $image->title->value,
       'bundle' => $image_media_type,
-      'uid' => $this->currentUser->id(),
+      'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
       'langcode' => Language::LANGCODE_NOT_SPECIFIED,
-      'status' => 1,
+      'status' => $story->published,
       $mappings['image_field'] => [
         'target_id' => $file->id(),
         'alt' => $image->caption->value,
@@ -248,5 +270,67 @@ class NprPullClient extends NprClient {
     return $media->id();
   }
 
+  /**
+   * Creates a media audio item based on the configured field values.
+   *
+   * @param object $story
+   *   A single NPRMLEntity.
+   *
+   * @return string $media
+   *   A media id.
+   */
+  function createMediaAudio($story) {
+
+    // Skip if there is no audio.
+    if (empty($story->audio)) {
+      return;
+    }
+
+    // Get and check the configuration.
+    $story_config = $this->config->get('npr_story.settings');
+    $audio_media_type = $story_config->get('audio_media_type');
+
+    // TODO: Currently this is not used. Do we need this config?
+    $audio_format = $story_config->get('audio_format');
+
+    if (empty($audio_media_type) || empty($audio_format)) {
+      $this->messenger->addError('Please configure the NPR story audio type and format.');
+      return;
+    }
+
+    // Create a media audio entity.
+    $mappings = $this->config->get('npr_story.settings')->get('audio_field_mappings');
+    if ($mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
+      $this->messenger->addError('Please configure the title and remote audio settings.');
+      return NULL;
+    }
+
+    // Create the audio media item(s).
+    foreach ($story->audio as $audio) {
+      $audio_uri = $audio->format->mp3['m3u']->value;
+      $media = Media::create([
+        $mappings['title'] => $audio->title->value,
+        'bundle' => $audio_media_type,
+        'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+        'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+        'status' => $story->published,
+        $mappings['remote_audio'] => ['uri' => $audio_uri],
+      ]);
+      // Map all of the remaining fields except title and remote_audio.
+      foreach ($mappings as $key => $value) {
+        if (!empty($value) &&
+            $value !== 'unused' &&
+            !empty($audio->{$key}->value) &&
+            !in_array($key, ['title', 'remote_audio'])
+        ) {
+          $media->set($value, $audio->{$key}->value);
+        }
+      }
+      $media->save();
+      $audio_ids[] = $media->id();
+    }
+
+    return $audio_ids;
+  }
 
 }
