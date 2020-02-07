@@ -49,6 +49,11 @@ class NprPullClient extends NprClient {
     $this->getXmlStories(['id' => $story_id]);
     $this->parse();
 
+    if (empty($this->stories)) {
+      $this->messenger->addError($story_id . ' is not a valid story ID.');
+      return;
+    }
+
     // Get the story field mappings.
     $story_config = $this->config->get('npr_story.settings');
     $story_mappings = $story_config->get('story_field_mappings');
@@ -101,6 +106,23 @@ class NprPullClient extends NprClient {
                 'value' => $story->body,
                 'format' => $text_format,
               ]);
+            }
+            elseif ($key == 'byline' && !empty($story->byline)) {
+              // Make byline an array if it is not.
+              if (!is_array($story->byline)) {
+                $story->byline = [$story->byline];
+              }
+              foreach ($story->byline as $author) {
+                // Not all of the authors in the byline have a link.
+                $uri = $author->link[0]->value ?: "<nolink>";
+                $byline[] = [
+                  // It looks like we always want the first link ("html")
+                  // rather than the second one ("api").
+                  'uri' => $uri,
+                  'title' => $author->name->value,
+                ];
+                $node->set($value, $byline);
+              }
             }
             // All of the other fields do have a "value."
             elseif (!empty($story->{$key}->value)) {

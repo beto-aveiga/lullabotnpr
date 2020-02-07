@@ -179,11 +179,6 @@ class NprClient implements ClientInterface {
     $object = simplexml_load_string($xml);
     $this->addSimplexmlAttributes($object, $this);
 
-    if (!empty($object->message)) {
-      $this->message->id = $this->getAttribute($object->message, 'id');
-      $this->message->level = $this->getAttribute($object->message, 'level');
-    }
-
     if (!empty($object->list->story)) {
       foreach ($object->list->story as $story) {
         $parsed = new NPRMLEntity();

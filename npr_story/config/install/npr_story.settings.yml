@@ -2,6 +2,7 @@ story_node_type: ''
 story_field_mappings:
   id: ''
   body: ''
+  byline: ''
   body_text_format: ''
   subtitle: ''
   shortTitle: ''
