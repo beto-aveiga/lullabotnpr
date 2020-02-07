@@ -10,14 +10,6 @@ use Drupal\user\Entity\User;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
-define('NPR_PULL_STAGE_URL', 'https://api-s2.npr.org');
-define('NPR_PULL_PRODUCTION_URL', 'https://api.npr.org');
-
-/**
- * The content type to which pulled stories will be mapped.
- */
-define('NPR_PULL_MAPPING_CONTENT_TYPE', 'npr_story');
-
 /**
  * Implements hook_permission().
  */
@@ -86,8 +78,8 @@ function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id)
     '#title' => t('NPR Pull URL'),
     '#default_value' => $config->get('npr_pull_api_url'),
     '#options' => [
-      'staging' => NPR_PULL_STAGE_URL . " (staging)",
-      'production' => NPR_PULL_PRODUCTION_URL . " (production)",
+      'staging' => NPR_API_STAGE_URL . " (staging)",
+      'production' => NPR_API_PRODUCTION_URL . " (production)",
     ],
   ];
 

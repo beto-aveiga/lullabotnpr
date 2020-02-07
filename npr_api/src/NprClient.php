@@ -20,7 +20,6 @@ class NprClient implements ClientInterface {
   const NPRAPI_STATUS_OK = 200;
   const BASE_URI = 'http://api.npr.org/query/';
 
-
   // NPRML CONSTANTS
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
   const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
