@@ -1,5 +1,5 @@
 npr_pull_author: 0
-npr_pull_url: 0
+npr_pull_url: 'production'
 npr_pull_cron_publish_flag: 1
 queue:
   autoupdate: false
