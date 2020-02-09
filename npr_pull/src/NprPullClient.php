@@ -2,16 +2,12 @@
 
 namespace Drupal\npr_pull;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\media\Entity\Media;
 use Drupal\node\Entity\Node;
 use Drupal\npr_api\NprClient;
-use GuzzleHttp\ClientInterface;
 
 /**
  * Performs CRUD opertions on Drupal nodes using data from the NPR API.
@@ -19,23 +15,9 @@ use GuzzleHttp\ClientInterface;
 class NprPullClient extends NprClient {
 
   /**
-   * Constructs a NprPullClient object.
+   * Create a story node.
    *
-   * @param \GuzzleHttp\ClientInterface $client
-   *   The HTTP client.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current logged in user.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger service.
-   */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
-    parent::__construct($client, $config_factory, $current_user, $messenger);
-  }
-
-  /**
-   * Converts an NPRMLEntity story object into a node object and saves it to the
+   * Converts an NPRMLEntity story object to a node object and saves it to the
    * database (the D8 equivalent of npr_pull_save_story).
    *
    * @param string $story_id
@@ -43,7 +25,7 @@ class NprPullClient extends NprClient {
    * @param bool $published
    *   Story should be published immediately.
    */
-  function saveOrUpdateNode($story_id, $published) {
+  public function saveOrUpdateNode($story_id, $published) {
 
     // Make a request.
     $this->getXmlStories(['id' => $story_id]);
@@ -65,7 +47,7 @@ class NprPullClient extends NprClient {
       return;
     }
 
-    foreach($this->stories as $story) {
+    foreach ($this->stories as $story) {
 
       // Add the published flag to the story object.
       $story->published = $published;
@@ -137,7 +119,7 @@ class NprPullClient extends NprClient {
                 $node->set($value, $byline);
               }
             }
-            // All of the other fields do have a "value."
+            // All of the other fields have a "value" property.
             elseif (!empty($story->{$key}->value)) {
               $node->set($value, $story->{$key}->value);
             }
@@ -148,7 +130,7 @@ class NprPullClient extends NprClient {
       $node->save();
       $nodes_created[] = $node;
     }
-    foreach($nodes_created as $node_created) {
+    foreach ($nodes_created as $node_created) {
       $link = Link::fromTextAndUrl($node_created->label(), $node_created->toUrl())->toString();
       \Drupal::messenger()->addStatus(t("Story @link was created.", [
         '@link' => $link,
@@ -162,18 +144,17 @@ class NprPullClient extends NprClient {
    * @param string $url
    *   A URL.
    *
-   * @return string $matches
+   * @return array
    *   The ID of the NPR story.
    */
-  function extractId($url) {
-    // URL format: /yyyy/mm/dd/id
-    // URL format: /blogs/name/yyyy/mm/dd/id
+  protected function extractId($url) {
+    // Handle URL formats such as /yyyy/mm/dd/id and /blogs/name/yyyy/mm/dd/id.
     preg_match('/https\:\/\/[^\s\/]*npr\.org\/((([^\/]*\/){3,5})([0-9]{8,12}))\/.*/', $url, $matches);
     if (!empty($matches[4])) {
       return $matches[4];
     }
     else {
-      // URL format: /templates/story/story.php?storyId=id
+      // Handle URL format /templates/story/story.php?storyId=id.
       preg_match('/https\:\/\/[^\s\/]*npr\.org\/([^&\s\<]*storyId\=([0-9]+)).*/', $url, $matches);
       if (!empty($matches[2])) {
         return $matches[2];
@@ -187,10 +168,10 @@ class NprPullClient extends NprClient {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return string $media
-   *   A media image.
+   * @return string|null
+   *   A media image id or null.
    */
-  function createMediaImage($story) {
+  protected function createMediaImage($story) {
 
     $story_config = $this->config->get('npr_story.settings');
     $image_media_type = $story_config->get('image_media_type');
@@ -276,10 +257,10 @@ class NprPullClient extends NprClient {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return string $media
-   *   A media id.
+   * @return string|null
+   *   A audo media id or null.
    */
-  function createMediaAudio($story) {
+  protected function createMediaAudio($story) {
 
     // Skip if there is no audio.
     if (empty($story->audio)) {
@@ -329,7 +310,6 @@ class NprPullClient extends NprClient {
       $media->save();
       $audio_ids[] = $media->id();
     }
-
     return $audio_ids;
   }
 
