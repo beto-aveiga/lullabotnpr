@@ -1,21 +1,18 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\npr_pull\Form\NprPullGetStory.
- */
-
 namespace Drupal\npr_pull\Form;
 
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Render\Element;
 use Drupal\npr_pull\NprPullClient;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Retrieves NPR stories and creates Drupal story nodes.
+ */
 class NprPullGetStory extends ConfigFormBase {
 
   /**
@@ -39,13 +36,15 @@ class NprPullGetStory extends ConfigFormBase {
    *   The messenger service.
    * @param \Drupal\npr_pull\NprPullClient $client
    *   The NPR client.
-   *
    */
   public function __construct(MessengerInterface $messenger, NprPullClient $client) {
     $this->messenger = $messenger;
     $this->client = $client;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('messenger'),
@@ -67,7 +66,10 @@ class NprPullGetStory extends ConfigFormBase {
     return 'npr_pull_get_story';
   }
 
-  public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
 
     $key = $this->config('npr_api.settings')->get('npr_api_api_key');
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
@@ -103,7 +105,10 @@ class NprPullGetStory extends ConfigFormBase {
     return $form;
   }
 
-  public function validateForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
 
     $url_value = $form_state->getValue(['url']);
 
@@ -117,12 +122,14 @@ class NprPullGetStory extends ConfigFormBase {
     }
   }
 
-  public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
 
     // Get the ID of the story.
-    $story_id = 0;
     $url_value = $form_state->getValue(['url']);
-    $story_id = $this->client->extractId($url_value);
+    $story_id = $this->client->extractId($url_value) ?: 0;
 
     // Get the publish flag.
     $published = $form_state->getValue(['publish_flag']);
