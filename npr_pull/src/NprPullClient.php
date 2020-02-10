@@ -52,12 +52,9 @@ class NprPullClient extends NprClient {
       // Add the published flag to the story object.
       $story->published = $published;
 
-      $is_update = FALSE;
-
       if (!empty($story->nid)) {
         // Load the story if it already exits.
         $node = Node::load($story->nid);
-        $nodes_updated[] = $node;
       }
       else {
         // Create a new story node if this is new.
@@ -147,7 +144,7 @@ class NprPullClient extends NprClient {
    * @return array
    *   The ID of the NPR story.
    */
-  protected function extractId($url) {
+  public function extractId($url) {
     // Handle URL formats such as /yyyy/mm/dd/id and /blogs/name/yyyy/mm/dd/id.
     preg_match('/https\:\/\/[^\s\/]*npr\.org\/((([^\/]*\/){3,5})([0-9]{8,12}))\/.*/', $url, $matches);
     if (!empty($matches[4])) {

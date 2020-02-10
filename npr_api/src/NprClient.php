@@ -3,10 +3,10 @@
 namespace Drupal\npr_api;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -16,11 +16,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class NprClient implements ClientInterface {
 
-  // HTTP status code = OK
+  // HTTP status code = OK.
   const NPRAPI_STATUS_OK = 200;
   const BASE_URI = 'http://api.npr.org/query/';
 
-  // NPRML CONSTANTS
+  // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
   const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
   const NPRML_VERSION = '0.92.2';
@@ -31,6 +31,13 @@ class NprClient implements ClientInterface {
    * @var \GuzzleHttp\ClientInterface
    */
   protected $client;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * The media manager settings config.
@@ -58,6 +65,8 @@ class NprClient implements ClientInterface {
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The HTTP client.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    * @param \Drupal\Core\Session\AccountInterface $current_user
@@ -65,16 +74,12 @@ class NprClient implements ClientInterface {
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
-
+  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
     $this->client = $client;
+    $this->entityTypeManager = $entity_type_manager;
     $this->config = $config_factory;
     $this->currentUser = $current_user;
     $this->messenger = $messenger;
-
-    // TODO: Is this needed?
-    $this->response = new \stdClass;
-    $this->response->code = NULL;
   }
 
   /**
@@ -83,15 +88,16 @@ class NprClient implements ClientInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('http_client'),
+      $container->get('entity_type.manager'),
       $container->get('config.factory'),
       $container->get('current_user')
     );
   }
 
   /**
-    * {@inheritdoc}
-    */
-  public function request($method = 'GET', $url, array $options = []) {
+   * {@inheritdoc}
+   */
+  public function request($method = 'GET', $url = '', array $options = []) {
     return $this->client->request($method, $url, $options);
   }
 
@@ -117,16 +123,17 @@ class NprClient implements ClientInterface {
   }
 
   /**
-    * {@inheritdoc}
-    */
-  public function getConfig($option = null) {
+   * {@inheritdoc}
+   */
+  public function getConfig($option = NULL) {
     return $this->client->getConfig($option);
   }
 
   /**
    * Get the default Guzzle client configuration array.
    *
-   * @return array An array of configuration options suitable for use with Guzzle.
+   * @return array
+   *   An array of configuration options suitable for use with Guzzle.
    */
   public static function getDefaultConfiguration() {
     $config = [
@@ -135,24 +142,20 @@ class NprClient implements ClientInterface {
         'Content-Type' => 'application/json',
       ],
     ];
-    if (empty($handler)) {
-      $handler = HandlerStack::create();
-    }
+    $handler = HandlerStack::create();
     $config['handler'] = $handler;
     return $config;
   }
 
   /**
    * Make a GET request without needing the BASE_URI.
-   *
-   * @return array An array of configuration options suitable for use with Guzzle.
    */
   public function getXmlStories($options) {
 
     $this->options = $options;
     // Add the API key. It feels icky using the Drupal class, but it also
     // seems to simplify things.
-    $key = \Drupal::config('npr_api.settings')->get('npr_api_api_key');
+    $key = $this->config->get('npr_api.settings')->get('npr_api_api_key');
     $options['apiKey'] = $key;
 
     // TODO: Store these for the report function.
@@ -163,9 +166,9 @@ class NprClient implements ClientInterface {
   }
 
   /**
-   * Parses object. Turns raw XML(NPRML) into various object properties.
+   * Turns raw XML(NPRML) into various object properties.
    */
-  function parse() {
+  public function parse() {
     if (!empty($this->xml)) {
       $xml = $this->xml;
     }
@@ -183,11 +186,11 @@ class NprClient implements ClientInterface {
         $parsed = new NPRMLEntity();
         $this->addSimplexmlAttributes($story, $parsed);
 
-        //Iterate trough the XML document and list all the children
+        // Iterate trough the XML document and list all the children.
         $xml_iterator = new \SimpleXMLIterator($story->asXML());
         $key = NULL;
         $current = NULL;
-        for($xml_iterator->rewind(); $xml_iterator->valid(); $xml_iterator->next()) {
+        for ($xml_iterator->rewind(); $xml_iterator->valid(); $xml_iterator->next()) {
           $current = $xml_iterator->current();
           $key = $xml_iterator->key();
 
@@ -204,22 +207,22 @@ class NprClient implements ClientInterface {
             }
           }
           else {
-            if (empty($parsed->{$key})){
-              // The $key wasn't parsed already, so just add the current element.
+            if (empty($parsed->{$key})) {
+              // The $key wasn't parsed already, so add the current element.
               $parsed->{$key} = $this->parseSimplexmlElement($current);
             }
             else {
               // If $parsed->$key exists and it's not an array, create an array
-              // out of the existing element
-              if (!is_array($parsed->{$key})){
-                $parsed->{$key} = array($parsed->{$key});
+              // out of the existing element.
+              if (!is_array($parsed->{$key})) {
+                $parsed->{$key} = [$parsed->{$key}];
               }
-              // Add the new child
+              // Add the new child.
               $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
           }
         }
-        $body ='';
+        $body = '';
         if (!empty($parsed->textWithHtml->paragraphs)) {
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {
             $body = $body . $paragraph->value . "\n\n";
@@ -240,42 +243,42 @@ class NprClient implements ClientInterface {
    * @return object
    *   An NPRML element.
    */
-  function parseSimplexmlElement($element) {
-    $NPRMLElement = new NPRMLElement();
-    $this->addSimplexmlAttributes($element, $NPRMLElement);
+  public function parseSimplexmlElement($element) {
+    $nprmlElement = new NPRMLElement();
+    $this->addSimplexmlAttributes($element, $nprmlElement);
     if (count($element->children())) {
       foreach ($element->children() as $i => $child) {
         if ($i == 'paragraph' || $i == 'mp3') {
           if ($i == 'paragraph') {
             $paragraph = $this->parseSimplexmlElement($child);
-            $NPRMLElement->paragraphs[$paragraph->num] = $paragraph;
+            $nprmlElement->paragraphs[$paragraph->num] = $paragraph;
           }
           if ($i == 'mp3') {
             $mp3 = $this->parseSimplexmlElement($child);
-            $NPRMLElement->mp3[$mp3->type] = $mp3;
+            $nprmlElement->mp3[$mp3->type] = $mp3;
           }
         }
         else {
           // If $i wasn't parsed already, so just add the current element.
-          if (empty($NPRMLElement->$i)){
-            $NPRMLElement->$i = $this->parseSimplexmlElement($child);
+          if (empty($nprmlElement->$i)) {
+            $nprmlElement->$i = $this->parseSimplexmlElement($child);
           }
           else {
-            // If $NPRMLElement->$i exists and is not an array, create an array
-            // out of the existing element
-            if (!is_array($NPRMLElement->$i)) {
-              $NPRMLElement->$i = array($NPRMLElement->$i);
+            // If $nprmlElement->$i exists and is not an array, create an array
+            // out of the existing element.
+            if (!is_array($nprmlElement->$i)) {
+              $nprmlElement->$i = [$nprmlElement->$i];
             }
             // Add the new child.
-            $NPRMLElement->{$i}[] = $this->parseSimplexmlElement($child);
+            $nprmlElement->{$i}[] = $this->parseSimplexmlElement($child);
           }
         }
       }
     }
     else {
-      $NPRMLElement->value = (string)$element;
+      $nprmlElement->value = (string) $element;
     }
-    return $NPRMLElement;
+    return $nprmlElement;
   }
 
   /**
@@ -283,17 +286,16 @@ class NprClient implements ClientInterface {
    *
    * @param object $element
    *   A SimpleXML element.
-   *
    * @param string $attribute
    *   The name of an attribute of the element.
    *
    * @return string
    *   The value of the attribute (if it exists in element).
    */
-  function getAttribute($element, $attribute) {
+  protected function getAttribute($element, $attribute) {
     foreach ($element->attributes() as $k => $v) {
       if ($k == $attribute) {
-        return (string)$v;
+        return (string) $v;
       }
     }
   }
@@ -304,17 +306,15 @@ class NprClient implements ClientInterface {
    * @return array
    *   Various messages (strings) .
    */
-  function report() {
-    $msg = array();
-
-    $xml = simplexml_load_string($this->xml);
+  public function report() {
+    $msg = [];
 
     $params = '';
     if (isset($this->params)) {
       foreach ($this->params as $k => $v) {
         $params .= " [$k => $v]";
       }
-      $msg[] =  'Request params were: ' . $params;
+      $msg[] = 'Request params were: ' . $params;
     }
     else {
       $msg[] = 'Request had no parameters.';
@@ -339,19 +339,17 @@ class NprClient implements ClientInterface {
   }
 
   /**
-   * Takes attributes of a SimpleXML element and adds them to an object (as
-   * properties).
+   * Add attributes of a SimpleXML element to an object (as properties).
    *
    * @param object $element
    *   A SimpleXML element.
-   *
    * @param object $object
    *   Any PHP object.
    */
-  function addSimplexmlAttributes($element, $object) {
+  protected function addSimplexmlAttributes($element, $object) {
     if (count($element->attributes())) {
       foreach ($element->attributes() as $attr => $value) {
-        $object->$attr = (string)$value;
+        $object->$attr = (string) $value;
       }
     }
   }
@@ -359,13 +357,14 @@ class NprClient implements ClientInterface {
   /**
    * Helper function to "flatten" the NPR story.
    */
-  function flatten() {
-    foreach($this->stories as $i => $story) {
-      foreach($story->parent as $parent) {
+  protected function flatten() {
+    foreach ($this->stories as $i => $story) {
+      foreach ($story->parent as $parent) {
         if ($parent->type == 'tag') {
           $this->stories[$i]->tags[] = $parent->title->value;
         }
       }
     }
   }
+
 }
