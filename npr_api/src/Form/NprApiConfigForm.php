@@ -1,17 +1,14 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\npr_api\Form\NprApiConfigForm.
- */
-
 namespace Drupal\npr_api\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
-use Drupal\npr_api\NprClient;
 
+/**
+ * Provides a base form for NPR API integration.
+ */
 class NprApiConfigForm extends ConfigFormBase {
 
   /**
@@ -46,17 +43,16 @@ class NprApiConfigForm extends ConfigFormBase {
     return ['npr_api.settings'];
   }
 
-  public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
 
     $form['npr_api_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('NPR API Key'),
+      '#title' => $this->t('NPR API Key'),
       '#default_value' => $this->config('npr_api.settings')->get('npr_api_api_key'),
-      '#description' => t(''),
-    ];
-
-    $form['npr_api_get_key'] = [
-      '#markup' => 'To get an API Key, visist <a href="http://api.npr.org" target="_blank">http://api.npr.org</a>'
+      '#description' => $this->t('To get an API Key, visit <a href="http://api.npr.org" target="_blank">http://api.npr.org</a>'),
     ];
 
     return parent::buildForm($form, $form_state);
