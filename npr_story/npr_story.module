@@ -2,6 +2,5 @@
 
 /**
  * @file
- * Configure a content type that can pull from and/or push to the NPR API
+ * Configure a content type that can pull from and/or push to the NPR API.
  */
-

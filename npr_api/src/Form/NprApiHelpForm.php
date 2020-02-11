@@ -5,6 +5,7 @@ namespace Drupal\npr_api\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\RendererInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a help form for API definitions.
@@ -26,6 +27,15 @@ class NprApiHelpForm extends FormBase {
    */
   public function __construct(RendererInterface $renderer) {
     $this->renderer = $renderer;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('renderer')
+    );
   }
 
   /**
@@ -70,7 +80,7 @@ class NprApiHelpForm extends FormBase {
       '#header' => $header,
       '#rows' => $rows,
     ];
-    $markup = $this->renderer($table);
+    $markup = $this->renderer->render($table);
 
     $form['NPRML_fields'] = [
       '#type' => 'fieldset',
