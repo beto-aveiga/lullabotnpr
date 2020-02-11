@@ -5,6 +5,7 @@ namespace Drupal\npr_pull;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
 
@@ -12,6 +13,8 @@ use Drupal\npr_api\NprClient;
  * Performs CRUD opertions on Drupal nodes using data from the NPR API.
  */
 class NprPullClient extends NprClient {
+
+  use StringTranslationTrait;
 
   /**
    * Create a story node.
@@ -129,8 +132,9 @@ class NprPullClient extends NprClient {
       $nodes_created[] = $node;
     }
     foreach ($nodes_created as $node_created) {
-      $link = Link::fromTextAndUrl($node_created->label(), $node_created->toUrl())->toString();
-      $this->messenger->addStatus(t("Story @link was created.", [
+      $link = Link::fromTextAndUrl($node_created->label(),
+        $node_created->toUrl())->toString();
+      $this->messenger->addStatus($this->t('Story @link was created.', [
         '@link' => $link,
       ]));
     }
@@ -210,7 +214,7 @@ class NprPullClient extends NprClient {
     // Get the directory in the form of YYYY/MM/DD and make sure it exists.
     $full_directory = dirname($image_url);
     $directory_uri = 'public://npr_story_images/' . substr($full_directory, -10);
-    \Drupal::service('file_system')->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
+    $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
 
     // Save the image.
     $file = file_save_data($file_data, $directory_uri . "/" . $filename, FILE_EXISTS_REPLACE);

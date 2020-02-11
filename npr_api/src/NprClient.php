@@ -4,6 +4,7 @@ namespace Drupal\npr_api;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use GuzzleHttp\ClientInterface;
@@ -61,6 +62,13 @@ class NprClient implements ClientInterface {
   protected $messenger;
 
   /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \GuzzleHttp\ClientInterface $client
@@ -74,12 +82,13 @@ class NprClient implements ClientInterface {
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    */
-  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger) {
+  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, FileSystemInterface $file_system = NULL) {
     $this->client = $client;
     $this->entityTypeManager = $entity_type_manager;
     $this->config = $config_factory;
     $this->currentUser = $current_user;
     $this->messenger = $messenger;
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -90,7 +99,8 @@ class NprClient implements ClientInterface {
       $container->get('http_client'),
       $container->get('entity_type.manager'),
       $container->get('config.factory'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('file_system')
     );
   }
 
