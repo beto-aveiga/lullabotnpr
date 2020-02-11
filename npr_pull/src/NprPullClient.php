@@ -56,86 +56,106 @@ class NprPullClient extends NprClient {
       // Add the published flag to the story object.
       $story->published = $published;
 
-      if (!empty($story->nid)) {
-        // Load the story if it already exits.
-        $node = $node_manager->load($story->nid);
+      $pull_author = $this->config->get('npr_pull.settings')
+        ->get('npr_pull_author');
+
+      // Check to see if a story node already exists in Drupal.
+      if ($node = $node_manager->loadByProperties(['field_id' => $story->id])) {
+        // Not the operation being performed for a later status message.
+        $operation = "updated";
+        if (count($node) > 1) {
+          $this->messenger->addError($this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', ['@id' => $story->id]));
+          return;
+        }
+        $node = reset($node);
+        // If so, update the title, status, and author.
+        $node->set('title', $story->title);
+        $node->set('uid', $pull_author);
+        $node->set('status', $published);
       }
+      // Otherwise, create a new story node if this is new.
       else {
-        // Create a new story node if this is new.
+        $operation = "created";
         $node = $node_manager->create([
           'type' => $story_config->get('story_node_type'),
           'title' => $story->title,
           'language' => 'en',
-          'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+          'uid' => $pull_author,
           'status' => $published,
         ]);
+      }
 
-        // Add a reference to the media image.
-        $media_image_id = $this->createMediaImage($story);
-        $image_field = $story_mappings['image'];
-        if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
-          $node->{$image_field}->target_id = $media_image_id;
-        }
+      // Add a reference to the media image.
+      $media_image_id = $this->createMediaImage($story);
+      $image_field = $story_mappings['image'];
+      if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
+        $node->{$image_field}->target_id = $media_image_id;
+      }
 
-        // Add a reference to the media audio.
-        $media_audio_ids = $this->createMediaAudio($story);
-        $audio_field = $story_mappings['audio'];
-        if ($audio_field == 'unused') {
-          $this->messenger->addError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
-          return;
+      // Add a reference to the media audio.
+      $media_audio_ids = $this->createMediaAudio($story);
+      $audio_field = $story_mappings['audio'];
+      if ($audio_field == 'unused') {
+        $this->messenger->addError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+        return;
+      }
+      if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
+        foreach ($media_audio_ids as $audio_id) {
+          $node->{$audio_field}[] = ['target_id' => $audio_id];
         }
-        if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
-          foreach ($media_audio_ids as $audio_id) {
-            $node->{$audio_field}[] = ['target_id' => $audio_id];
+      }
+
+      // Add data to the remaining fields except image and audio.
+      foreach ($story_mappings as $key => $value) {
+        if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
+          // ID doesn't have a "value" key.
+          if ($key == 'id') {
+            $node->set($value, $story->id);
+          }
+          elseif ($key == 'body') {
+            $node->set($value, [
+              'value' => $story->body,
+              'format' => $text_format,
+            ]);
+          }
+          elseif ($key == 'byline' && !empty($story->byline)) {
+            // Make byline an array if it is not.
+            if (!is_array($story->byline)) {
+              $story->byline = [$story->byline];
+            }
+            foreach ($story->byline as $author) {
+              // Not all of the authors in the byline have a link.
+              if (isset($author->link[0]->value)) {
+                $uri = $author->link[0]->value;
+              }
+              else {
+                $uri = "<nolink>";
+              }
+              $byline[] = [
+                // It looks like we always want the first link ("html")
+                // rather than the second one ("api").
+                'uri' => $uri,
+                'title' => $author->name->value,
+              ];
+              $node->set($value, $byline);
+            }
+          }
+          // All of the other fields have a "value" property.
+          elseif (!empty($story->{$key}->value)) {
+            $node->set($value, $story->{$key}->value);
           }
         }
-
-        // Add data to the remaining fields except image and audio.
-        foreach ($story_mappings as $key => $value) {
-          if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
-            // ID doesn't have a "value" key.
-            if ($key == 'id') {
-              $node->set($value, $story->id);
-            }
-            elseif ($key == 'body') {
-              $node->set($value, [
-                'value' => $story->body,
-                'format' => $text_format,
-              ]);
-            }
-            elseif ($key == 'byline' && !empty($story->byline)) {
-              // Make byline an array if it is not.
-              if (!is_array($story->byline)) {
-                $story->byline = [$story->byline];
-              }
-              foreach ($story->byline as $author) {
-                // Not all of the authors in the byline have a link.
-                $uri = $author->link[0]->value ?: "<nolink>";
-                $byline[] = [
-                  // It looks like we always want the first link ("html")
-                  // rather than the second one ("api").
-                  'uri' => $uri,
-                  'title' => $author->name->value,
-                ];
-                $node->set($value, $byline);
-              }
-            }
-            // All of the other fields have a "value" property.
-            elseif (!empty($story->{$key}->value)) {
-              $node->set($value, $story->{$key}->value);
-            }
-          }
-        }
-
       }
       $node->save();
-      $nodes_created[] = $node;
+      $nodes_affected[] = $node;
     }
-    foreach ($nodes_created as $node_created) {
-      $link = Link::fromTextAndUrl($node_created->label(),
-        $node_created->toUrl())->toString();
-      $this->messenger->addStatus($this->t('Story @link was created.', [
+
+    foreach ($nodes_affected as $node_affected) {
+      $link = Link::fromTextAndUrl($node_affected->label(),
+        $node_affected->toUrl())->toString();
+      $this->messenger->addStatus($this->t('Story @link was @operation.', [
         '@link' => $link,
+        '@operation' => $operation,
       ]));
     }
   }
