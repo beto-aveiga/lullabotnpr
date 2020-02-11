@@ -1,21 +1,19 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\npr_story\Form\NprStoryConfigForm.
- */
-
 namespace Drupal\npr_story\Form;
 
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element;
-use Drupal\npr_story\NprClient;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Provides a configuration form for story nodes.
+ */
 class NprStoryConfigForm extends ConfigFormBase {
+
+  use StringTranslationTrait;
 
   /**
    * The entity type manager.
@@ -36,7 +34,7 @@ class NprStoryConfigForm extends ConfigFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_field_manager
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
    *   The entity field manager.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager) {
@@ -68,7 +66,10 @@ class NprStoryConfigForm extends ConfigFormBase {
     return ['npr_story.settings'];
   }
 
-  public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
 
     $config = $this->config('npr_story.settings');
 
@@ -111,7 +112,6 @@ class NprStoryConfigForm extends ConfigFormBase {
       $story_field_options = ['unused' => 'unused'] + array_combine($story_fields, $story_fields);
       $npr_story_fields = $config->get('story_field_mappings');
       foreach ($npr_story_fields as $field_name => $field_value) {
-        $default = !empty($npr_story_fields[$field_name]) ?? 'unused';
         $form['node_type_settings']['story_field_mappings'][$field_name] = [
           '#type' => 'select',
           '#title' => $field_name,
@@ -127,7 +127,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
-    // Image media type configuration
+    // Image media type configuration.
     $form['image_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Image settings'),
@@ -164,7 +164,6 @@ class NprStoryConfigForm extends ConfigFormBase {
         array_combine($image_media_fields, $image_media_fields);
       $npr_image_fields = $config->get('image_field_mappings');
       foreach ($npr_image_fields as $npr_image_field => $field_value) {
-        $default = !empty($npr_image_fields[$npr_image_field]) ?? 'unused';
         $form['image_settings']['image_field_mappings'][$npr_image_field] = [
           '#type' => 'select',
           '#title' => $npr_image_field,
@@ -180,7 +179,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
-    // Audio media type configuration
+    // Audio media type configuration.
     $form['audio_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Audio settings'),
@@ -190,7 +189,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#type' => 'select',
       '#title' => $this->t('Drupal remote audio media type'),
       '#default_value' => $config->get('audio_media_type'),
-      '#description' => 'Out of the box, Drupal does not come with a "remote audio" media type, and neither the default "audio " format nor "remote video" should be used. Rather, the npr_story module includes a plugin so that provides the ability to create a media type of source "NPR Remote Audio" that can be used.',
+      '#description' => $this->t('Out of the box, Drupal does not come with a "remote audio" media type, and neither the default "audio " format nor "remote video" should be used. Rather, the npr_story module includes a plugin so that provides the ability to create a media type of source "NPR Remote Audio" that can be used.'),
       '#options' => $media_type_options,
     ];
     $formats = ['mp3', 'm3u', 'mp4', 'hlsOnDemand', 'mediastream'];
@@ -215,7 +214,6 @@ class NprStoryConfigForm extends ConfigFormBase {
         array_combine($audio_media_fields, $audio_media_fields);
       $audio_field_mappings = $config->get('audio_field_mappings');
       foreach ($audio_field_mappings as $npr_audio_field => $audio_field_value) {
-        $default = !empty($audio_field_mappings[$npr_audio_field]) ?? 'unused';
         $form['audio_settings']['audio_field_mappings'][$npr_audio_field] = [
           '#type' => 'select',
           '#title' => $npr_audio_field,
@@ -272,4 +270,3 @@ class NprStoryConfigForm extends ConfigFormBase {
   }
 
 }
-
