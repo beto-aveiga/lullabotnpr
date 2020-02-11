@@ -69,10 +69,10 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, User $user) {
+  public function buildForm(array $form, FormStateInterface $form_state) {
 
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
-    $user = $user->load($author_id);
+    $user = User::load($author_id);
     $username = $user->getUsername() ?: 'Anonymous';
 
     $form['url'] = [

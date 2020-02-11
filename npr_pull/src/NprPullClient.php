@@ -6,7 +6,6 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
 use Drupal\media\Entity\Media;
-use Drupal\node\Entity\Node;
 use Drupal\npr_api\NprClient;
 
 /**
@@ -26,6 +25,8 @@ class NprPullClient extends NprClient {
    *   Story should be published immediately.
    */
   public function saveOrUpdateNode($story_id, $published) {
+
+    $node_manager = $this->entityTypeManager->getStorage('node');
 
     // Make a request.
     $this->getXmlStories(['id' => $story_id]);
@@ -54,11 +55,11 @@ class NprPullClient extends NprClient {
 
       if (!empty($story->nid)) {
         // Load the story if it already exits.
-        $node = Node::load($story->nid);
+        $node = $node_manager->load($story->nid);
       }
       else {
         // Create a new story node if this is new.
-        $node = Node::create([
+        $node = $node_manager->create([
           'type' => $story_config->get('story_node_type'),
           'title' => $story->title,
           'language' => 'en',
@@ -129,7 +130,7 @@ class NprPullClient extends NprClient {
     }
     foreach ($nodes_created as $node_created) {
       $link = Link::fromTextAndUrl($node_created->label(), $node_created->toUrl())->toString();
-      \Drupal::messenger()->addStatus(t("Story @link was created.", [
+      $this->messenger->addStatus(t("Story @link was created.", [
         '@link' => $link,
       ]));
     }
