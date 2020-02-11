@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Creates basic calls to NPR API; creates and parses NPR's flavor of XML (NPRML).
+ * Calls NPR API, creates and parses NPR's flavor of XML (NPRML).
  */
 
 use GuzzleHttp\Client;
@@ -11,7 +11,7 @@ use Drupal\npr_api\NprClient;
 /**
  * Returns a nested array of info about all NPRML "fields".
  *
- * @return
+ * @return array
  *   An array of all NPRML "fields".
  */
 function npr_api_get_nprml_fields() {
@@ -58,13 +58,13 @@ function npr_api_get_nprml_fields() {
 /**
  * Creates an NprClient object, narrowed by query-type parameters.
  *
- * @param $params
+ * @param array $params
  *   An array of query-type parameters.
  *
- * @return
+ * @return object
  *   An NPRAPIDrupal object.
  */
-function npr_api_fetch_object($params) {
+function npr_api_fetch_object(array $params) {
 
   // Create a new NprClient with the default configuration.
   $defaults = NprClient::getDefaultConfiguration();

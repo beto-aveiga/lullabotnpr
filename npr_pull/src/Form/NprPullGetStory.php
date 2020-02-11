@@ -8,7 +8,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\npr_pull\NprPullClient;
-use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -40,12 +39,12 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * MyModuleService constructor.
    *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    * @param \Drupal\npr_pull\NprPullClient $client
    *   The NPR client.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClient $client) {
     $this->entityTypeManager = $entity_type_manager;
