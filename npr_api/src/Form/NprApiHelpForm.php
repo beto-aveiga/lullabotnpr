@@ -21,7 +21,7 @@ class NprApiHelpForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, RendererInterface $render) {
+  public function buildForm(array $form, FormStateInterface $form_state) {
 
     $npr_fields = npr_api_get_nprml_fields();
     $header = [
@@ -53,7 +53,7 @@ class NprApiHelpForm extends FormBase {
       '#header' => $header,
       '#rows' => $rows,
     ];
-    $markup = $render($table);
+    $markup = drupal_render($table);
 
     $form['NPRML_fields'] = [
       '#type' => 'fieldset',

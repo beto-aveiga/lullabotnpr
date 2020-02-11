@@ -1,1 +1,3 @@
 npr_api_api_key: ''
+npr_api_production_url: 'https://api.npr.org'
+npr_api_stage_url: 'https://api-s2.npr.org'

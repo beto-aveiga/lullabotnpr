@@ -48,11 +48,27 @@ class NprApiConfigForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
 
+    $npr_api_config = $this->config('npr_api.settings');
+
     $form['npr_api_api_key'] = [
       '#type' => 'textfield',
       '#title' => $this->t('NPR API Key'),
-      '#default_value' => $this->config('npr_api.settings')->get('npr_api_api_key'),
+      '#default_value' => $npr_api_config->get('npr_api_api_key'),
       '#description' => $this->t('To get an API Key, visit <a href="http://api.npr.org" target="_blank">http://api.npr.org</a>'),
+    ];
+
+    $form['npr_api_production_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('NPR API production URL'),
+      '#default_value' => $npr_api_config->get('npr_api_production_url'),
+      '#disabled' => TRUE,
+    ];
+
+    $form['npr_api_staging_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('NPR API staging URL'),
+      '#default_value' => $npr_api_config->get('npr_api_staging_url'),
+      '#disabled' => TRUE,
     ];
 
     return parent::buildForm($form, $form_state);
