@@ -5,6 +5,7 @@
  * Creates basic calls to NPR API; creates and parses NPR's flavor of XML (NPRML).
  */
 
+use GuzzleHttp\Client;
 use Drupal\npr_api\NprClient;
 
 /**
@@ -14,43 +15,43 @@ use Drupal\npr_api\NprClient;
  *   An array of all NPRML "fields".
  */
 function npr_api_get_nprml_fields() {
-  $nprml_fields = array(
-    'id' => array(
+  $nprml_fields = [
+    'id' => [
       'type' => 'attribute',
-      'accepted_types' => array('text (plain)'),
-      'description' => t('A unique identifier for the content.')
-    ),
-    'subtitle' => array(
+      'accepted_types' => ['text (plain)'],
+      'description' => t('A unique identifier for the content.'),
+    ],
+    'subtitle' => [
       'type' => 'text',
-      'accepted_types' => array('Text (plain)'),
-      'description' => t('A short, sentence-like description of the returned story.')
-    ),
-    'shortTitle' => array(
+      'accepted_types' => ['Text (plain)'],
+      'description' => t('A short, sentence-like description of the returned story.'),
+    ],
+    'shortTitle' => [
       'type' => 'text',
-      'accepted_types' => array('Text (plain)'),
-      'description' => t('An abbreviated title for the returned story, not to exceed 30 characters.')
-    ),
-    'miniTeaser' => array(
+      'accepted_types' => ['Text (plain)'],
+      'description' => t('An abbreviated title for the returned story, not to exceed 30 characters.'),
+    ],
+    'miniTeaser' => [
       'type' => 'text',
-      'accepted_types' => array('Text (plain)'),
-      'description' => t('An abbreviated abstract for the returned story, describing what the story is about.')
-    ),
-    'slug' => array(
+      'accepted_types' => ['Text (plain)'],
+      'description' => t('An abbreviated abstract for the returned story, describing what the story is about.'),
+    ],
+    'slug' => [
       'type' => 'text',
-      'accepted_types' => array('Text (plain)'),
-      'description' => t('A short phrase or title used to indicate the story content.')
-    ),
-    'image' => array(
+      'accepted_types' => ['Text (plain)'],
+      'description' => t('A short phrase or title used to indicate the story content.'),
+    ],
+    'image' => [
       'type' => 'image',
-      'accepted_types' => array('Entity reference (image)'),
-      'description' => t('An image related to the content.')
-    ),
-    'audio' => array(
+      'accepted_types' => ['Entity reference (image)'],
+      'description' => t('An image related to the content.'),
+    ],
+    'audio' => [
       'type' => 'audio',
-      'accepted_types' => array('Entity reference (audio)'),
-      'description' => t('An audio file related to the content.')
-    ),
-  );
+      'accepted_types' => ['Entity reference (audio)'],
+      'description' => t('An audio file related to the content.'),
+    ],
+  ];
   return $nprml_fields;
 }
 
@@ -63,13 +64,12 @@ function npr_api_get_nprml_fields() {
  * @return
  *   An NPRAPIDrupal object.
  */
-
 function npr_api_fetch_object($params) {
 
   // Create a new NprClient with the default configuration.
   $defaults = NprClient::getDefaultConfiguration();
   // TODO. This is not cool at all.
-  $client = new NprClient(new \GuzzleHttp\Client($defaults), \Drupal::entityManager(), \Drupal::configFactory(), \Drupal::currentUser(), \Drupal::messenger());
+  $client = new NprClient(new Client($defaults), \Drupal::entityManager(), \Drupal::configFactory(), \Drupal::currentUser(), \Drupal::messenger());
 
   // Make a request.
   $client->getXmlStories($params);

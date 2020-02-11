@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\npr_api\Controller\ApiTestController.
- */
-
 namespace Drupal\npr_api\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
@@ -35,4 +30,3 @@ class ApiTestController extends ControllerBase {
   }
 
 }
-

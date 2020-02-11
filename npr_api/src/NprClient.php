@@ -81,6 +81,8 @@ class NprClient implements ClientInterface {
    *   The current logged in user.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The filesystem service.
    */
   public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, FileSystemInterface $file_system = NULL) {
     $this->client = $client;

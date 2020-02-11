@@ -12,6 +12,23 @@ use Drupal\Core\Render\RendererInterface;
 class NprApiHelpForm extends FormBase {
 
   /**
+   * The renderer.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
+   * Constructs a new NprApiHelpForm.
+   *
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer.
+   */
+  public function __construct(RendererInterface $renderer) {
+    $this->renderer = $renderer;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -53,7 +70,7 @@ class NprApiHelpForm extends FormBase {
       '#header' => $header,
       '#rows' => $rows,
     ];
-    $markup = drupal_render($table);
+    $markup = $this->renderer($table);
 
     $form['NPRML_fields'] = [
       '#type' => 'fieldset',

@@ -1,4 +1,5 @@
 <?php
+
 namespace Drupal\npr_api;
 
 /**
