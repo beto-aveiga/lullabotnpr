@@ -69,18 +69,17 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state, User $user) {
 
-    $key = $this->config('npr_api.settings')->get('npr_api_api_key');
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
-    $user = User::load($author_id);
+    $user = $user->load($author_id);
     $username = $user->getUsername() ?: 'Anonymous';
 
     $form['url'] = [
       '#type' => 'textfield',
-      '#title' => t('NPR API story URL'),
+      '#title' => $this->t('NPR API story URL'),
       '#required' => TRUE,
-      '#description' => t('Full URL for a story on NPR.org.'),
+      '#description' => $this->t('Full URL for a story on NPR.org.'),
     ];
 
     $form['author'] = [
@@ -92,14 +91,14 @@ class NprPullGetStory extends ConfigFormBase {
 
     $form['publish_flag'] = [
       '#type' => 'checkbox',
-      '#title' => t('Publish stories upon retrieval?'),
+      '#title' => $this->t('Publish stories upon retrieval?'),
       '#default_value' => '',
       '#description' => $this->t('If checked stories will automatically be published. If not, stories will still be retrieved and saved in your database - but not published.'),
     ];
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => t('Get story'),
+      '#value' => $this->t('Get story'),
     ];
 
     return $form;
@@ -113,12 +112,12 @@ class NprPullGetStory extends ConfigFormBase {
     $url_value = $form_state->getValue(['url']);
 
     if (!UrlHelper::isValid($url_value, TRUE)) {
-      $form_state->setErrorByName('url', t('Does not appear to be a valid URL.'));
+      $form_state->setErrorByName('url', $this->t('Does not appear to be a valid URL.'));
       return;
     }
 
     if (!$this->client->extractId($url_value)) {
-      $form_state->setErrorByName('url', t('Could not extract an NPR ID from given URL.'));
+      $form_state->setErrorByName('url', $this->t('Could not extract an NPR ID from given URL.'));
     }
   }
 

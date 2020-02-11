@@ -62,7 +62,7 @@ class NprApiHelpForm extends FormBase {
       '#collapsed' => FALSE,
     ];
     $form['NPRML_fields']['info'] = [
-      '#markup' => $this->t('Title, teaser, and body will automatically be mapped to the corresponding NPRML elements.')
+      '#markup' => $this->t('Title, teaser, and body will automatically be mapped to the corresponding NPRML elements.'),
     ];
     $form['NPRML_fields']['table'] = ['#markup' => $markup];
 
