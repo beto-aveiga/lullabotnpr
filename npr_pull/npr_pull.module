@@ -116,12 +116,12 @@ function npr_pull_api_config_submit(array &$form, FormStateInterface $form_state
 }
 
 
-// /**
- // * Implements hook_cron().
- // */
-// function npr_pull_cron() {
+/**
+ * Implements hook_cron().
+ */
+function npr_pull_cron() {
   // npr_pull_pull_stories();
-// }
+}
 
 /**
  * Pulls NPR stories (according to config settings).
