@@ -7,9 +7,6 @@
 
 use Drupal\npr_api\NprClient;
 
-define('NPR_API_PRODUCTION_URL', 'https://api.npr.org');
-define('NPR_API_STAGE_URL', 'https://api-s2.npr.org');
-
 /**
  * Returns a nested array of info about all NPRML "fields".
  *
