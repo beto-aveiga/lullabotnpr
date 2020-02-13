@@ -1,0 +1,10 @@
+npr_api.settings:
+  type: mapping
+  label: Settings
+  mapping:
+    npr_api_api_key:
+      type: string
+    npr_api_production_url:
+      type: string
+    npr_api_stage_url:
+      type: string
