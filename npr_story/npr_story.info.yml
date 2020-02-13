@@ -5,4 +5,4 @@ package: NPR
 type: module
 configure: npr_story.config_form
 dependencies:
-  - npr_api: 'npr_api:npr_api'
+  - npr:npr_api

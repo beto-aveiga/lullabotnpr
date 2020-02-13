@@ -2,7 +2,7 @@ name: 'NPR API Pull'
 description: 'Download stories via the NPR API'
 core: 8.x
 package: NPR
-dependencies:
-  npr_api: 'npr_api:npr_api'
-  npr_story: 'npr_story:npr_story'
 type: module
+dependencies:
+  npr:npr_api
+  npr:npr_story
