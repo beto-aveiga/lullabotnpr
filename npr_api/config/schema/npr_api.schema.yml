@@ -1,10 +1,13 @@
 npr_api.settings:
-  type: mapping
-  label: Settings
+  type: config_entity
+  label: 'NPR API settings'
   mapping:
     npr_api_api_key:
-      type: string
+      type: text
+      label: 'NPR API key'
     npr_api_production_url:
-      type: string
+      type: text
+      label: 'Production URL'
     npr_api_stage_url:
-      type: string
+      type: text
+      label: 'Staging URL'

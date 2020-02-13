@@ -69,7 +69,7 @@ function npr_api_fetch_object(array $params) {
   // Create a new NprClient with the default configuration.
   $defaults = NprClient::getDefaultConfiguration();
   // TODO. This is not cool at all.
-  $client = new NprClient(new Client($defaults), \Drupal::entityManager(), \Drupal::configFactory(), \Drupal::currentUser(), \Drupal::messenger());
+  $client = new NprClient(new Client($defaults), \Drupal::entityTypeManager(), \Drupal::configFactory(), \Drupal::currentUser(), \Drupal::messenger());
 
   // Make a request.
   $client->getXmlStories($params);
