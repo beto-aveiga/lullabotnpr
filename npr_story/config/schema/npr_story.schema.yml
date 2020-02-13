@@ -1,0 +1,106 @@
+npr_story.settings:
+  type: config_entity
+  label: 'NPR story module settings'
+  mapping:
+    story_node_type:
+      type: text
+      label: 'The node type for stories'
+    body_text_format:
+      type: text
+      label: 'The format of the body text'
+    story_field_mappings:
+      type: mapping
+      label: 'Story mappings'
+      id:
+        type: text
+        label: 'Story ID field'
+      body:
+        type: text
+        label: 'Story body field'
+      byline:
+        type: text
+        label: 'Story byline field'
+      subtitle:
+        type: text
+        label: 'Story subtitle field'
+      sortTitle:
+        type: text
+        label: 'shortTitle of the story field'
+      miniTeaser:
+        type: text
+        label: 'Story miniTeaser field'
+      slug:
+        type: text
+        label: 'Story slug field'
+      storyDate:
+        type: text
+        label: 'Story date field'
+      pubDate:
+        type: text
+        label: 'Story pubDate field'
+      lastModifiedDate:
+        type: text
+        label: 'Story lastModifiedDate field'
+      audioRunByDate:
+        type: text
+        label: 'Story audioRunByDate field'
+      image:
+        type: text
+        label: 'Story image field'
+      audio:
+        type: text
+        label: 'Story audio field'
+    image_media_type:
+      type: text
+      label: 'The image media type'
+    image_crop_size:
+      type: text
+      label: 'The crop size to use for story images'
+    image_field_mappings:
+      type: mapping
+      label: 'Image mappings'
+      id:
+        type: text
+        label: 'Image media id field'
+      title:
+        type: text
+        label: 'Image media title field'
+      image_field:
+        type: text
+        label: 'Image media image field'
+      caption:
+        type: text
+        label: 'Image media caption field'
+      producer:
+        type: text
+        label: 'Image media producer field'
+      provider:
+        type: text
+        label: 'Image media provider field'
+      copyright:
+        type: text
+        label: 'Image media copyright field'
+    audio_media_type:
+      type: text
+      label: 'Image media copyright field'
+    audio_format:
+      type: text
+      label: 'Audio format needed'
+    audio_field_mappings:
+      type: mapping
+      label: 'Audio mappings'
+      id:
+        type: text
+        label: 'Audio media id field'
+      remote_audio:
+        type: text
+        label: 'Audio media remote audio field'
+      title:
+        type: text
+        label: 'Audio media title field'
+      duration:
+        type: text
+        label: 'Audio media duration field'
+      rightsHolder:
+        type: text
+        label: 'Audio media rights holder field'
