@@ -275,7 +275,7 @@ class NprPullClient extends NprClient {
     $directory_uri = 'public://npr_story_images/' . substr($full_directory, -10);
     $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
     // Save the image.
-    $file = file_save_data($file_data, $directory_uri . "/" . $filename, FILE_EXISTS_REPLACE);
+    $file = file_save_data($file_data, $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
 
     // Attached the image file to the media item.
     $media_image->set($image_field, [

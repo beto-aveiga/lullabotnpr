@@ -85,7 +85,7 @@ function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id)
   $users = User::loadMultiple();
   $all_users = [];
   foreach ($users as $user) {
-    $all_users[$user->id()] = $user->getUsername();
+    $all_users[$user->id()] = $user->getDisplayName();
   }
   unset($all_users[0]);
   asort($all_users);
@@ -129,7 +129,7 @@ function npr_pull_pull_stories() {
   // not scalar. You'll need to provide a default value in
   // config/install/npr_pull.settings.yml and config/schema/npr_pull.schema.yml.
   $ids = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_query_ids');
-  $today = format_date(REQUEST_TIME, 'custom', 'Y-m-d');
+  $today = \Drupal::service('date.formatter')->format(\Drupal::time()->getRequestTime(), 'custom', 'Y-m-d');
   $pub = \Drupal::config('npr_pull.settings')->get('npr_pull_cron_publish_flag');
   foreach ($ids as $id) {
     if ($id) {
