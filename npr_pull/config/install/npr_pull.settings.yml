@@ -1,7 +1,6 @@
 npr_pull_author: 0
 npr_pull_url: 'production'
 npr_pull_cron_publish_flag: 1
-queue:
-  autoupdate: false
-  autoupdate_interval: 21600
+queue_enable: 0
+queue_interval: 21600
 last_update: 0

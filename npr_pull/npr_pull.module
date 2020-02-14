@@ -97,6 +97,41 @@ function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id)
     '#options' => $all_users,
   ];
 
+  $form['story_queue'] = [
+    '#type' => 'details',
+    '#title' => t('Stories queue settings'),
+    '#open' => TRUE,
+  ];
+
+  $form['story_queue']['queue_enable'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Enable automated queue building'),
+    '#description' => t('Enable incremental updates to local Story
+      nodes from NPR API data.'),
+    '#default_value' => $pull_config->get('queue_enable'),
+    '#return_value' => TRUE,
+  ];
+
+  $interval_options = [3600, 10800, 21600, 43200, 86400, 604800];
+  /** @var \Drupal\Core\Datetime\DateFormatterInterface $date_formatter */
+  $date_formatter = \Drupal::service('date.formatter');
+  $form['story_queue']['queue_interval'] = [
+    '#type' => 'select',
+    '#title' => t('Queue builder update interval'),
+    '#description' => t('How often to check the NPR API for new or
+      updated stories to add to the queue. The queue itself is processed
+      one every cron ron (or by an external cron operation).'),
+    '#default_value' => $pull_config->get('queue_interval'),
+    '#options' => array_map([$date_formatter, 'formatInterval'],
+      array_combine($interval_options, $interval_options)
+    ),
+    '#states' => [
+      'visible' => [
+        'input[name="queue_enable"]' => ['checked' => TRUE],
+      ],
+    ],
+  ];
+
   // Add a custom submit handler to save the configuration.
   $form['actions']['submit']['#submit'][] = 'npr_pull_api_config_submit';
 }
@@ -110,6 +145,9 @@ function npr_pull_api_config_submit(array &$form, FormStateInterface $form_state
   $values = $form_state->getValues();
   $config->set('npr_pull_api_url', $values['npr_pull_api_url']);
   $config->set('npr_pull_author', $values['npr_pull_author']);
+  $config->set('queue_interval', $values['queue_interval']);
+  $config->set('queue_enable', $values['queue_enable']);
+
   $config->save();
 }
 
