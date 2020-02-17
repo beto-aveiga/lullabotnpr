@@ -67,7 +67,7 @@ class NprApiConfigForm extends ConfigFormBase {
     $form['npr_api_staging_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('NPR API staging URL'),
-      '#default_value' => $npr_api_config->get('npr_api_staging_url'),
+      '#default_value' => $npr_api_config->get('npr_api_stage_url'),
       '#disabled' => TRUE,
     ];
 
