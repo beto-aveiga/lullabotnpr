@@ -61,6 +61,8 @@ function npr_pull_menu() {
 
 /**
  * Implements hook_form_FORM_ID_alter().
+ *
+ * @see npr_pull_form_npr_api_config_form_submit().
  */
 function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id) {
 
@@ -71,10 +73,10 @@ function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id)
     '#type' => 'fieldset',
     '#title' => t('NPR Pull'),
   ];
-  $form['npr_pull_config']['npr_pull_api_url'] = [
+  $form['npr_pull_config']['npr_pull_url'] = [
     '#type' => 'select',
     '#title' => t('NPR Pull URL'),
-    '#default_value' => $pull_config->get('npr_pull_api_url'),
+    '#default_value' => $pull_config->get('npr_pull_url'),
     '#options' => [
       'staging' => 'Staging',
       'production' => 'Production',
@@ -131,23 +133,19 @@ function npr_pull_form_npr_api_config_form_alter(&$form, &$form_state, $form_id)
       ],
     ],
   ];
-
-  // Add a custom submit handler to save the configuration.
-  $form['actions']['submit']['#submit'][] = 'npr_pull_api_config_submit';
 }
 
 /**
  * Submit handler for the form_alter().
  */
-function npr_pull_api_config_submit(array &$form, FormStateInterface $form_state) {
+function npr_pull_form_npr_api_config_form_submit(array &$form, FormStateInterface $form_state) {
   $config_factory = \Drupal::configFactory();
   $config = $config_factory->getEditable('npr_pull.settings');
   $values = $form_state->getValues();
-  $config->set('npr_pull_api_url', $values['npr_pull_api_url']);
+  $config->set('npr_pull_url', $values['npr_pull_url']);
   $config->set('npr_pull_author', $values['npr_pull_author']);
   $config->set('queue_interval', $values['queue_interval']);
   $config->set('queue_enable', $values['queue_enable']);
-
   $config->save();
 }
 
