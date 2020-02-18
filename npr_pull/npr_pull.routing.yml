@@ -1,3 +1,10 @@
+npr_pull.config_form:
+  path: /admin/config/services/npr/pull
+  defaults:
+    _title: 'Pull Settings'
+    _form: \Drupal\npr_pull\Form\NprPullConfigForm
+  requirements:
+    _permission: 'administer npr api'
 npr_pull.get_story:
   path: /admin/content/npr
   defaults:

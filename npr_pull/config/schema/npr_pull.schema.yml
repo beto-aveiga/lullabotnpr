@@ -4,5 +4,17 @@ npr_pull.settings:
   mapping:
     npr_pull_author:
       type: integer
+    npr_pull_url:
+      type: string
     npr_pull_cron_publish_flag:
       type: integer
+    queue_enable:
+      type: boolean
+    queue_interval:
+      type: integer
+    num_results:
+      type: integer
+    ord_id:
+      type: integer
+    topic_ids:
+      type: array

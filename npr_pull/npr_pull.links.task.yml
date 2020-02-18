@@ -2,3 +2,7 @@ npr_pull.get_story:
   route_name: npr_pull.get_story
   base_route: system.admin_content
   title: 'Pull NPR Story'
+npr_pull.config_form:
+  route_name: npr_pull.config_form
+  title: 'Pull Settings'
+  base_route: npr_api.config_form

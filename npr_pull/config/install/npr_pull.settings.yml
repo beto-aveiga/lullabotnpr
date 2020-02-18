@@ -3,4 +3,6 @@ npr_pull_url: 'production'
 npr_pull_cron_publish_flag: 1
 queue_enable: 0
 queue_interval: 21600
-last_update: 0
+num_results: 10
+ord_id: 0
+topic_ids: ''
