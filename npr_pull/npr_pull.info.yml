@@ -4,5 +4,5 @@ core: 8.x
 package: NPR
 type: module
 dependencies:
-  npr:npr_api
-  npr:npr_story
+  - npr:npr_api
+  - npr:npr_story

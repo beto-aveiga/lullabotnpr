@@ -119,6 +119,9 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#options' => $story_field_options,
           '#default_value' => $npr_story_fields[$field_name],
         ];
+        $form['node_type_settings']['story_field_mappings']['id']['#required'] = TRUE;
+        $form['node_type_settings']['story_field_mappings']['audio']['#required'] = TRUE;
+        $form['node_type_settings']['story_field_mappings']['image']['#required'] = TRUE;
       }
     }
     else {
@@ -172,6 +175,10 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#default_value' => $npr_image_fields[$npr_image_field],
         ];
       }
+      // Mark the required fields.
+      $form['image_settings']['image_field_mappings']['image_id']['#required'] = TRUE;
+      $form['image_settings']['image_field_mappings']['title']['#required'] = TRUE;
+      $form['image_settings']['image_field_mappings']['image_field']['#required'] = TRUE;
     }
     else {
       $form['image_settings']['image_field_mappings']['mappings_required'] = [
@@ -221,6 +228,10 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#options' => $audio_field_options,
           '#default_value' => $audio_field_mappings[$npr_audio_field],
         ];
+        // Mark the required fields.
+        $form['audio_settings']['audio_field_mappings']['audio_id']['#required'] = TRUE;
+        $form['audio_settings']['audio_field_mappings']['title']['#required'] = TRUE;
+        $form['audio_settings']['audio_field_mappings']['remote_audio']['#required'] = TRUE;
       }
     }
     else {

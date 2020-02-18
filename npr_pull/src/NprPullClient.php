@@ -288,7 +288,7 @@ class NprPullClient extends NprClient {
     foreach ($mappings as $key => $value) {
       if (!empty($value) && $value !== 'unused' && !in_array($key, ['title', 'image_field'])) {
         // ID doesn't have a "value" property.
-        if ($key == 'id') {
+        if ($key == 'image_id') {
           $media_image->set($value, $image->id);
         }
         else {
@@ -377,7 +377,7 @@ class NprPullClient extends NprClient {
       foreach ($mappings as $key => $value) {
         if (!empty($value) && $value !== 'unused' && !in_array($key, ['title', 'remote_audio'])) {
           // ID doesn't have a "value" property.
-          if ($key == 'id') {
+          if ($key == 'audio_id') {
             $media_audio->set($value, $audio->id);
           }
           else {
