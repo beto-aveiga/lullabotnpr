@@ -5,8 +5,11 @@ namespace Drupal\npr_api;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Queue\QueueInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\State\StateInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\HandlerStack;
 use Psr\Http\Message\RequestInterface;
@@ -62,6 +65,20 @@ class NprClient implements ClientInterface {
   protected $messenger;
 
   /**
+   * Queue service.
+   *
+   * @var \Drupal\Core\Queue\QueueFactory
+   */
+  protected $queueFactory;
+
+  /**
+   * State interface.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
+  /**
    * The file system service.
    *
    * @var \Drupal\Core\File\FileSystemInterface
@@ -81,15 +98,21 @@ class NprClient implements ClientInterface {
    *   The current logged in user.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
+   * @param \Drupal\Core\Queue\QueueFactory $queue_factory
+   *   Queue factory service.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   State service.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The filesystem service.
    */
-  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, FileSystemInterface $file_system = NULL) {
+  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, FileSystemInterface $file_system = NULL) {
     $this->client = $client;
     $this->entityTypeManager = $entity_type_manager;
     $this->config = $config_factory;
     $this->currentUser = $current_user;
     $this->messenger = $messenger;
+    $this->queueFactory = $queue_factory;
+    $this->state = $state;
     $this->fileSystem = $file_system;
   }
 
@@ -102,6 +125,9 @@ class NprClient implements ClientInterface {
       $container->get('entity_type.manager'),
       $container->get('config.factory'),
       $container->get('current_user'),
+      $container->get('messenger'),
+      $container->get('queue'),
+      $container->get('state'),
       $container->get('file_system')
     );
   }
@@ -165,8 +191,6 @@ class NprClient implements ClientInterface {
   public function getXmlStories($options) {
 
     $this->options = $options;
-    // Add the API key. It feels icky using the Drupal class, but it also
-    // seems to simplify things.
     $key = $this->config->get('npr_api.settings')->get('npr_api_api_key');
     $options['apiKey'] = $key;
 
@@ -377,6 +401,16 @@ class NprClient implements ClientInterface {
         }
       }
     }
+  }
+
+  /**
+   * Gets the queue for the API content type.
+   *
+   * @return \Drupal\Core\Queue\QueueInterface
+   *   API content type update queue.
+   */
+  public function getQueue(): QueueInterface {
+    return $this->queueFactory->get('npr_api.queue.story');
   }
 
 }

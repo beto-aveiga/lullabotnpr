@@ -1,4 +1,9 @@
 services:
   npr_api.client:
     class: Drupal\npr_api\NprClient
-    arguments: ['@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@file_system']
+    arguments: ['@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@file_system']
+  logger.channel.npr_api:
+    class: Drupal\Core\Logger\LoggerChannel
+    factory: logger.factory:get
+    arguments:
+      - 'npr_api'

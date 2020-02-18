@@ -2,6 +2,7 @@
 
 namespace Drupal\npr_pull;
 
+use DateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
@@ -15,6 +16,11 @@ use Drupal\npr_api\NprClient;
 class NprPullClient extends NprClient {
 
   use StringTranslationTrait;
+
+  /**
+   * State key for the last update DateTime.
+   */
+  const LAST_UPDATE_KEY = 'npr_pull.last_update';
 
   /**
    * The story node.
@@ -413,6 +419,70 @@ class NprPullClient extends NprClient {
         return $matches[2];
       }
     }
+  }
+
+  /**
+   * Gets the date and time of the last API content type sync.
+   *
+   * @return \DateTime
+   *   Date and time of last API content type sync.
+   */
+  public function getLastUpdateTime(): DateTime {
+    return $this->state->get(
+      self::LAST_UPDATE_KEY,
+      new DateTime('@1')
+    );
+  }
+
+  /**
+   * Sets the date and time of the last API content type sync.
+   *
+   * @param \DateTime $time
+   *   Date and time to set.
+   */
+  public function setLastUpdateTime(DateTime $time): void {
+    $this->state->set(self::LAST_UPDATE_KEY, $time);
+  }
+
+  /**
+   * Resets the stored date and time of the last API content type sync.
+   */
+  public function resetLastUpdateTime(): void {
+    $this->state->delete(self::LAST_UPDATE_KEY);
+  }
+
+  /**
+   * Adds items to the API story queue based on a time constraint.
+   *
+   * @param \DateTime|null $since
+   *   Time constraint for the queue cutoff. Defaults to the last time the queue
+   *   was updated.
+   *
+   * @return bool
+   *   TRUE if the queue update fully completes, FALSE if it does not.
+   */
+  public function updateQueue(DateTime $since = NULL): bool {
+    $dt_start = new DateTime();
+
+    if (empty($since)) {
+      $since = $this->getLastUpdateTime();
+    }
+
+    // Make a request.
+    $options = ['id' => 1126];
+    $this->getXmlStories($options);
+    $this->parse();
+
+    foreach ($this->stories as $story) {
+      $updated_at = new DateTime($story->lastModifiedDate);
+      if ($updated_at > $since) {
+        $this->getQueue()->createItem($story);
+      }
+    }
+
+    $this->setLastUpdateTime($dt_start);
+
+    return TRUE;
   }
 
 }
