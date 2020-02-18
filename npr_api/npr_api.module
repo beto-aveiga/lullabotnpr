@@ -2,11 +2,8 @@
 
 /**
  * @file
- * Calls NPR API, creates and parses NPR's flavor of XML (NPRML).
+ * Hooks provided by the npr_api module.
  */
-
-use GuzzleHttp\Client;
-use Drupal\npr_api\NprClient;
 
 /**
  * Returns a nested array of info about all NPRML "fields".
@@ -53,27 +50,4 @@ function npr_api_get_nprml_fields() {
     ],
   ];
   return $nprml_fields;
-}
-
-/**
- * Creates an NprClient object, narrowed by query-type parameters.
- *
- * @param array $params
- *   An array of query-type parameters.
- *
- * @return object
- *   An NPRAPIDrupal object.
- */
-function npr_api_fetch_object(array $params) {
-
-  // Create a new NprClient with the default configuration.
-  $defaults = NprClient::getDefaultConfiguration();
-  // TODO. This is not cool at all.
-  $client = new NprClient(new Client($defaults), \Drupal::entityTypeManager(), \Drupal::configFactory(), \Drupal::currentUser(), \Drupal::messenger());
-
-  // Make a request.
-  $client->getXmlStories($params);
-  $client->parse();
-
-  return $client;
 }

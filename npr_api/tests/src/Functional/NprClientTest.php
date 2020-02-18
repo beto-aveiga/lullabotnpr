@@ -52,9 +52,8 @@ class NprClientTest extends BrowserTestBase {
    */
   public function testNprClient() {
 
-    // Make a request.
-    $params = ['id' => 1126];
-    $client = npr_api_fetch_object($params);
+    /** @var \Drupal\npr_api\NprClient $client */
+    $client = \Drupal::service('npr_api.client');
     $this->assertNotNull($client);
 
   }

@@ -61,7 +61,7 @@ npr_story.settings:
       type: mapping
       label: 'Image mappings'
       mapping:
-        id:
+        image_id:
           type: text
           label: 'Image media id field'
         title:
@@ -92,7 +92,7 @@ npr_story.settings:
       type: mapping
       label: 'Audio mappings'
       mapping:
-        id:
+        audio_id:
           type: text
           label: 'Audio media id field'
         remote_audio:

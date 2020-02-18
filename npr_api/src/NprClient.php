@@ -11,7 +11,6 @@ use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\HandlerStack;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -168,21 +167,18 @@ class NprClient implements ClientInterface {
   }
 
   /**
-   * Get the default Guzzle client configuration array.
+   * Gets stories narrowed by query-type parameters.
    *
-   * @return array
-   *   An array of configuration options suitable for use with Guzzle.
+   * @param array $params
+   *   An array of query-type parameters.
+   *
+   * @return object
+   *   A parsed object of NPRML stories.
    */
-  public static function getDefaultConfiguration() {
-    $config = [
-      'headers' => [
-        'Accept' => 'application/json',
-        'Content-Type' => 'application/json',
-      ],
-    ];
-    $handler = HandlerStack::create();
-    $config['handler'] = $handler;
-    return $config;
+  public function getStories(array $params) {
+    $this->getXmlStories($params);
+    $this->parse();
+    return $this->stories;
   }
 
   /**

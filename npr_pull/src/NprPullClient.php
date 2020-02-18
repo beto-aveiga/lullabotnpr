@@ -470,8 +470,7 @@ class NprPullClient extends NprClient {
 
     // Make a request.
     $options = ['id' => 1126];
-    $this->getXmlStories($options);
-    $this->parse();
+    $this->getStories($options);
 
     foreach ($this->stories as $story) {
       $updated_at = new DateTime($story->lastModifiedDate);
