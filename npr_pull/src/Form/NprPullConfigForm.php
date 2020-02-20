@@ -120,7 +120,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#return_value' => TRUE,
     ];
 
-    $interval_options = [3600, 10800, 21600, 43200, 86400, 604800];
+    $interval_options = [0, 3600, 10800, 21600, 43200, 86400, 604800];
     $form['story_queue']['queue_interval'] = [
       '#type' => 'select',
       '#title' => $this->t('Queue builder update interval'),
@@ -164,7 +164,7 @@ class NprPullConfigForm extends ConfigFormBase {
       ],
     ];
     $form['story_queue']['topic_ids'] = [
-      '#type' => 'select',
+      '#type' => 'checkboxes',
       '#title' => $this->t('Limit by topic'),
       '#default_value' => $config->get('topic_ids'),
       '#options' => $this->getTopics(),
@@ -190,7 +190,7 @@ class NprPullConfigForm extends ConfigFormBase {
     $config->set('queue_enable', $values['queue_enable']);
     $config->set('num_results', $values['num_results']);
     $config->set('org_id', $values['org_id']);
-    $config->set('topic_ids', $values['topic_ids']);
+    $config->set('topic_ids', array_filter($values['topic_ids']));
     $config->save();
 
     parent::submitForm($form, $form_state);

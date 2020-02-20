@@ -50,8 +50,12 @@ class NprPullClient extends NprClient {
    *   The ID of an NPR story.
    * @param bool $published
    *   Story should be published immediately.
+   * @param bool $display_messages
+   *   Messages should be displayed.
    */
-  public function saveOrUpdateNode($story_id, $published) {
+  public function saveOrUpdateNode($story_id, $published, $display_messages = FALSE) {
+
+    $this->displayMessages = $display_messages;
 
     $node_manager = $this->entityTypeManager->getStorage('node');
 
@@ -60,7 +64,7 @@ class NprPullClient extends NprClient {
     $this->parse();
 
     if (empty($this->stories)) {
-      $this->messenger->addError($story_id . ' is not a valid story ID.');
+      $this->nprPullError($story_id . ' is not a valid story ID.');
       return;
     }
 
@@ -71,7 +75,7 @@ class NprPullClient extends NprClient {
 
     if (empty($text_format)) {
       // TODO: Add a link to the config page.
-      $this->messenger->addError('You must select a body text format.');
+      $this->nprPullError('You must select a body text format.');
       return;
     }
 
@@ -85,7 +89,11 @@ class NprPullClient extends NprClient {
         // Not the operation being performed for a later status message.
         $operation = "updated";
         if (count($this->node) > 1) {
-          $this->messenger->addError($this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', ['@id' => $story->id]));
+          $this->nprPullError(
+            $this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', [
+              '@id' => $story->id,
+            ])
+          );
           return;
         }
         $this->node = reset($this->node);
@@ -119,7 +127,7 @@ class NprPullClient extends NprClient {
       // Add a reference to the media audio.
       $media_audio_ids = $this->createOrUpdateMediaAudio($story);
       if ($audio_field == 'unused') {
-        $this->messenger->addError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+        $this->nprPullError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
         return;
       }
       if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
@@ -177,7 +185,7 @@ class NprPullClient extends NprClient {
     foreach ($nodes_affected as $node_affected) {
       $link = Link::fromTextAndUrl($node_affected->label(),
         $node_affected->toUrl())->toString();
-      $this->messenger->addStatus($this->t('Story @link was @operation.', [
+      $this->nprPullStatus($this->t('Story @link was @operation.', [
         '@link' => $link,
         '@operation' => $operation,
       ]));
@@ -205,7 +213,7 @@ class NprPullClient extends NprClient {
     $crop_selected = $story_config->get('image_crop_size');
 
     if (empty($image_media_type) || empty($crop_selected)) {
-      $this->messenger->addError('Please configure the NPR story image settings.');
+      $this->nprPullError('Please configure the NPR story image settings.');
       return;
     }
 
@@ -220,10 +228,11 @@ class NprPullClient extends NprClient {
     // Check to see if a media image already exists in Drupal.
     if ($media_image = $media_manager->loadByProperties(['field_id' => $image->id])) {
       if (count($media_image) > 1) {
-        $this->messenger->addError(
+        $this->nprPullError(
           $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
             '@id' => $image->id,
-            '@title' => $image->title,
+            // TODO: determine if we have to truncate titles.
+            '@title' => substr($image->title, 0, 255),
           ]));
         return;
       }
@@ -242,7 +251,7 @@ class NprPullClient extends NprClient {
     else {
       // Create a media entity.
       if ($mappings['title'] == 'unused' || $image_field == 'unused') {
-        $this->messenger->addError('Please configure the title and image field settings for media images.');
+        $this->nprPullError('Please configure the title and image field settings for media images.');
         return;
       }
       $media_image = Media::create([
@@ -266,7 +275,7 @@ class NprPullClient extends NprClient {
       }
     }
     if (empty($image_url)) {
-      $this->messenger->addError(
+      $this->nprPullError(
         $this->t('There is no image available for the image with the ID @id.', [
           '@id' => $image->id,
         ]));
@@ -331,7 +340,7 @@ class NprPullClient extends NprClient {
     $audio_format = $story_config->get('audio_format');
 
     if (empty($audio_media_type) || empty($audio_format)) {
-      $this->messenger->addError('Please configure the NPR story audio type and format.');
+      $this->nprPullError('Please configure the NPR story audio type and format.');
       return;
     }
 
@@ -341,7 +350,7 @@ class NprPullClient extends NprClient {
     // Get, and verify, the necessary configuration.
     $mappings = $this->config->get('npr_story.settings')->get('audio_field_mappings');
     if ($mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
-      $this->messenger->addError('Please configure the title and remote audio settings.');
+      $this->nprPullError('Please configure the title and remote audio settings.');
       return NULL;
     }
     $remote_audio_field = $mappings['remote_audio'];
@@ -349,12 +358,17 @@ class NprPullClient extends NprClient {
     // Create the audio media item(s).
     foreach ($story->audio as $audio) {
 
-      $audio_uri = $audio->format->mp3['m3u']->value;
+      if (!empty($audio->format->mp3['m3u']->value)) {
+        $audio_uri = $audio->format->mp3['m3u']->value;
+      }
+      else {
+        return;
+      }
 
       // Check to see if a story node already exists in Drupal.
       if ($media_audio = $media_manager->loadByProperties(['field_id' => $audio->id])) {
         if (count($media_audio) > 1) {
-          $this->messenger->addError(
+          $this->nprPullError(
             $this->t('More than one audio media item with the ID @id ("@title") exist. Please delete the duplicate audio media.', [
               '@id' => $audio->id,
               '@title' => $audio->title,
@@ -469,8 +483,9 @@ class NprPullClient extends NprClient {
     }
 
     // Make a request.
-    $options = ['id' => 1126];
-    $this->getStories($options);
+    $topic_ids = $this->config->get('npr_pull.settings')->get('topic_ids');
+    $params = ['id' => array_keys($topic_ids)];
+    $this->getStories($params);
 
     foreach ($this->stories as $story) {
       $updated_at = new DateTime($story->lastModifiedDate);
@@ -482,6 +497,32 @@ class NprPullClient extends NprClient {
     $this->setLastUpdateTime($dt_start);
 
     return TRUE;
+  }
+
+  /**
+   * Helper function for error messages.
+   *
+   * @param string $text
+   *   The message to log or display.
+   */
+  private function nprPullError($text) {
+    $this->logger->error($text);
+    if ($this->displayMessages) {
+      $this->messenger->addError($text);
+    }
+  }
+
+  /**
+   * Helper function for error notices.
+   *
+   * @param string $text
+   *   The message to log or display.
+   */
+  private function nprPullStatus($text) {
+    $this->logger->notice($text);
+    if ($this->displayMessages) {
+      $this->messenger->addStatus($text);
+    }
   }
 
 }

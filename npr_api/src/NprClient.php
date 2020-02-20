@@ -12,6 +12,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use GuzzleHttp\ClientInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,6 +28,13 @@ class NprClient implements ClientInterface {
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
   const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
   const NPRML_VERSION = '0.92.2';
+
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
 
   /**
    * The HTTP client.
@@ -87,6 +95,8 @@ class NprClient implements ClientInterface {
   /**
    * Constructs a NprClient object.
    *
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.
    * @param \GuzzleHttp\ClientInterface $client
    *   The HTTP client.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -104,7 +114,8 @@ class NprClient implements ClientInterface {
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The filesystem service.
    */
-  public function __construct(ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, FileSystemInterface $file_system = NULL) {
+  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, FileSystemInterface $file_system = NULL) {
+    $this->logger = $logger;
     $this->client = $client;
     $this->entityTypeManager = $entity_type_manager;
     $this->config = $config_factory;
@@ -120,6 +131,7 @@ class NprClient implements ClientInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('logger.channel.npr_api'),
       $container->get('http_client'),
       $container->get('entity_type.manager'),
       $container->get('config.factory'),

@@ -2,10 +2,10 @@
 
 namespace Drupal\npr_api\Plugin\QueueWorker;
 
-use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\npr_pull\NprPullClient;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,11 +26,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   /**
-   * NPR API logger.
+   * The logger.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   * @var \Psr\Log\LoggerInterface
    */
-  private $logger;
+  protected $logger;
 
   /**
    * NPR API pull client.
@@ -45,7 +45,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   public function __construct(array $configuration,
     $plugin_id,
     $plugin_definition,
-    LoggerChannelInterface $logger,
+    LoggerInterface $logger,
     NprPullClient $npr_pull_client
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -77,7 +77,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   public function processItem($item): void {
     // TODO: Get this from config.
     $published = TRUE;
-    $this->nprPullClient->saveOrUpdateNode($item, $published);
+    $this->nprPullClient->saveOrUpdateNode($item->id, $published);
   }
 
 }
