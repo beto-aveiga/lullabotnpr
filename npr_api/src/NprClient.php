@@ -202,6 +202,8 @@ class NprClient implements ClientInterface {
     $key = $this->config->get('npr_api.settings')->get('npr_api_api_key');
     // Add the API key to the parameters.
     $options['apiKey'] = $key;
+    // TODO: Which way should we be sorting?
+    $options['sort'] = 'dateDesc';
 
     // TODO: Store these for the report function.
     $this->response = $this->request('GET', self::BASE_URI, ['query' => $options]);
