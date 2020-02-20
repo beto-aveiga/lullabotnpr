@@ -25,20 +25,23 @@ class NprPullClient extends NprClient {
   /**
    * The story node.
    *
-   * TODO: For now, this is only used for updating audio.
-   *
    * @var \Drupal\node\NodeInterface
    */
   protected $node;
 
   /**
-   * The story node.
-   *
-   * TODO: For now, this is only used for updating audio.
+   * The audio field on the story.
    *
    * @var string
    */
   protected $audioField;
+
+  /**
+   * The image field on the story.
+   *
+   * @var string
+   */
+  protected $imageField;
 
   /**
    * Create a story node.
@@ -114,9 +117,11 @@ class NprPullClient extends NprClient {
         ]);
       }
 
+      // Make the image field available to other methods.
+      $this->imageField = $story_mappings['image'];
+      $image_field = $this->imageField;
       // Add a reference to the media image.
       $media_image_id = $this->createOrUpdateMediaImage($story);
-      $image_field = $story_mappings['image'];
       if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
         $this->node->{$image_field}[] = ['target_id' => $media_image_id];
       }
@@ -245,8 +250,10 @@ class NprPullClient extends NprClient {
           $referenced_file->delete();
         }
       }
-      // Remove the references to the images.
+      // Remove the references to the images on the media item.
       $media_image->{$image_field} = NULL;
+      // Remove the references to the media image on the story node.
+      $this->node->set($this->imageField, NULL);
     }
     else {
       // Create a media entity.
