@@ -490,10 +490,10 @@ class NprPullClient extends NprClient {
     }
 
     $topic_ids = $this->config->get('npr_pull.settings')->get('topic_ids');
-    // TODO: Can we add lastModifiedDate as a parameter?
-    $params = [
-      'id' => array_keys($topic_ids)
-    ];
+    $params = [];
+    if (!empty($topic_ids)) {
+      $params = ['id' => array_keys($topic_ids)];
+    }
     $this->getStories($params);
 
     foreach ($this->stories as $story) {
