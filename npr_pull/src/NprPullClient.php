@@ -236,8 +236,7 @@ class NprPullClient extends NprClient {
         $this->nprPullError(
           $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
             '@id' => $image->id,
-            // TODO: determine if we have to truncate titles.
-            '@title' => substr($image->title, 0, 255),
+            '@title' => $image->title->value,
           ]));
         return;
       }
@@ -262,7 +261,8 @@ class NprPullClient extends NprClient {
         return;
       }
       $media_image = Media::create([
-        $mappings['title'] => $image->title->value,
+        // TODO: determine if we have to truncate titles.
+        $mappings['title'] => substr($image->title->value, 0, 255),
         'bundle' => $image_media_type,
         'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
         'langcode' => Language::LANGCODE_NOT_SPECIFIED,
@@ -489,9 +489,11 @@ class NprPullClient extends NprClient {
       $since = $this->getLastUpdateTime();
     }
 
-    // Make a request.
     $topic_ids = $this->config->get('npr_pull.settings')->get('topic_ids');
-    $params = ['id' => array_keys($topic_ids)];
+    // TODO: Can we add lastModifiedDate as a parameter?
+    $params = [
+      'id' => array_keys($topic_ids)
+    ];
     $this->getStories($params);
 
     foreach ($this->stories as $story) {
