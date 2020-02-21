@@ -489,17 +489,23 @@ class NprPullClient extends NprClient {
       $since = $this->getLastUpdateTime();
     }
 
+    // Get all topic IDs selected.
     $topic_ids = $this->config->get('npr_pull.settings')->get('topic_ids');
-    $params = [];
-    if (!empty($topic_ids)) {
-      $params = ['id' => array_keys($topic_ids)];
+    // If there is no topic ID, just get "News".
+    if (empty($topic_ids)) {
+      $topic_ids = [1001 => 1001];
     }
-    $this->getStories($params);
+    // Make separate API calls for each topic. If there are many, many topics
+    // slected, we may not get data for all of them.
+    foreach ($topic_ids as $topic_id) {
+      $params = ['id' => $topic_id];
+      $this->getStories($params);
 
-    foreach ($this->stories as $story) {
-      $updated_at = new DateTime($story->lastModifiedDate);
-      if ($updated_at > $since) {
-        $this->getQueue()->createItem($story);
+      foreach ($this->stories as $story) {
+        $updated_at = new DateTime($story->lastModifiedDate);
+        if ($updated_at > $since) {
+          $this->getQueue()->createItem($story);
+        }
       }
     }
 

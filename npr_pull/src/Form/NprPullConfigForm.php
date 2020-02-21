@@ -202,7 +202,7 @@ class NprPullConfigForm extends ConfigFormBase {
    * @see https://www.npr.org/api/mappingCodes.php
    */
   public function getTopics() {
-    return [
+    $topics = [
       1126 => 'Africa',
       1059 => 'Analysis',
       1132 => 'Animals',
@@ -317,6 +317,8 @@ class NprPullConfigForm extends ConfigFormBase {
       1103 => 'Studio Sessions',
       10004 => 'World',
     ];
+    asort($topics);
+    return $topics;
   }
 
 }

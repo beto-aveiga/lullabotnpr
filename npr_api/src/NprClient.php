@@ -224,7 +224,6 @@ class NprClient implements ClientInterface {
     if (!empty($this->xml)) {
       $xml = $this->xml;
     }
-
     else {
       $this->notices[] = 'No XML to parse.';
       return;
