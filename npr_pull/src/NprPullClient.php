@@ -100,7 +100,24 @@ class NprPullClient extends NprClient {
           return;
         }
         $this->node = reset($this->node);
-        // If so, update the title, status, and author.
+
+        // Don't update stories that have not been updated.
+        $node_last_modified = $story_mappings['lastModifiedDate'];
+        $drupal_story_last_modified = new DateTime($this->node->get($node_last_modified)->value);
+        $npr_story_last_modified = new DateTime($story->lastModifiedDate);
+        if ($drupal_story_last_modified >= $npr_story_last_modified) {
+          if ($this->displayMessages) {
+            // No need to log this message, so just display it.
+            $this->messenger->addStatus(
+              $this->t('The NPR story with the @id has not been updated in the NPR database so it was not updated in Drupal.', [
+                '@id' => $story->id,
+              ]
+            ));
+            return;
+          }
+        }
+
+        // Otherwise, update the title, status, and author.
         $this->node->set('title', $story->title);
         $this->node->set('uid', $pull_author);
         $this->node->set('status', $published);
