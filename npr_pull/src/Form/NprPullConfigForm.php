@@ -138,7 +138,7 @@ class NprPullConfigForm extends ConfigFormBase {
     ];
     $form['story_queue']['num_results'] = [
       '#type' => 'select',
-      '#title' => $this->t('Number of stories to retrieve per cron run'),
+      '#title' => $this->t('Number of stories to retrieve per cron run per topic'),
       '#default_value' => $config->get('num_results'),
       '#options' => [
         10 => 10,

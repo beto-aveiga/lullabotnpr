@@ -63,10 +63,9 @@ class NprPullClient extends NprClient {
     $node_manager = $this->entityTypeManager->getStorage('node');
 
     // Make a request.
-    $this->getXmlStories(['id' => $story_id]);
-    $this->parse();
+    $npr_stories = $this->getStories(['id' => $story_id]);
 
-    if (empty($this->stories)) {
+    if (empty($npr_stories)) {
       $this->nprPullError($story_id . ' is not a valid story ID.');
       return;
     }
@@ -82,13 +81,14 @@ class NprPullClient extends NprClient {
       return;
     }
 
-    foreach ($this->stories as $story) {
+    foreach ($npr_stories as $story) {
 
       $pull_author = $this->config->get('npr_pull.settings')
         ->get('npr_pull_author');
 
+      $this->node = $node_manager->loadByProperties(['field_id' => $story->id]);
       // Check to see if a story node already exists in Drupal.
-      if ($this->node = $node_manager->loadByProperties(['field_id' => $story->id])) {
+      if (!empty($this->node)) {
         // Not the operation being performed for a later status message.
         $operation = "updated";
         if (count($this->node) > 1) {
@@ -506,8 +506,12 @@ class NprPullClient extends NprClient {
       $since = $this->getLastUpdateTime();
     }
 
-    // Get all topic IDs selected.
-    $topic_ids = $this->config->get('npr_pull.settings')->get('topic_ids');
+    $pull_config = $this->config->get('npr_pull.settings');
+    $num_results = $pull_config->get('num_results');
+    // By default, check stories for the past 3 days.
+    $start = date("Y-m-d", time() - 259200);
+    $end = date("Y-m-d");
+    $topic_ids = $pull_config->get('topic_ids');
     // If there is no topic ID, just get "News".
     if (empty($topic_ids)) {
       $topic_ids = [1001 => 1001];
@@ -515,7 +519,12 @@ class NprPullClient extends NprClient {
     // Make separate API calls for each topic. If there are many, many topics
     // slected, we may not get data for all of them.
     foreach ($topic_ids as $topic_id) {
-      $params = ['id' => $topic_id];
+      $params = [
+        'id' => $topic_id,
+        'numResults' => $num_results,
+        'startDate' => $start,
+        'endDate' => $end,
+      ];
       $this->getStories($params);
 
       foreach ($this->stories as $story) {
