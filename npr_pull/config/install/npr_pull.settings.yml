@@ -5,4 +5,5 @@ queue_enable: 0
 queue_interval: 21600
 num_results: 10
 ord_id: 0
-topic_ids: ''
+topic_ids:
+  1001: '1001'
