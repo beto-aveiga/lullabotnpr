@@ -77,7 +77,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   public function processItem($item): void {
     // TODO: Get this from config.
     $published = TRUE;
-    $this->nprPullClient->saveOrUpdateNode($item->id, $published);
+    $this->nprPullClient->addOrUpdateNode($item, $published);
   }
 
 }

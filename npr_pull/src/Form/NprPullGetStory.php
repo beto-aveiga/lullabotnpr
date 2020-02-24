@@ -146,7 +146,7 @@ class NprPullGetStory extends ConfigFormBase {
 
     // Save or update the story.
     $display_messages = TRUE;
-    $this->client->saveOrUpdateNode($story_id, $published, $display_messages);
+    $this->client->addOrUpdateNode($story_id, $published, $display_messages);
   }
 
 }

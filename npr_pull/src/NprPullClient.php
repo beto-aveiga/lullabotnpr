@@ -49,26 +49,18 @@ class NprPullClient extends NprClient {
    * Converts an NPRMLEntity story object to a node object and saves it to the
    * database (the D8 equivalent of npr_pull_save_story).
    *
-   * @param string $story_id
-   *   The ID of an NPR story.
+   * @param object $story
+   *   An NPRMLEntity story object.
    * @param bool $published
    *   Story should be published immediately.
    * @param bool $display_messages
    *   Messages should be displayed.
    */
-  public function saveOrUpdateNode($story_id, $published, $display_messages = FALSE) {
+  public function addOrUpdateNode($story, $published, $display_messages = FALSE) {
 
+    $this->node = NULL;
     $this->displayMessages = $display_messages;
-
     $node_manager = $this->entityTypeManager->getStorage('node');
-
-    // Make a request.
-    $npr_stories = $this->getStories(['id' => $story_id]);
-
-    if (empty($npr_stories)) {
-      $this->nprPullError($story_id . ' is not a valid story ID.');
-      return;
-    }
 
     // Get the story field mappings.
     $story_config = $this->config->get('npr_story.settings');
@@ -81,128 +73,124 @@ class NprPullClient extends NprClient {
       return;
     }
 
-    foreach ($npr_stories as $story) {
+    $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
-      $pull_author = $this->config->get('npr_pull.settings')
-        ->get('npr_pull_author');
-
-      $this->node = $node_manager->loadByProperties(['field_id' => $story->id]);
-      // Check to see if a story node already exists in Drupal.
-      if (!empty($this->node)) {
-        // Not the operation being performed for a later status message.
-        $operation = "updated";
-        if (count($this->node) > 1) {
-          $this->nprPullError(
-            $this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', [
-              '@id' => $story->id,
-            ])
-          );
-          return;
-        }
-        $this->node = reset($this->node);
-
-        // Don't update stories that have not been updated.
-        $node_last_modified = $story_mappings['lastModifiedDate'];
-        $drupal_story_last_modified = new DateTime($this->node->get($node_last_modified)->value);
-        $npr_story_last_modified = new DateTime($story->lastModifiedDate);
-        if ($drupal_story_last_modified >= $npr_story_last_modified) {
-          if ($this->displayMessages) {
-            // No need to log this message, so just display it.
-            $this->messenger->addStatus(
-              $this->t('The NPR story with the @id has not been updated in the NPR database so it was not updated in Drupal.', [
-                '@id' => $story->id,
-              ]
-            ));
-            return;
-          }
-        }
-
-        // Otherwise, update the title, status, and author.
-        $this->node->set('title', $story->title);
-        $this->node->set('uid', $pull_author);
-        $this->node->set('status', $published);
-      }
-      // Otherwise, create a new story node if this is new.
-      else {
-        $operation = "created";
-        $this->node = $node_manager->create([
-          'type' => $story_config->get('story_node_type'),
-          'title' => $story->title,
-          'language' => 'en',
-          'uid' => $pull_author,
-          'status' => $published,
-        ]);
-      }
-
-      // Make the image field available to other methods.
-      $this->imageField = $story_mappings['image'];
-      $image_field = $this->imageField;
-      // Add a reference to the media image.
-      $media_image_id = $this->createOrUpdateMediaImage($story);
-      if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
-        $this->node->{$image_field}[] = ['target_id' => $media_image_id];
-      }
-
-      // Make the audio field available to other methods.
-      $this->audioField = $story_mappings['audio'];
-      $audio_field = $this->audioField;
-      // Add a reference to the media audio.
-      $media_audio_ids = $this->createOrUpdateMediaAudio($story);
-      if ($audio_field == 'unused') {
-        $this->nprPullError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+    $this->node = $node_manager->loadByProperties(['field_id' => $story->id]);
+    // Check to see if a story node already exists in Drupal.
+    if (!empty($this->node)) {
+      // Not the operation being performed for a later status message.
+      $operation = "updated";
+      if (count($this->node) > 1) {
+        $this->nprPullError(
+          $this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', [
+            '@id' => $story->id,
+          ])
+        );
         return;
       }
-      if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
-        foreach ($media_audio_ids as $media_audio_id) {
-          $this->node->{$audio_field}[] = ['target_id' => $media_audio_id];
+      $this->node = reset($this->node);
+
+      // Don't update stories that have not been updated.
+      $node_last_modified = $story_mappings['lastModifiedDate'];
+      $drupal_story_last_modified = new DateTime($this->node->get($node_last_modified)->value);
+      $npr_story_last_modified = new DateTime($story->lastModifiedDate);
+      if ($drupal_story_last_modified >= $npr_story_last_modified) {
+        if ($this->displayMessages) {
+          // No need to log this message, so just display it.
+          $this->messenger->addStatus(
+            $this->t('The NPR story with the @id has not been updated in the NPR database so it was not updated in Drupal.', [
+              '@id' => $story->id,
+            ]
+          ));
+          return;
         }
       }
 
-      // Add data to the remaining fields except image and audio.
-      foreach ($story_mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
-          // ID doesn't have a "value" property.
-          if ($key == 'id') {
-            $this->node->set($value, $story->id);
+      // Otherwise, update the title, status, and author.
+      $this->node->set('title', $story->title);
+      $this->node->set('uid', $pull_author);
+      $this->node->set('status', $published);
+    }
+    // Otherwise, create a new story node if this is new.
+    else {
+      $operation = "created";
+      $this->node = $node_manager->create([
+        'type' => $story_config->get('story_node_type'),
+        'title' => $story->title,
+        'language' => 'en',
+        'uid' => $pull_author,
+        'status' => $published,
+      ]);
+    }
+
+    // Make the image field available to other methods.
+    $this->imageField = $story_mappings['image'];
+    $image_field = $this->imageField;
+    // Add a reference to the media image.
+    $media_image_id = $this->addOrUpdateMediaImage($story);
+    if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
+      $this->node->{$image_field}[] = ['target_id' => $media_image_id];
+    }
+
+    // Make the audio field available to other methods.
+    $this->audioField = $story_mappings['audio'];
+    $audio_field = $this->audioField;
+    // Add a reference to the media audio.
+    $media_audio_ids = $this->addOrUpdateMediaAudio($story);
+    if ($audio_field == 'unused') {
+      $this->nprPullError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+      return;
+    }
+    if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
+      foreach ($media_audio_ids as $media_audio_id) {
+        $this->node->{$audio_field}[] = ['target_id' => $media_audio_id];
+      }
+    }
+
+    // Add data to the remaining fields except image and audio.
+    foreach ($story_mappings as $key => $value) {
+      if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
+        // ID doesn't have a "value" property.
+        if ($key == 'id') {
+          $this->node->set($value, $story->id);
+        }
+        elseif ($key == 'body') {
+          $this->node->set($value, [
+            'value' => $story->body,
+            'format' => $text_format,
+          ]);
+        }
+        elseif ($key == 'byline' && !empty($story->byline)) {
+          // Make byline an array if it is not.
+          if (!is_array($story->byline)) {
+            $story->byline = [$story->byline];
           }
-          elseif ($key == 'body') {
-            $this->node->set($value, [
-              'value' => $story->body,
-              'format' => $text_format,
-            ]);
-          }
-          elseif ($key == 'byline' && !empty($story->byline)) {
-            // Make byline an array if it is not.
-            if (!is_array($story->byline)) {
-              $story->byline = [$story->byline];
+          foreach ($story->byline as $author) {
+            // Not all of the authors in the byline have a link.
+            if (isset($author->link[0]->value)) {
+              $uri = $author->link[0]->value;
             }
-            foreach ($story->byline as $author) {
-              // Not all of the authors in the byline have a link.
-              if (isset($author->link[0]->value)) {
-                $uri = $author->link[0]->value;
-              }
-              else {
-                $uri = '<nolink>';
-              }
-              $byline[] = [
-                // It looks like we always want the first link ("html")
-                // rather than the second one ("api").
-                'uri' => $uri,
-                'title' => $author->name->value,
-              ];
-              $this->node->set($value, $byline);
-              $this->node->save();
+            else {
+              $uri = '<nolink>';
             }
-          }
-          // All of the other fields have a "value" property.
-          elseif (!empty($story->{$key}->value)) {
-            $this->node->set($value, $story->{$key}->value);
+            $byline[] = [
+              // It looks like we always want the first link ("html")
+              // rather than the second one ("api").
+              'uri' => $uri,
+              'title' => $author->name->value,
+            ];
+            $this->node->set($value, $byline);
+            $this->node->save();
           }
         }
+        // All of the other fields have a "value" property.
+        elseif (!empty($story->{$key}->value)) {
+          $this->node->set($value, $story->{$key}->value);
+        }
       }
-      $this->node->save();
-      $nodes_affected[] = $this->node;
     }
+    $this->node->save();
+    $nodes_affected[] = $this->node;
 
     foreach ($nodes_affected as $node_affected) {
       $link = Link::fromTextAndUrl($node_affected->label(),
@@ -223,7 +211,7 @@ class NprPullClient extends NprClient {
    * @return string|null
    *   A media image id or null.
    */
-  protected function createOrUpdateMediaImage($story) {
+  protected function addOrUpdateMediaImage($story) {
 
     $media_manager = $this->entityTypeManager->getStorage('media');
 
@@ -349,7 +337,7 @@ class NprPullClient extends NprClient {
    * @return string|null
    *   A audo media id or null.
    */
-  protected function createOrUpdateMediaAudio($story) {
+  protected function addOrUpdateMediaAudio($story) {
 
     // Skip if there is no audio.
     if (empty($story->audio)) {
