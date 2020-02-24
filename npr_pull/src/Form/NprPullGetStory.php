@@ -137,16 +137,26 @@ class NprPullGetStory extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
-    // Get the ID of the story.
+    // Get the ID of the story from the URL.
     $url_value = $form_state->getValue(['url']);
     $story_id = $this->client->extractId($url_value) ?: 0;
+    if (empty($story_id)) {
+      $form_state->setErrorByName('url', $this->t('Could not extract an NPR ID from given URL.'));
+    }
 
-    // Get the publish flag.
+    // Load the story from NPR.
+    $story = $this->client->getStories(['id' => $story_id]);
+    $story = reset($story);
+    if (empty($story)) {
+      $form_state->setErrorByName('url', $this->t('The NPR ID @id did not return stories.', [
+        '@id' => $story_id,
+      ]));
+    }
+
+    // Add or update the story.
     $published = $form_state->getValue(['publish_flag']);
-
-    // Save or update the story.
     $display_messages = TRUE;
-    $this->client->addOrUpdateNode($story_id, $published, $display_messages);
+    $this->client->addOrUpdateNode($story, $published, $display_messages);
   }
 
 }

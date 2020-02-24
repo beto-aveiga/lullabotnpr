@@ -58,8 +58,13 @@ class NprPullClient extends NprClient {
    */
   public function addOrUpdateNode($story, $published, $display_messages = FALSE) {
 
-    $this->node = NULL;
     $this->displayMessages = $display_messages;
+    if (!is_object($story)) {
+      $this->nprPullError('The story could not be added or updated.');
+      return;
+    }
+
+    $this->node = NULL;
     $node_manager = $this->entityTypeManager->getStorage('node');
 
     // Get the story field mappings.
@@ -536,7 +541,7 @@ class NprPullClient extends NprClient {
    */
   private function nprPullError($text) {
     $this->logger->error($text);
-    if ($this->displayMessages) {
+    if (!empty($this->displayMessages)) {
       $this->messenger->addError($text);
     }
   }
@@ -549,7 +554,7 @@ class NprPullClient extends NprClient {
    */
   private function nprPullStatus($text) {
     $this->logger->notice($text);
-    if ($this->displayMessages) {
+    if (!empty($this->displayMessages)) {
       $this->messenger->addStatus($text);
     }
   }
