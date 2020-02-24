@@ -70,9 +70,15 @@ class NprPullClient extends NprClient {
     // Get the story field mappings.
     $story_config = $this->config->get('npr_story.settings');
     $story_mappings = $story_config->get('story_field_mappings');
-    $id_field = $story_mappings['id'];
-    $text_format = $story_config->get('body_text_format');
 
+    // Verify the story ID field is configured.
+    $id_field = $story_mappings['id'];
+    if ($id_field == 'unused') {
+      $this->nprPullError('Please configure the story id field.');
+      return NULL;
+    }
+
+    $text_format = $story_config->get('body_text_format');
     if (empty($text_format)) {
       // TODO: Add a link to the config page.
       $this->nprPullError('You must select a body text format.');
@@ -268,8 +274,8 @@ class NprPullClient extends NprClient {
     }
     else {
       // Create a media entity.
-      if ($mappings['title'] == 'unused' || $image_field == 'unused') {
-        $this->nprPullError('Please configure the title and image field settings for media images.');
+      if ($image_id_field == 'unused' || $mappings['title'] == 'unused' || $image_field == 'unused') {
+        $this->nprPullError('Please configure the image_id, title, and image_field settings for media images.');
         return;
       }
       $media_image = Media::create([
@@ -369,8 +375,8 @@ class NprPullClient extends NprClient {
     // Get, and verify, the necessary configuration.
     $mappings = $this->config->get('npr_story.settings')->get('audio_field_mappings');
     $audio_id_field = $mappings['audio_id'];
-    if ($mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
-      $this->nprPullError('Please configure the title and remote audio settings.');
+    if ($audio_id_field == 'unused' || $mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
+      $this->nprPullError('Please configure the audio_id, title, and remote_audio settings.');
       return NULL;
     }
     $remote_audio_field = $mappings['remote_audio'];
