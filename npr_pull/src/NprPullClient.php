@@ -70,6 +70,7 @@ class NprPullClient extends NprClient {
     // Get the story field mappings.
     $story_config = $this->config->get('npr_story.settings');
     $story_mappings = $story_config->get('story_field_mappings');
+    $id_field = $story_mappings['id'];
     $text_format = $story_config->get('body_text_format');
 
     if (empty($text_format)) {
@@ -80,7 +81,7 @@ class NprPullClient extends NprClient {
 
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
-    $this->node = $node_manager->loadByProperties(['field_id' => $story->id]);
+    $this->node = $node_manager->loadByProperties([$id_field => $story->id]);
     // Check to see if a story node already exists in Drupal.
     if (!empty($this->node)) {
       // Not the operation being performed for a later status message.
@@ -224,6 +225,7 @@ class NprPullClient extends NprClient {
     $story_config = $this->config->get('npr_story.settings');
     $mappings = $story_config->get('image_field_mappings');
     $image_field = $mappings['image_field'];
+    $image_id_field = $mappings['image_id'];
     $image_media_type = $story_config->get('image_media_type');
     $crop_selected = $story_config->get('image_crop_size');
 
@@ -241,7 +243,7 @@ class NprPullClient extends NprClient {
     }
 
     // Check to see if a media image already exists in Drupal.
-    if ($media_image = $media_manager->loadByProperties(['field_id' => $image->id])) {
+    if ($media_image = $media_manager->loadByProperties([$image_id_field => $image->id])) {
       if (count($media_image) > 1) {
         $this->nprPullError(
           $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
@@ -366,6 +368,7 @@ class NprPullClient extends NprClient {
 
     // Get, and verify, the necessary configuration.
     $mappings = $this->config->get('npr_story.settings')->get('audio_field_mappings');
+    $audio_id_field = $mappings['audio_id'];
     if ($mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
       $this->nprPullError('Please configure the title and remote audio settings.');
       return NULL;
@@ -383,7 +386,7 @@ class NprPullClient extends NprClient {
       }
 
       // Check to see if a story node already exists in Drupal.
-      if ($media_audio = $media_manager->loadByProperties(['field_id' => $audio->id])) {
+      if ($media_audio = $media_manager->loadByProperties([$audio_id_field => $audio->id])) {
         if (count($media_audio) > 1) {
           $this->nprPullError(
             $this->t('More than one audio media item with the ID @id ("@title") exist. Please delete the duplicate audio media.', [
