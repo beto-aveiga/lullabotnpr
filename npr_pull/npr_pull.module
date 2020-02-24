@@ -21,7 +21,9 @@ function npr_pull_cron(): void {
   $request_time = \Drupal::time()->getRequestTime();
   $now = new DateTime("@{$request_time}");
 
-  if ($config->get('queue_interval')) {
+  $queue_enable = $config->get('queue_enable');
+  $queue_interval = $config->get('queue_interval');
+  if (!empty($queue_enable) & !empty($queue_interval)) {
     /** @var \Drupal\npr_pull\NprPullClient $nprPullClient */
     $nprPullClient = Drupal::service('npr_pull.client');
 
