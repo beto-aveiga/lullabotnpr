@@ -230,10 +230,16 @@ class NprPullClient extends NprClient {
     // Get reguired configuration.
     $story_config = $this->config->get('npr_story.settings');
     $mappings = $story_config->get('image_field_mappings');
-    $image_field = $mappings['image_field'];
-    $image_id_field = $mappings['image_id'];
     $image_media_type = $story_config->get('image_media_type');
     $crop_selected = $story_config->get('image_crop_size');
+
+    // Verify required image field mappings.
+    $image_field = $mappings['image_field'];
+    $image_id_field = $mappings['image_id'];
+    if ($image_id_field == 'unused' || $mappings['title'] == 'unused' || $image_field == 'unused') {
+      $this->nprPullError('Please configure the image_id, title, and image_field settings for media images.');
+      return;
+    }
 
     if (empty($image_media_type) || empty($crop_selected)) {
       $this->nprPullError('Please configure the NPR story image settings.');
@@ -274,10 +280,6 @@ class NprPullClient extends NprClient {
     }
     else {
       // Create a media entity.
-      if ($image_id_field == 'unused' || $mappings['title'] == 'unused' || $image_field == 'unused') {
-        $this->nprPullError('Please configure the image_id, title, and image_field settings for media images.');
-        return;
-      }
       $media_image = Media::create([
         // TODO: determine if we have to truncate titles.
         $mappings['title'] => substr($image->title->value, 0, 255),
