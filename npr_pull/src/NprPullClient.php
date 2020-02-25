@@ -161,7 +161,13 @@ class NprPullClient extends NprClient {
 
     // Add data to the remaining fields except image and audio.
     foreach ($story_mappings as $key => $value) {
-      if (!empty($value) && $value !== 'unused' && !in_array($key, ['image', 'audio'])) {
+
+      // Don't add unused fields.
+      if ($value == 'unused') {
+        continue;
+      }
+
+      if (!empty($value) && !in_array($key, ['image', 'audio'])) {
         // ID doesn't have a "value" property.
         if ($key == 'id') {
           $this->node->set($value, $story->id);
@@ -171,6 +177,9 @@ class NprPullClient extends NprClient {
             'value' => $story->body,
             'format' => $text_format,
           ]);
+        }
+        elseif ($key == 'link') {
+          $this->node->set($value, ['uri' => $story->link['html']]);
         }
         elseif ($key == 'byline' && !empty($story->byline)) {
           // Make byline an array if it is not.

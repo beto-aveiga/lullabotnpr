@@ -51,6 +51,12 @@ npr_story.settings:
         audio:
           type: text
           label: 'Story audio field'
+        link:
+          type: text
+          label: 'Story link field'
+        teaser:
+          type: text
+          label: 'Story teaser field'
     image_media_type:
       type: text
       label: 'The image media type'
