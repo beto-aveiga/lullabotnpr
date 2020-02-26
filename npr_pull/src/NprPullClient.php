@@ -78,7 +78,7 @@ class NprPullClient extends NprClient {
       return NULL;
     }
     $node_last_modified = $story_mappings['lastModifiedDate'];
-    if (empty($node_last_modified)) {
+    if ($node_last_modified == 'unused') {
       $this->nprPullError('Please configure the story last modified date field.');
       return;
     }
