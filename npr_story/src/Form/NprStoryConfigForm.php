@@ -101,35 +101,35 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#options' => $formats,
     ];
 
-    // Topic vocabularly configuration.
+    // Topic vocabulary configuration.
     $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
-    $vocabularly_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
-    $form['node_type_settings']['vocabularly_settings'] = [
+    $vocabulary_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
+    $form['node_type_settings']['vocabulary_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Vocabularly settings'),
-      '#description' => $this->t('Any, all, or none of the topics fields can be configured. For instance, all "primaryTopic" and "topic" terms could go to one vocabularly and another vocabularly could consist only of "primaryTopic" terms.'),
+      '#description' => $this->t('Any, all, or none of the topics fields can be configured. For instance, all "primaryTopic" and "topic" terms could go to one vocabulary and another vocabulary could consist only of "primaryTopic" terms.'),
       '#open' => TRUE,
     ];
-    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_primary'] = [
+    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_primary'] = [
       '#type' => 'select',
-      '#title' => $this->t('Primary topic vocabularly'),
-      '#description' => $this->t('Configure vocabularly for "primaryTopic" terms.'),
-      '#default_value' => $config->get('topic_vocabularly_primary'),
-      '#options' => $vocabularly_options,
+      '#title' => $this->t('Primary topic vocabulary'),
+      '#description' => $this->t('Configure vocabulary for "primaryTopic" terms.'),
+      '#default_value' => $config->get('topic_vocabulary_primary'),
+      '#options' => $vocabulary_options,
     ];
-    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_topic'] = [
+    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_topic'] = [
       '#type' => 'select',
-      '#title' => $this->t('Topic vocabularly'),
-      '#description' => $this->t('Configure vocabularly for "topic" terms.'),
-      '#default_value' => $config->get('topic_vocabularly_topic'),
-      '#options' => $vocabularly_options,
+      '#title' => $this->t('Topic vocabulary'),
+      '#description' => $this->t('Configure vocabulary for "topic" terms.'),
+      '#default_value' => $config->get('topic_vocabulary_topic'),
+      '#options' => $vocabulary_options,
     ];
-    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_all'] = [
+    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_all'] = [
       '#type' => 'select',
-      '#title' => $this->t('All topics vocabularly'),
-      '#description' => $this->t('Configure this field to have all of the "primaryTopic" and "topic" terms in a single vocabularly.'),
-      '#default_value' => $config->get('topic_vocabularly_all'),
-      '#options' => $vocabularly_options,
+      '#title' => $this->t('All topics vocabulary'),
+      '#description' => $this->t('Configure this field to have all of the "primaryTopic" and "topic" terms in a single vocabulary.'),
+      '#default_value' => $config->get('topic_vocabulary_all'),
+      '#options' => $vocabulary_options,
     ];
 
     // Story node field mappings.
@@ -289,9 +289,9 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config->set('story_node_type', $values['story_node_type']);
     $config->set('body_text_format', $values['body_text_format']);
-    $config->set('topic_vocabularly_primary', $values['topic_vocabularly_primary']);
-    $config->set('topic_vocabularly_topic', $values['topic_vocabularly_topic']);
-    $config->set('topic_vocabularly_all', $values['topic_vocabularly_all']);
+    $config->set('topic_vocabulary_primary', $values['topic_vocabulary_primary']);
+    $config->set('topic_vocabulary_topic', $values['topic_vocabulary_topic']);
+    $config->set('topic_vocabulary_all', $values['topic_vocabulary_all']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
     $config->set('audio_media_type', $values['audio_media_type']);

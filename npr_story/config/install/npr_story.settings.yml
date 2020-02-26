@@ -1,8 +1,8 @@
 story_node_type: ''
 body_text_format: ''
-topic_vocabularly_all: ''
-topic_vocabularly_primary: ''
-topic_vocabularly_topic: ''
+topic_vocabulary_all: ''
+topic_vocabulary_primary: ''
+topic_vocabulary_topic: ''
 story_field_mappings:
   id: ''
   lastModifiedDate: ''

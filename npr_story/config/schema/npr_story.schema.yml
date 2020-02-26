@@ -8,13 +8,13 @@ npr_story.settings:
     body_text_format:
       type: text
       label: 'The format of the body text'
-    topic_vocabularly_all:
+    topic_vocabulary_all:
       type: text
       label: 'All topics vocabulary'
-    topic_vocabularly_primary:
+    topic_vocabulary_primary:
       type: text
       label: 'Primary topic vocabulary'
-    topic_vocabularly_topic:
+    topic_vocabulary_topic:
       type: text
       label: 'Topics vocabulary'
     story_field_mappings:
