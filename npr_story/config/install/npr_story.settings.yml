@@ -1,5 +1,8 @@
 story_node_type: ''
 body_text_format: ''
+topic_vocabularly_all: ''
+topic_vocabularly_primary: ''
+topic_vocabularly_topic: ''
 story_field_mappings:
   id: ''
   lastModifiedDate: ''
@@ -16,6 +19,9 @@ story_field_mappings:
   storyDate: ''
   subtitle: ''
   teaser: ''
+  topics_all: ''
+  topics_primary: ''
+  topics_topic: ''
 image_media_type: 'image'
 image_crop_size: 'standard'
 image_field_mappings:

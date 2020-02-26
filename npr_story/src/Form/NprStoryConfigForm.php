@@ -88,7 +88,8 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('story_node_type'),
       '#options' => $node_type_options,
     ];
-    // Create a list of text formats.
+
+    // Text format configuration.
     foreach (filter_formats() as $format) {
       $formats[$format->get('format')] = $format->get('name');
     }
@@ -99,6 +100,38 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('body_text_format'),
       '#options' => $formats,
     ];
+
+    // Topic vocabularly configuration.
+    $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
+    $vocabularly_options = array_combine($vocabs, $vocabs);
+    $form['node_type_settings']['vocabularly_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Vocabularly settings'),
+      '#description' => $this->t('Any, all, or none of the topics fields can be configured. For instance, all "primaryTopic" and "topic" terms could go to one vocabularly and another vocabularly could consist only of "primaryTopic" terms.'),
+      '#open' => TRUE,
+    ];
+    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_primary'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Primary topic vocabularly'),
+      '#description' => $this->t('Configure vocabularly for "primaryTopic" terms.'),
+      '#default_value' => $config->get('topic_vocabularly_primary'),
+      '#options' => $vocabularly_options,
+    ];
+    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_topic'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Topic vocabularly'),
+      '#description' => $this->t('Configure vocabularly for "topic" terms.'),
+      '#default_value' => $config->get('topic_vocabularly_topic'),
+      '#options' => $vocabularly_options,
+    ];
+    $form['node_type_settings']['vocabularly_settings']['topic_vocabularly_all'] = [
+      '#type' => 'select',
+      '#title' => $this->t('All topics vocabularly'),
+      '#description' => $this->t('Configure this field to have all of the "primaryTopic" and "topic" terms in a single vocabularly.'),
+      '#default_value' => $config->get('topic_vocabularly_all'),
+      '#options' => $vocabularly_options,
+    ];
+
     // Story node field mappings.
     $form['node_type_settings']['story_field_mappings'] = [
       '#type' => 'details',
@@ -256,6 +289,9 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config->set('story_node_type', $values['story_node_type']);
     $config->set('body_text_format', $values['body_text_format']);
+    $config->set('topic_vocabularly_primary', $values['topic_vocabularly_primary']);
+    $config->set('topic_vocabularly_topic', $values['topic_vocabularly_topic']);
+    $config->set('topic_vocabularly_all', $values['topic_vocabularly_all']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
     $config->set('audio_media_type', $values['audio_media_type']);
