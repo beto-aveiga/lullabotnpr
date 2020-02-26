@@ -119,9 +119,12 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#options' => $story_field_options,
           '#default_value' => $npr_story_fields[$field_name],
         ];
+        // Make some fields required fields.
+        // TODO: Add form validation so required fields cannot be "unused".
         $form['node_type_settings']['story_field_mappings']['id']['#required'] = TRUE;
         $form['node_type_settings']['story_field_mappings']['audio']['#required'] = TRUE;
         $form['node_type_settings']['story_field_mappings']['image']['#required'] = TRUE;
+        $form['node_type_settings']['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
       }
     }
     else {

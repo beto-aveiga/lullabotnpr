@@ -71,17 +71,20 @@ class NprPullClient extends NprClient {
     $story_config = $this->config->get('npr_story.settings');
     $story_mappings = $story_config->get('story_field_mappings');
 
-    // Verify the story ID field is configured.
+    // Verify that the required fields are configured.
     $id_field = $story_mappings['id'];
     if ($id_field == 'unused') {
       $this->nprPullError('Please configure the story id field.');
       return NULL;
     }
-
+    $node_last_modified = $story_mappings['lastModifiedDate'];
+    if (empty($node_last_modified)) {
+      $this->nprPullError('Please configure the story last modified date field.');
+      return;
+    }
     $text_format = $story_config->get('body_text_format');
     if (empty($text_format)) {
-      // TODO: Add a link to the config page.
-      $this->nprPullError('You must select a body text format.');
+      $this->nprPullError('Please configure the story body text format.');
       return;
     }
 
@@ -103,7 +106,6 @@ class NprPullClient extends NprClient {
       $this->node = reset($this->node);
 
       // Don't update stories that have not been updated.
-      $node_last_modified = $story_mappings['lastModifiedDate'];
       $drupal_story_last_modified = new DateTime($this->node->get($node_last_modified)->value);
       $npr_story_last_modified = new DateTime($story->lastModifiedDate);
       if ($drupal_story_last_modified >= $npr_story_last_modified) {

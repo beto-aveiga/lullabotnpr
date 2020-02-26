@@ -2,12 +2,12 @@ story_node_type: ''
 body_text_format: ''
 story_field_mappings:
   id: ''
+  lastModifiedDate: ''
   image: ''
   audio: ''
   audioRunByDate: ''
   body: ''
   byline: ''
-  lastModifiedDate: ''
   link: ''
   miniTeaser: ''
   pubDate: ''
@@ -15,7 +15,7 @@ story_field_mappings:
   slug: ''
   storyDate: ''
   subtitle: ''
-  teaser:
+  teaser: ''
 image_media_type: 'image'
 image_crop_size: 'standard'
 image_field_mappings:
