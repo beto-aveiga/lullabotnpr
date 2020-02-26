@@ -107,7 +107,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $form['node_type_settings']['vocabulary_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Vocabularly settings'),
-      '#description' => $this->t('Any, all, or none of the topics fields can be configured. For instance, all "primaryTopic" and "topic" terms could go to one vocabulary and another vocabulary could consist only of "primaryTopic" terms.'),
+      '#description' => $this->t('Any, all, or none of the topics fields can be configured. For instance, all "primaryTopic", "topic", and "tag" terms could go to one vocabulary and another vocabulary could consist only of "primaryTopic" terms.'),
       '#open' => TRUE,
     ];
     $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_primary'] = [
@@ -115,6 +115,13 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#title' => $this->t('Primary topic vocabulary'),
       '#description' => $this->t('Configure vocabulary for "primaryTopic" terms.'),
       '#default_value' => $config->get('topic_vocabulary_primary'),
+      '#options' => $vocabulary_options,
+    ];
+    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_tag'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Tag vocabulary'),
+      '#description' => $this->t('Configure vocabulary for "tag" terms.'),
+      '#default_value' => $config->get('topic_vocabulary_tag'),
       '#options' => $vocabulary_options,
     ];
     $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_topic'] = [
@@ -127,7 +134,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_all'] = [
       '#type' => 'select',
       '#title' => $this->t('All topics vocabulary'),
-      '#description' => $this->t('Configure this field to have all of the "primaryTopic" and "topic" terms in a single vocabulary.'),
+      '#description' => $this->t('Configure this field to pull all of the "primaryTopic", "topic", and "tag" terms in a single vocabulary.'),
       '#default_value' => $config->get('topic_vocabulary_all'),
       '#options' => $vocabulary_options,
     ];
@@ -290,6 +297,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('story_node_type', $values['story_node_type']);
     $config->set('body_text_format', $values['body_text_format']);
     $config->set('topic_vocabulary_primary', $values['topic_vocabulary_primary']);
+    $config->set('topic_vocabulary_tag', $values['topic_vocabulary_tag']);
     $config->set('topic_vocabulary_topic', $values['topic_vocabulary_topic']);
     $config->set('topic_vocabulary_all', $values['topic_vocabulary_all']);
     $config->set('image_media_type', $values['image_media_type']);
