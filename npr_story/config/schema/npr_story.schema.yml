@@ -13,7 +13,7 @@ npr_story.settings:
       label: 'All topics vocabulary'
     topic_vocabularly_primary:
       type: text
-      label: 'Primary topics vocabulary'
+      label: 'Primary topic vocabulary'
     topic_vocabularly_topic:
       type: text
       label: 'Topics vocabulary'

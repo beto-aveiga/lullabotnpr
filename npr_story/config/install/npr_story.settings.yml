@@ -19,9 +19,9 @@ story_field_mappings:
   storyDate: ''
   subtitle: ''
   teaser: ''
-  topics_all: ''
-  topics_primary: ''
-  topics_topic: ''
+  topics_all: 'unused'
+  topics_primary: 'unused'
+  topics_topic: 'unused'
 image_media_type: 'image'
 image_crop_size: 'standard'
 image_field_mappings:

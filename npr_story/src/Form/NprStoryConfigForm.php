@@ -103,7 +103,7 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     // Topic vocabularly configuration.
     $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
-    $vocabularly_options = array_combine($vocabs, $vocabs);
+    $vocabularly_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
     $form['node_type_settings']['vocabularly_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Vocabularly settings'),
