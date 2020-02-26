@@ -200,6 +200,12 @@ class NprClient implements ClientInterface {
 
     $this->options = $options;
     $key = $this->config->get('npr_api.settings')->get('npr_api_api_key');
+
+    if (empty($key)) {
+      $this->nprError('The configured NPR API Key is not correct.');
+      return;
+    }
+
     // Add the API key to the parameters.
     $options['apiKey'] = $key;
     // TODO: Which way should we be sorting?
@@ -426,6 +432,32 @@ class NprClient implements ClientInterface {
    */
   public function getQueue(): QueueInterface {
     return $this->queueFactory->get('npr_api.queue.story');
+  }
+
+  /**
+   * Helper function for error messages.
+   *
+   * @param string $text
+   *   The message to log or display.
+   */
+  private function nprError($text) {
+    $this->logger->error($text);
+    if (!empty($this->displayMessages)) {
+      $this->messenger->addError($text);
+    }
+  }
+
+  /**
+   * Helper function for error notices.
+   *
+   * @param string $text
+   *   The message to log or display.
+   */
+  private function nprStatus($text) {
+    $this->logger->notice($text);
+    if (!empty($this->displayMessages)) {
+      $this->messenger->addStatus($text);
+    }
   }
 
 }
