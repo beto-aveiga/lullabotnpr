@@ -247,7 +247,7 @@ class NprPullClient extends NprClient {
     // Verify required image field mappings.
     $image_field = $mappings['image_field'];
     $image_id_field = $mappings['image_id'];
-    if ($image_id_field == 'unused' || $mappings['title'] == 'unused' || $image_field == 'unused') {
+    if ($image_id_field == 'unused' || $mappings['image_title'] == 'unused' || $image_field == 'unused') {
       $this->nprError('Please configure the image_id, title, and image_field settings for media images.');
       return;
     }
@@ -293,7 +293,7 @@ class NprPullClient extends NprClient {
       // Create a media entity.
       $media_image = Media::create([
         // TODO: determine if we have to truncate titles.
-        $mappings['title'] => substr($image->title->value, 0, 255),
+        $mappings['image_title'] => substr($image->title->value, 0, 255),
         'bundle' => $image_media_type,
         'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
         'langcode' => Language::LANGCODE_NOT_SPECIFIED,
@@ -336,10 +336,10 @@ class NprPullClient extends NprClient {
       'alt' => $image->caption->value,
     ]);
 
-    // Map all of the remaining fields except title and image_field, which are
-    // used above.
+    // Map all of the remaining fields except image_title and image_field,
+    // which are used above.
     foreach ($mappings as $key => $value) {
-      if (!empty($value) && $value !== 'unused' && !in_array($key, ['title', 'image_field'])) {
+      if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
         // ID doesn't have a "value" property.
         if ($key == 'image_id') {
           $media_image->set($value, $image->id);
@@ -388,8 +388,8 @@ class NprPullClient extends NprClient {
     // Get, and verify, the necessary configuration.
     $mappings = $this->config->get('npr_story.settings')->get('audio_field_mappings');
     $audio_id_field = $mappings['audio_id'];
-    if ($audio_id_field == 'unused' || $mappings['title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
-      $this->nprError('Please configure the audio_id, title, and remote_audio settings.');
+    if ($audio_id_field == 'unused' || $mappings['audio_title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
+      $this->nprError('Please configure the audio_id, audio_title, and remote_audio settings.');
       return NULL;
     }
     $remote_audio_field = $mappings['remote_audio'];
@@ -425,7 +425,7 @@ class NprPullClient extends NprClient {
       else {
         // Otherwise, create a new media audio entity.
         $media_audio = Media::create([
-          $mappings['title'] => $audio->title->value,
+          $mappings['audio_title'] => $audio->title->value,
           'bundle' => $audio_media_type,
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'langcode' => Language::LANGCODE_NOT_SPECIFIED,
@@ -434,7 +434,7 @@ class NprPullClient extends NprClient {
       }
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['title', 'remote_audio'])) {
+        if (!empty($value) && $value !== 'unused' && !in_array($key, ['audio_title', 'remote_audio'])) {
           // ID doesn't have a "value" property.
           if ($key == 'audio_id') {
             $media_audio->set($value, $audio->id);
@@ -563,9 +563,9 @@ class NprPullClient extends NprClient {
    */
   public function getTopicFields() {
     return [
-      'topics_all',
-      'topics_primary',
-      'topics_topic',
+      'primaryTopic',
+      'topic',
+      'tag',
     ];
   }
 

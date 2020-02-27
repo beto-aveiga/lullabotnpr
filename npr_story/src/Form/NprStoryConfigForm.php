@@ -213,7 +213,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       }
       // Mark the required fields.
       $form['image_settings']['image_field_mappings']['image_id']['#required'] = TRUE;
-      $form['image_settings']['image_field_mappings']['title']['#required'] = TRUE;
+      $form['image_settings']['image_field_mappings']['image_title']['#required'] = TRUE;
       $form['image_settings']['image_field_mappings']['image_field']['#required'] = TRUE;
     }
     else {
