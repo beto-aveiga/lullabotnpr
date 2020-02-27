@@ -266,7 +266,7 @@ class NprStoryConfigForm extends ConfigFormBase {
         ];
         // Mark the required fields.
         $form['audio_settings']['audio_field_mappings']['audio_id']['#required'] = TRUE;
-        $form['audio_settings']['audio_field_mappings']['title']['#required'] = TRUE;
+        $form['audio_settings']['audio_field_mappings']['audio_title']['#required'] = TRUE;
         $form['audio_settings']['audio_field_mappings']['remote_audio']['#required'] = TRUE;
       }
     }
