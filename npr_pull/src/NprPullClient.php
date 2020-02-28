@@ -187,16 +187,40 @@ class NprPullClient extends NprClient {
         }
         elseif (in_array($key, $this->getTopicFields())) {
 
-          // Load the vocabulary data.
-          $topic_vocabulary_primary = $story_config->get('topic_vocabulary_primary');
-          $topic_vocabulary_tag = $story_config->get('topic_vocabulary_tag');
-          $topic_vocabulary_topic = $story_config->get('topic_vocabulary_topic');
-
-          foreach ($story->parent as $item) {
-            if ($item->type == 'primaryTopic' && $topic_vocabulary_primary != 'unused') {
-              $tid = $this->getTermId($item->title->value, $topic_vocabulary_primary);
-              if ($tid > 0) {
-                $this->node->{$value}[] = ['target_id' => $tid];
+          // Handle the primaryTopic field.
+          if ($key == 'primaryTopic') {
+            $topic_vocabulary_primary = $story_config->get('topic_vocabulary_primary');
+            // Check all of the "parent" items for the primary topic.
+            foreach ($story->parent as $item) {
+              if ($item->type == 'primaryTopic' && $topic_vocabulary_primary != 'unused') {
+                $tid = $this->getTermId($item->title->value, $topic_vocabulary_primary);
+                if ($tid > 0) {
+                  $this->node->{$value}[] = ['target_id' => $tid];
+                }
+              }
+            }
+          }
+          // Handle the topic field.
+          if ($key == 'topic') {
+            $topic_vocabulary_topic = $story_config->get('topic_vocabulary_topic');
+            foreach ($story->parent as $item) {
+              if ($item->type == 'topic' && $topic_vocabulary_topic != 'unused') {
+                $tid = $this->getTermId($item->title->value, $topic_vocabulary_topic);
+                if ($tid > 0) {
+                  $this->node->{$value}[] = ['target_id' => $tid];
+                }
+              }
+            }
+          }
+          // Handle the tag field.
+          if ($key == 'tag') {
+            $topic_vocabulary_tag = $story_config->get('topic_vocabulary_tag');
+            foreach ($story->parent as $item) {
+              if ($item->type == 'tag' && $topic_vocabulary_tag != 'unused') {
+                $tid = $this->getTermId($item->title->value, $topic_vocabulary_tag);
+                if ($tid > 0) {
+                  $this->node->{$value}[] = ['target_id' => $tid];
+                }
               }
             }
           }
@@ -600,11 +624,13 @@ class NprPullClient extends NprClient {
    */
   protected function getTermId($term_name, $vid) {
     $term = taxonomy_term_load_multiple_by_name($term_name, $vid);
+    $term = reset($term);
     if (empty($term)) {
       $term = Term::create([
         'name' => $term_name,
         'vid' => $vid,
-      ])->save();
+      ]);
+      $term->save();
       $this->nprStatus($this->t('The term @title was added to @vocab', [
         '@title' => $term_name,
         '@vocab' => $vid,
@@ -617,10 +643,6 @@ class NprPullClient extends NprClient {
         ]));
       return 0;
     }
-    if (empty($term)) {
-      return 0;
-    }
-    $term = reset($term);
     return $term->id();
   }
 
