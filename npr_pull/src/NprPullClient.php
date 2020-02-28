@@ -356,8 +356,9 @@ class NprPullClient extends NprClient {
     }
     if (empty($image_url)) {
       $this->nprError(
-        $this->t('There is no image available for the image with the ID @id.', [
-          '@id' => $image->id,
+        $this->t('There is no image of type @crop available for story @title.', [
+          '@crop' => $crop_selected,
+          '@title' => $story->title,
         ]));
       return;
     }
