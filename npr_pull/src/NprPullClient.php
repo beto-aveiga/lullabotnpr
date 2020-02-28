@@ -9,6 +9,7 @@ use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Performs CRUD opertions on Drupal nodes using data from the NPR API.
@@ -165,11 +166,12 @@ class NprPullClient extends NprClient {
     foreach ($story_mappings as $key => $value) {
 
       // Don't add unused fields.
-      if ($value == 'unused') {
+      if ($value == 'unused' || empty($value)) {
         continue;
       }
 
-      if (!empty($value) && !in_array($key, ['image', 'audio'])) {
+      if (!in_array($key, ['image', 'audio'])) {
+
         // ID doesn't have a "value" property.
         if ($key == 'id') {
           $this->node->set($value, $story->id);
@@ -182,6 +184,22 @@ class NprPullClient extends NprClient {
         }
         elseif ($key == 'link') {
           $this->node->set($value, ['uri' => $story->link['html']]);
+        }
+        elseif (in_array($key, $this->getTopicFields())) {
+
+          // Load the vocabulary data.
+          $topic_vocabulary_primary = $story_config->get('topic_vocabulary_primary');
+          $topic_vocabulary_tag = $story_config->get('topic_vocabulary_tag');
+          $topic_vocabulary_topic = $story_config->get('topic_vocabulary_topic');
+
+          foreach ($story->parent as $item) {
+            if ($item->type == 'primaryTopic' && $topic_vocabulary_primary != 'unused') {
+              $tid = $this->getTermId($item->title->value, $topic_vocabulary_primary);
+              if ($tid > 0) {
+                $this->node->{$value}[] = ['target_id' => $tid];
+              }
+            }
+          }
         }
         elseif ($key == 'byline' && !empty($story->byline)) {
           // Make byline an array if it is not.
@@ -561,12 +579,49 @@ class NprPullClient extends NprClient {
    * @return array
    *   The topic fields
    */
-  public function getTopicFields() {
+  protected function getTopicFields() {
     return [
       'primaryTopic',
       'topic',
       'tag',
     ];
+  }
+
+  /**
+   * Gets a term ID either by loading it or creating it.
+   *
+   * @param string $term_name
+   *   The name of the term.
+   * @param string $vid
+   *   The vocabulary id.
+   *
+   * @return int
+   *   The integer of the taxonomy term.
+   */
+  protected function getTermId($term_name, $vid) {
+    $term = taxonomy_term_load_multiple_by_name($term_name, $vid);
+    if (empty($term)) {
+      $term = Term::create([
+        'name' => $term_name,
+        'vid' => $vid,
+      ])->save();
+      $this->nprStatus($this->t('The term @title was added to @vocab', [
+        '@title' => $term_name,
+        '@vocab' => $vid,
+      ]));
+    }
+    if (is_array($term) && count($term) > 1) {
+      $this->nprError(
+        $this->t('More than one term with the name @name exist. Please delete the duplicate term(s).', [
+          '@name' => $term_name,
+        ]));
+      return 0;
+    }
+    if (empty($term)) {
+      return 0;
+    }
+    $term = reset($term);
+    return $term->id();
   }
 
   /**

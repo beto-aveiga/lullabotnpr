@@ -43,6 +43,8 @@ class NprPullCommands extends DrushCommands {
    *   The number of results to get from the API.
    * @param int $topic_id
    *   The NPR topic ID corrected with topics such as News, Education, or Music.
+   * @param int $start_num
+   *   The page to start from.
    * @param string $sort
    *   The storting order, either dateDesc or dateAsc.
    * @param string $start_date
@@ -57,13 +59,17 @@ class NprPullCommands extends DrushCommands {
    * @command npr_pull:getStoriesByTopicId
    * @aliases npr-gst
    */
-  public function getStoriesByTopicId($num_results = 1, $topic_id = 1001, $sort = 'dateDesc', $start_date = '', $end_date = '', $published = TRUE, $display_messages = TRUE) {
+  public function getStoriesByTopicId($num_results = 1, $topic_id = 1001, $start_num = 0, $sort = 'dateDesc', $start_date = '', $end_date = '', $published = TRUE, $display_messages = TRUE) {
 
     $params = [
       'numResults' => $num_results,
       'id' => $topic_id,
       'sort' => $sort,
     ];
+
+    if ($start_num > 0) {
+      $params['startNum'] = $start_num;
+    }
 
     if (!empty($start_date)) {
       $params['startDate'] = $start_date;
