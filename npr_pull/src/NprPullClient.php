@@ -94,7 +94,7 @@ class NprPullClient extends NprClient {
     $this->node = $node_manager->loadByProperties([$id_field => $story->id]);
     // Check to see if a story node already exists in Drupal.
     if (!empty($this->node)) {
-      // Not the operation being performed for a later status message.
+      // Record the operation being performed for a later status message.
       $operation = "updated";
       if (count($this->node) > 1) {
         $this->nprError(
@@ -107,9 +107,9 @@ class NprPullClient extends NprClient {
       $this->node = reset($this->node);
 
       // Don't update stories that have not been updated.
-      $drupal_story_last_modified = new DateTime($this->node->get($node_last_modified)->value);
-      $npr_story_last_modified = new DateTime($story->lastModifiedDate);
-      if ($drupal_story_last_modified >= $npr_story_last_modified) {
+      $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
+      $npr_story_last_modified = strtotime($story->lastModifiedDate->value);
+      if ($drupal_story_last_modified == $npr_story_last_modified) {
         if ($this->displayMessages) {
           // No need to log this message, so just display it.
           $this->messenger->addStatus(
@@ -161,7 +161,6 @@ class NprPullClient extends NprClient {
         $this->node->{$audio_field}[] = ['target_id' => $media_audio_id];
       }
     }
-
     // Add data to the remaining fields except image and audio.
     foreach ($story_mappings as $key => $value) {
 
@@ -185,42 +184,21 @@ class NprPullClient extends NprClient {
         elseif ($key == 'link') {
           $this->node->set($value, ['uri' => $story->link['html']]);
         }
-        elseif (in_array($key, $this->getTopicFields())) {
-
-          // Handle the primaryTopic field.
-          if ($key == 'primaryTopic') {
-            $topic_vocabulary_primary = $story_config->get('topic_vocabulary_primary');
-            // Check all of the "parent" items for the primary topic.
-            foreach ($story->parent as $item) {
-              if ($item->type == 'primaryTopic' && $topic_vocabulary_primary != 'unused') {
-                $tid = $this->getTermId($item->title->value, $topic_vocabulary_primary);
-                if ($tid > 0) {
-                  $this->node->{$value}[] = ['target_id' => $tid];
-                }
-              }
-            }
-          }
-          // Handle the topic field.
-          if ($key == 'topic') {
-            $topic_vocabulary_topic = $story_config->get('topic_vocabulary_topic');
-            foreach ($story->parent as $item) {
-              if ($item->type == 'topic' && $topic_vocabulary_topic != 'unused') {
-                $tid = $this->getTermId($item->title->value, $topic_vocabulary_topic);
-                if ($tid > 0) {
-                  $this->node->{$value}[] = ['target_id' => $tid];
-                }
-              }
-            }
-          }
-          // Handle the tag field.
-          if ($key == 'tag') {
-            $topic_vocabulary_tag = $story_config->get('topic_vocabulary_tag');
-            foreach ($story->parent as $item) {
-              if ($item->type == 'tag' && $topic_vocabulary_tag != 'unused') {
-                $tid = $this->getTermId($item->title->value, $topic_vocabulary_tag);
-                if ($tid > 0) {
-                  $this->node->{$value}[] = ['target_id' => $tid];
-                }
+        elseif (in_array($key, array_keys($story_config->get('parent_vocabulary')))) {
+          // Get the vocabulary for the current "parent" item (topic, tag, etc).
+          $parent_item_vocabularly = $story_config->get('parent_vocabulary.' . $key);
+          // Get the story field for the current "parent" item.
+          $parent_item_field = $story_config->get('story_field_mappings.' . $key);
+          foreach ($story->parent as $item) {
+            if ($item->type == $key && $parent_item_field != 'unused') {
+              // Get the existing referenced item or create one.
+              $tid = $this->getTermId($item->title->value, $parent_item_vocabularly);
+              $ref_terms = $this->node->get($parent_item_field)->getValue();
+              // Get a list of all items already referenced in the field.
+              $referenced_ids = array_column($ref_terms, 'target_id');
+              // If the item is not already referenced, add a reference.
+              if ($tid > 0 && !in_array($tid, $referenced_ids)) {
+                $this->node->{$parent_item_field}[] = ['target_id' => $tid];
               }
             }
           }
@@ -596,20 +574,6 @@ class NprPullClient extends NprClient {
     $this->setLastUpdateTime($dt_start);
 
     return TRUE;
-  }
-
-  /**
-   * Gets all of the "topic" fields under the "parent" section of the story.
-   *
-   * @return array
-   *   The topic fields
-   */
-  protected function getTopicFields() {
-    return [
-      'primaryTopic',
-      'topic',
-      'tag',
-    ];
   }
 
   /**

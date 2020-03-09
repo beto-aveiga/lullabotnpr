@@ -110,27 +110,16 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#description' => $this->t('Any, all, or none of the topics fields can be configured.'),
       '#open' => TRUE,
     ];
-    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_primary'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Primary topic vocabulary'),
-      '#description' => $this->t('Configure vocabulary for "primaryTopic" terms.'),
-      '#default_value' => $config->get('topic_vocabulary_primary'),
-      '#options' => $vocabulary_options,
-    ];
-    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_topic'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Topic vocabulary'),
-      '#description' => $this->t('Configure vocabulary for "topic" terms.'),
-      '#default_value' => $config->get('topic_vocabulary_topic'),
-      '#options' => $vocabulary_options,
-    ];
-    $form['node_type_settings']['vocabulary_settings']['topic_vocabulary_tag'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Tag vocabulary'),
-      '#description' => $this->t('Configure vocabulary for "tag" terms.'),
-      '#default_value' => $config->get('topic_vocabulary_tag'),
-      '#options' => $vocabulary_options,
-    ];
+    $parent_fields = $config->get('parent_vocabulary');
+    foreach ($parent_fields as $field) {
+      $form['node_type_settings']['vocabulary_settings']['parent_vocabulary_' . $field] = [
+        '#type' => 'select',
+        '#title' => $this->t('@field vocabulary', ['@field' => $field]),
+        '#description' => $this->t('Configure vocabulary for "parent: @field" terms.', ['@field' => $field]),
+        '#default_value' => $config->get('parent_vocabulary.' . $field),
+        '#options' => $vocabulary_options,
+      ];
+    }
 
     // Story node field mappings.
     $form['node_type_settings']['story_field_mappings'] = [
@@ -289,13 +278,15 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config->set('story_node_type', $values['story_node_type']);
     $config->set('body_text_format', $values['body_text_format']);
-    $config->set('topic_vocabulary_primary', $values['topic_vocabulary_primary']);
-    $config->set('topic_vocabulary_topic', $values['topic_vocabulary_topic']);
-    $config->set('topic_vocabulary_tag', $values['topic_vocabulary_tag']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
     $config->set('audio_media_type', $values['audio_media_type']);
     $config->set('audio_format', $values['audio_format']);
+
+    $parent_fields = $config->get('parent_vocabulary');
+    foreach ($parent_fields as $field) {
+      $config->set('parent_vocabulary.' . $field, $values['parent_vocabulary_' . $field]);
+    }
 
     $npr_story_fields = $config->get('story_field_mappings');
     foreach ($npr_story_fields as $field_name => $field_value) {
