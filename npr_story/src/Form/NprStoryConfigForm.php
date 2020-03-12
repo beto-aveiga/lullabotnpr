@@ -111,12 +111,12 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#open' => TRUE,
     ];
     $parent_fields = $config->get('parent_vocabulary');
-    foreach ($parent_fields as $field) {
-      $form['node_type_settings']['vocabulary_settings']['parent_vocabulary_' . $field] = [
+    foreach (array_keys($parent_fields) as $field) {
+      $form['node_type_settings']['vocabulary_settings'][$field] = [
         '#type' => 'select',
         '#title' => $this->t('@field vocabulary', ['@field' => $field]),
         '#description' => $this->t('Configure vocabulary for "parent: @field" terms.', ['@field' => $field]),
-        '#default_value' => $config->get('parent_vocabulary.' . $field),
+        '#default_value' => $config->get($field),
         '#options' => $vocabulary_options,
       ];
     }
@@ -285,7 +285,7 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $parent_fields = $config->get('parent_vocabulary');
     foreach ($parent_fields as $field) {
-      $config->set('parent_vocabulary.' . $field, $values['parent_vocabulary_' . $field]);
+      $config->set($field, $values[$field]);
     }
 
     $npr_story_fields = $config->get('story_field_mappings');
