@@ -112,12 +112,23 @@ class NprStoryConfigForm extends ConfigFormBase {
     ];
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
-      $form['node_type_settings']['vocabulary_settings']['parent_vocabulary_' . $field] = [
+      $form['node_type_settings']['vocabulary_settings'][$field . '_settings'] = [
+        '#type' => 'details',
+        '#title' => $this->t('@field settings', ['@field' => $field]),
+        '#open' => TRUE,
+      ];
+      $form['node_type_settings']['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field] = [
         '#type' => 'select',
         '#title' => $this->t('@field vocabulary', ['@field' => $field]),
         '#description' => $this->t('Configure vocabulary for "@field" terms.', ['@field' => $field]),
         '#default_value' => $config->get('parent_vocabulary.' . $field),
         '#options' => $vocabulary_options,
+      ];
+      $form['node_type_settings']['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field . '_prefix'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('@field prefix', ['@field' => $field]),
+        '#description' => $this->t('Configure a prefix for "@field" terms.', ['@field' => $field]),
+        '#default_value' => $config->get('parent_vocabulary_prefix.' . $field . '_prefix'),
       ];
     }
 
@@ -286,6 +297,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
       $config->set('parent_vocabulary.' . $field, $values['parent_vocabulary_' . $field]);
+      $config->set('parent_vocabulary_prefix.' . $field . '_prefix', $values['parent_vocabulary_' . $field . '_prefix']);
     }
 
     $npr_story_fields = $config->get('story_field_mappings');

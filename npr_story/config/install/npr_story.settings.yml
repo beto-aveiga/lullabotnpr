@@ -8,6 +8,16 @@ parent_vocabulary:
   category: ''
   genre: ''
   artist: ''
+  series: ''
+parent_vocabulary_prefix:
+  primaryTopic_prefix: ''
+  topic_prefix: ''
+  tag_prefix: ''
+  blog_prefix: ''
+  category_prefix: ''
+  genre_prefix: ''
+  artist_prefix: ''
+  series_prefix: ''
 story_field_mappings:
   id: ''
   lastModifiedDate: ''
