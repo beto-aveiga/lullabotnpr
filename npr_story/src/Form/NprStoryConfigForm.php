@@ -106,17 +106,17 @@ class NprStoryConfigForm extends ConfigFormBase {
     $vocabulary_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
     $form['node_type_settings']['vocabulary_settings'] = [
       '#type' => 'details',
-      '#title' => $this->t('Vocabularly settings'),
+      '#title' => $this->t('Vocabulary settings'),
       '#description' => $this->t('Any, all, or none of the topics fields can be configured.'),
       '#open' => TRUE,
     ];
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
-      $form['node_type_settings']['vocabulary_settings'][$field] = [
+      $form['node_type_settings']['vocabulary_settings']['parent_vocabulary_' . $field] = [
         '#type' => 'select',
         '#title' => $this->t('@field vocabulary', ['@field' => $field]),
         '#description' => $this->t('Configure vocabulary for "@field" terms.', ['@field' => $field]),
-        '#default_value' => $config->get($field),
+        '#default_value' => $config->get('parent_vocabulary.' . $field),
         '#options' => $vocabulary_options,
       ];
     }
@@ -284,8 +284,8 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('audio_format', $values['audio_format']);
 
     $parent_fields = $config->get('parent_vocabulary');
-    foreach ($parent_fields as $field) {
-      $config->set($field, $values[$field]);
+    foreach (array_keys($parent_fields) as $field) {
+      $config->set('parent_vocabulary.' . $field, $values['parent_vocabulary_' . $field]);
     }
 
     $npr_story_fields = $config->get('story_field_mappings');
