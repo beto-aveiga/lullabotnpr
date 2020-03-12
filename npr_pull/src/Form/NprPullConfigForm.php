@@ -204,7 +204,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#type' => 'checkboxes',
       '#title' => $this->t('Select taxonomies to use for subscription'),
       '#default_value' => $config->get('topic_vocabularies'),
-      '#description' => $this->t('Each vocabulary selected MUST have a field with the machine name `field_id` and use the `name` field for the title.'),
+      '#description' => $this->t('Each vocabulary selected MUST have a field with the machine name `field_npr_news_id` and use the `name` field for the title.'),
       '#options' => $vocabulary_options,
       '#states' => [
         'visible' => [
