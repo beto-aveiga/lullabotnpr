@@ -163,17 +163,57 @@ class NprPullConfigForm extends ConfigFormBase {
         ],
       ],
     ];
-    $form['story_queue']['topic_ids'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('Limit by topic'),
-      '#default_value' => $config->get('topic_ids'),
-      '#options' => $this->getTopics(),
+
+    $form['story_queue']['method'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Subscribe method'),
+      '#open' => TRUE,
       '#states' => [
         'visible' => [
           'input[name="queue_enable"]' => ['checked' => TRUE],
         ],
       ],
     ];
+
+    $form['story_queue']['method']['subscribe_method'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select method for subscription'),
+      '#description' => $this->t('Both methods produce a list of NPR tag and topic IDs to query. One method allows selecting terms for a list, while the other method is more flexible and uses data from a configurable taxonomy vocabulary.'),
+      '#default_value' => $config->get('subscribe_method'),
+      '#options' => [
+        'checkbox' => 'Checkbox',
+        'taxonomy' => 'Taxonomy',
+      ],
+    ];
+
+    $form['story_queue']['method']['topic_ids'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Limit by topic'),
+      '#default_value' => $config->get('topic_ids'),
+      '#options' => $this->getTopics(),
+      '#states' => [
+        'visible' => [
+          'select[name="subscribe_method"]' => ['value' => 'checkbox'],
+        ],
+      ],
+    ];
+
+    $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
+    $vocabulary_options = array_combine($vocabs, $vocabs);
+    $form['story_queue']['method']['topic_vocabularies'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Select taxonomies to use for subscription'),
+      '#default_value' => $config->get('topic_vocabularies'),
+      '#description' => $this->t('Each vocabulary selected MUST have a field with the machine name `field_id` and use the `name` field for the title.'),
+      '#options' => $vocabulary_options,
+      '#states' => [
+        'visible' => [
+          'select[name="subscribe_method"]' => ['value' => 'taxonomy'],
+        ],
+      ],
+    ];
+
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -190,6 +230,8 @@ class NprPullConfigForm extends ConfigFormBase {
     $config->set('queue_enable', $values['queue_enable']);
     $config->set('num_results', $values['num_results']);
     $config->set('org_id', $values['org_id']);
+    $config->set('subscribe_method', $values['subscribe_method']);
+    $config->set('topic_vocabularies', array_filter($values['topic_vocabularies']));
     $config->set('topic_ids', array_filter($values['topic_ids']));
     $config->save();
 
