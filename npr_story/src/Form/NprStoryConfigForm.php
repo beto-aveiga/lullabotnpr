@@ -115,7 +115,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       $form['node_type_settings']['vocabulary_settings'][$field] = [
         '#type' => 'select',
         '#title' => $this->t('@field vocabulary', ['@field' => $field]),
-        '#description' => $this->t('Configure vocabulary for "parent: @field" terms.', ['@field' => $field]),
+        '#description' => $this->t('Configure vocabulary for "@field" terms.', ['@field' => $field]),
         '#default_value' => $config->get($field),
         '#options' => $vocabulary_options,
       ];
