@@ -75,14 +75,15 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config = $this->config('npr_story.settings');
 
     // Node type configuration.
-    $form['node_type_settings'] = [
+    $form['node_settings]'] = [
       '#type' => 'details',
-      '#title' => $this->t('Node type settings'),
+      '#title' => $this->t('Node settings'),
+      '#description' => $this->t('To make this module as flexible as possible, there are many configuration options available. The story field mappings are probably the most important, but the vocabulary settings are required for various topics/tags and the image/audio settings are required to have images and audio.'),
       '#open' => TRUE,
     ];
     $drupal_node_types = array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple());
     $node_type_options = array_combine($drupal_node_types, $drupal_node_types);
-    $form['node_type_settings']['story_node_type'] = [
+    $form['node_settings]']['story_node_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Drupal story node type'),
       '#default_value' => $config->get('story_node_type'),
@@ -93,7 +94,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     foreach (filter_formats() as $format) {
       $formats[$format->get('format')] = $format->get('name');
     }
-    $form['node_type_settings']['body_text_format'] = [
+    $form['node_settings]']['body_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Body text format'),
       '#description' => $this->t('The body field is selected below.'),
@@ -101,42 +102,12 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#options' => $formats,
     ];
 
-    // Topic vocabulary configuration.
-    $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
-    $vocabulary_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
-    $form['node_type_settings']['vocabulary_settings'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Vocabulary settings'),
-      '#description' => $this->t('Any, all, or none of the topics fields can be configured.'),
-      '#open' => TRUE,
-    ];
-    $parent_fields = $config->get('parent_vocabulary');
-    foreach (array_keys($parent_fields) as $field) {
-      $form['node_type_settings']['vocabulary_settings'][$field . '_settings'] = [
-        '#type' => 'details',
-        '#title' => $this->t('@field settings', ['@field' => $field]),
-        '#open' => TRUE,
-      ];
-      $form['node_type_settings']['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field] = [
-        '#type' => 'select',
-        '#title' => $this->t('@field vocabulary', ['@field' => $field]),
-        '#description' => $this->t('Configure vocabulary for "@field" terms. The vocabulary must contain a `name` field and a field with the machine name `field_npr_news_id`.', ['@field' => $field]),
-        '#default_value' => $config->get('parent_vocabulary.' . $field),
-        '#options' => $vocabulary_options,
-      ];
-      $form['node_type_settings']['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field . '_prefix'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('@field prefix', ['@field' => $field]),
-        '#description' => $this->t('Configure a prefix for "@field" terms.', ['@field' => $field]),
-        '#default_value' => $config->get('parent_vocabulary_prefix.' . $field . '_prefix'),
-      ];
-    }
 
     // Story node field mappings.
-    $form['node_type_settings']['story_field_mappings'] = [
+    $form['story_field_mappings'] = [
       '#type' => 'details',
       '#title' => $this->t('Story field mappings'),
-      '#open' => TRUE,
+      '#open' => FALSE,
     ];
     $story_node_type = $config->get('story_node_type');
     if (!empty($story_node_type)) {
@@ -146,7 +117,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       $story_field_options = ['unused' => 'unused'] + array_combine($story_fields, $story_fields);
       $npr_story_fields = $config->get('story_field_mappings');
       foreach ($npr_story_fields as $field_name => $field_value) {
-        $form['node_type_settings']['story_field_mappings'][$field_name] = [
+        $form['story_field_mappings'][$field_name] = [
           '#type' => 'select',
           '#title' => $field_name,
           '#options' => $story_field_options,
@@ -154,16 +125,47 @@ class NprStoryConfigForm extends ConfigFormBase {
         ];
         // Make some fields required fields.
         // TODO: Add form validation so required fields cannot be "unused".
-        $form['node_type_settings']['story_field_mappings']['id']['#required'] = TRUE;
-        $form['node_type_settings']['story_field_mappings']['audio']['#required'] = TRUE;
-        $form['node_type_settings']['story_field_mappings']['image']['#required'] = TRUE;
-        $form['node_type_settings']['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
+        $form['story_field_mappings']['id']['#required'] = TRUE;
+        $form['story_field_mappings']['audio']['#required'] = TRUE;
+        $form['story_field_mappings']['image']['#required'] = TRUE;
+        $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
       }
     }
     else {
-      $form['node_type_settings']['story_field_mappings']['mappings_required'] = [
+      $form['story_field_mappings']['mappings_required'] = [
         '#type' => 'item',
         '#markup' => 'Select and save Drupal story node type to choose field mappings.',
+      ];
+    }
+
+    // Topic vocabulary configuration.
+    $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
+    $vocabulary_options = ['unused' => 'unused'] + array_combine($vocabs, $vocabs);
+    $form['vocabulary_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Vocabulary settings'),
+      '#description' => $this->t('Select the kinds of data that you would like to collect and store in taxonomy terms, such as topics, tags, genres, artists, series, and more. Any, all, or none of the vocabularies. can be configured.'),
+      '#open' => FALSE,
+    ];
+    $parent_fields = $config->get('parent_vocabulary');
+    foreach (array_keys($parent_fields) as $field) {
+      $form['vocabulary_settings'][$field . '_settings'] = [
+        '#type' => 'details',
+        '#title' => $this->t('@field settings', ['@field' => $field]),
+        '#open' => TRUE,
+      ];
+      $form['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field] = [
+        '#type' => 'select',
+        '#title' => $this->t('@field vocabulary', ['@field' => $field]),
+        '#description' => $this->t('Configure vocabulary for "@field" terms. The vocabulary must contain a `name` field and a field with the machine name `field_npr_news_id`.', ['@field' => $field]),
+        '#default_value' => $config->get('parent_vocabulary.' . $field),
+        '#options' => $vocabulary_options,
+      ];
+      $form['vocabulary_settings'][$field . '_settings']['parent_vocabulary_' . $field . '_prefix'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('@field prefix', ['@field' => $field]),
+        '#description' => $this->t('Configure a prefix for "@field" terms.', ['@field' => $field]),
+        '#default_value' => $config->get('parent_vocabulary_prefix.' . $field . '_prefix'),
       ];
     }
 
@@ -171,7 +173,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $form['image_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Image settings'),
-      '#open' => TRUE,
+      '#open' => FALSE,
     ];
     $media_types = array_keys($this->entityTypeManager->getStorage('media_type')->loadMultiple());
     $media_type_options = array_combine($media_types, $media_types);
@@ -189,11 +191,12 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#options' => $image_options,
       '#default_value' => $config->get('image_crop_size'),
     ];
+
     // Media image field mappings.
     $form['image_settings']['image_field_mappings'] = [
       '#type' => 'details',
       '#title' => $this->t('Image field mappings'),
-      '#open' => TRUE,
+      '#open' => FALSE,
     ];
     $image_media_type = $config->get('image_media_type');
     if (!empty($image_media_type)) {
@@ -227,7 +230,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $form['audio_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Audio settings'),
-      '#open' => TRUE,
+      '#open' => FALSE,
     ];
     $form['audio_settings']['audio_media_type'] = [
       '#type' => 'select',

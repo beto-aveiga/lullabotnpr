@@ -186,13 +186,13 @@ class NprPullClient extends NprClient {
         }
         elseif (in_array($key, array_keys($story_config->get('parent_vocabulary')))) {
           // Get the vocabulary for the current "parent" item (topic, tag, etc).
-          $parent_item_vocabularly = $story_config->get('parent_vocabulary.' . $key);
+          $parent_item_vocabulary = $story_config->get('parent_vocabulary.' . $key);
           // Get the story field for the current "parent" item.
           $parent_item_field = $story_config->get('story_field_mappings.' . $key);
           foreach ($story->parent as $item) {
             if ($item->type == $key && $parent_item_field != 'unused') {
               // Get the existing referenced item or create one.
-              $tid = $this->getTermId($item->title->value, $parent_item_vocabularly);
+              $tid = $this->getTermId($item->title->value, $parent_item_vocabulary);
               $ref_terms = $this->node->get($parent_item_field)->getValue();
               // Get a list of all items already referenced in the field.
               $referenced_ids = array_column($ref_terms, 'target_id');
