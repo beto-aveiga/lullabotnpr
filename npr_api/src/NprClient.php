@@ -190,7 +190,10 @@ class NprClient implements ClientInterface {
   public function getStories(array $params) {
     $this->getXmlStories($params);
     $this->parse();
-    return $this->stories;
+    if (!empty($this->stories)) {
+      return $this->stories;
+    }
+    return NULL;
   }
 
   /**
