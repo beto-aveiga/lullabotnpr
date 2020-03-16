@@ -4,6 +4,7 @@ namespace Drupal\npr_api;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Queue\QueueFactory;
@@ -93,6 +94,13 @@ class NprClient implements ClientInterface {
   protected $fileSystem;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \Psr\Log\LoggerInterface $logger
@@ -111,10 +119,12 @@ class NprClient implements ClientInterface {
    *   Queue factory service.
    * @param \Drupal\Core\State\StateInterface $state
    *   State service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The filesystem service.
    */
-  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, FileSystemInterface $file_system = NULL) {
+  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, ModuleHandlerInterface $module_handler, FileSystemInterface $file_system = NULL) {
     $this->logger = $logger;
     $this->client = $client;
     $this->entityTypeManager = $entity_type_manager;
@@ -123,6 +133,7 @@ class NprClient implements ClientInterface {
     $this->messenger = $messenger;
     $this->queueFactory = $queue_factory;
     $this->state = $state;
+    $this->moduleHandler = $module_handler;
     $this->fileSystem = $file_system;
   }
 
@@ -139,6 +150,7 @@ class NprClient implements ClientInterface {
       $container->get('messenger'),
       $container->get('queue'),
       $container->get('state'),
+      $container->get('module_handler'),
       $container->get('file_system')
     );
   }
