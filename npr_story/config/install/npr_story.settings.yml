@@ -9,6 +9,7 @@ parent_vocabulary:
   genre: ''
   artist: ''
   series: ''
+  program: ''
 parent_vocabulary_prefix:
   primaryTopic_prefix: ''
   topic_prefix: ''
@@ -18,6 +19,7 @@ parent_vocabulary_prefix:
   genre_prefix: ''
   artist_prefix: ''
   series_prefix: ''
+  program_prefix: ''
 story_field_mappings:
   id: ''
   lastModifiedDate: ''
