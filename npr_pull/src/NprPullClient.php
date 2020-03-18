@@ -193,6 +193,7 @@ class NprPullClient extends NprClient {
           $parent_item_field = $story_config->get('story_field_mappings.' . $key);
           foreach ($story->parent as $item) {
             if ($item->type == $key && $parent_item_field != 'unused') {
+              // Add a prefix to the term, if necessary.
               if ($parent_item_vocabulary_prefix != '') {
                 $saved_term = $parent_item_vocabulary_prefix . $item->title->value;
               }
@@ -200,7 +201,7 @@ class NprPullClient extends NprClient {
                 $saved_term = $item->title->value;
               }
               // Get the existing referenced item or create one.
-              $tid = $this->getTermId($saved_term, $parent_item_vocabulary);
+              $tid = $this->getTermId($saved_term, $item->id, $parent_item_vocabulary);
               $ref_terms = $this->node->get($parent_item_field)->getValue();
               // Get a list of all items already referenced in the field.
               $referenced_ids = array_column($ref_terms, 'target_id');
@@ -589,19 +590,23 @@ class NprPullClient extends NprClient {
    *
    * @param string $term_name
    *   The name of the term.
+   * @param int $id
+   *   The NPR ID of the term.
    * @param string $vid
    *   The vocabulary id.
    *
    * @return int
    *   The integer of the taxonomy term.
    */
-  protected function getTermId($term_name, $vid) {
-    $term = taxonomy_term_load_multiple_by_name($term_name, $vid);
+  protected function getTermId($term_name, $id, $vid) {
+    $term = $this->entityTypeManager->getStorage('taxonomy_term')
+      ->loadByProperties(['field_npr_news_id' => $id]);
     $term = reset($term);
     if (empty($term)) {
       $term = Term::create([
         'name' => $term_name,
         'vid' => $vid,
+        'field_npr_news_id' => $id,
       ]);
       $term->save();
       $this->nprStatus($this->t('The term @title was added to @vocab', [
@@ -611,8 +616,8 @@ class NprPullClient extends NprClient {
     }
     if (is_array($term) && count($term) > 1) {
       $this->nprError(
-        $this->t('More than one term with the name @name exist. Please delete the duplicate term(s).', [
-          '@name' => $term_name,
+        $this->t('Multiple terms with the id @id exist. Please delete the duplicate term(s).', [
+          '@id' => $id,
         ]));
       return 0;
     }
