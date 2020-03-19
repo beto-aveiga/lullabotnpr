@@ -13,39 +13,29 @@
  * @throws \Exception
  */
 function npr_pull_cron(): void {
+
   /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
   $config_factory = \Drupal::configFactory();
   $config = $config_factory->get('npr_pull.settings');
+  $queue_enable = $config->get('queue_enable');
+  $queue_interval = (int) $config->get('queue_interval');
+  $subscribe_method = $config->get('subscribe_method');
+  if (empty($queue_enable) || empty($queue_interval) || empty($subscribe_method)) {
+    return;
+  }
+
+  /** @var \Drupal\npr_pull\NprPullClient $nprPullClient */
+  $nprPullClient = Drupal::service('npr_pull.client');
 
   // Get the current time.
   $request_time = \Drupal::time()->getRequestTime();
   $now = new DateTime("@{$request_time}");
 
-  $queue_enable = $config->get('queue_enable');
-  $queue_interval = $config->get('queue_interval');
-  if (!empty($queue_enable) & !empty($queue_interval)) {
-    /** @var \Drupal\npr_pull\NprPullClient $nprPullClient */
-    $nprPullClient = Drupal::service('npr_pull.client');
+  // Determine difference beteween now and when the queue was last updated.
+  $diff = $now->getTimestamp() - $nprPullClient->getLastUpdateTime()->getTimestamp();
 
-    // Get a timestamp of the update interval.
-    $interval = (int) $config->get('queue_interval');
-    // Determine difference beteween now and when the queue was last updated.
-    $diff = $now->getTimestamp() - $nprPullClient->getLastUpdateTime()->getTimestamp();
-
-    // Only update the queue if more time has passed than the desired interval.
-    if ($diff > $interval) {
-      _npr_pull_story_update_queue();
-    }
+  // Only update the queue if more time has passed than the desired interval.
+  if ($diff > $queue_interval) {
+    $nprPullClient->updateQueue();
   }
-}
-
-/**
- * Executes the Story queue update operation.
- *
- * @throws \Exception
- */
-function _npr_pull_story_update_queue() {
-  /** @var \Drupal\npr_pull\NprPullClient $nprPullClient */
-  $nprPullClient = Drupal::service('npr_pull.client');
-  $nprPullClient->updateQueue();
 }

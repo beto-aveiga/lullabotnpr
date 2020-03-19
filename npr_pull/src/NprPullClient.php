@@ -547,6 +547,7 @@ class NprPullClient extends NprClient {
   public function updateQueue(DateTime $since = NULL): bool {
     $dt_start = new DateTime();
 
+    $this->stories = [];
     if (empty($since)) {
       $since = $this->getLastUpdateTime();
     }
@@ -556,11 +557,35 @@ class NprPullClient extends NprClient {
     // By default, check stories for the past 3 days.
     $start = date("Y-m-d", time() - 259200);
     $end = date("Y-m-d");
-    $topic_ids = $pull_config->get('topic_ids');
+
+    $subscribe_method = $pull_config->get('subscribe_method');
+    if ($subscribe_method == 'taxonomy' && $topic_vocabularies = $pull_config->get('topic_vocabularies')) {
+      $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
+      // For each vocabularly used for subscription, check for taxonomy terms
+      // with the "subscribe" box checked.
+      foreach (array_keys($topic_vocabularies) as $vocabulary) {
+        $subscribed_terms = $taxonomy_manager->loadByProperties([
+          'field_npr_subscribe' => 1,
+          'vid' => $vocabulary,
+        ]);
+        // Get the NPR ids for all of the terms that have been subscribed to.
+        foreach ($subscribed_terms as $subscribed_term) {
+          if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
+            $topic_ids[$npr_id] = $npr_id;
+          }
+        }
+      }
+    }
+    // If the terms have been selected using the predetermined checkboxes, get
+    // those as a list of topic IDs.
+    elseif ($subscribe_method == 'checkbox') {
+      $topic_ids = $pull_config->get('topic_ids');
+    }
     // If there is no topic ID, just get "News".
     if (empty($topic_ids)) {
       $topic_ids = [1001 => 1001];
     }
+
     // Make separate API calls for each topic. If there are many, many topics
     // slected, we may not get data for all of them.
     foreach ($topic_ids as $topic_id) {
