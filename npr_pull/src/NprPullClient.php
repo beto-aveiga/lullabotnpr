@@ -560,7 +560,6 @@ class NprPullClient extends NprClient {
 
     // Get a list of IDs subscribed to.
     $npr_ids = $this->getSubscriptionIds();
-    var_dump($npr_ids);
 
     // Make separate API calls for each topic. If there are many, many topics
     // slected, we may not get data for all of them.
