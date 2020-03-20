@@ -558,39 +558,15 @@ class NprPullClient extends NprClient {
     $start = date("Y-m-d", time() - 259200);
     $end = date("Y-m-d");
 
-    $subscribe_method = $pull_config->get('subscribe_method');
-    if ($subscribe_method == 'taxonomy' && $topic_vocabularies = $pull_config->get('topic_vocabularies')) {
-      $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
-      // For each vocabularly used for subscription, check for taxonomy terms
-      // with the "subscribe" box checked.
-      foreach (array_keys($topic_vocabularies) as $vocabulary) {
-        $subscribed_terms = $taxonomy_manager->loadByProperties([
-          'field_npr_subscribe' => 1,
-          'vid' => $vocabulary,
-        ]);
-        // Get the NPR ids for all of the terms that have been subscribed to.
-        foreach ($subscribed_terms as $subscribed_term) {
-          if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
-            $topic_ids[$npr_id] = $npr_id;
-          }
-        }
-      }
-    }
-    // If the terms have been selected using the predetermined checkboxes, get
-    // those as a list of topic IDs.
-    elseif ($subscribe_method == 'checkbox') {
-      $topic_ids = $pull_config->get('topic_ids');
-    }
-    // If there is no topic ID, just get "News".
-    if (empty($topic_ids)) {
-      $topic_ids = [1001 => 1001];
-    }
+    // Get a list of IDs subscribed to.
+    $npr_ids = $this->getSubscriptionIds();
+    var_dump($npr_ids);
 
     // Make separate API calls for each topic. If there are many, many topics
     // slected, we may not get data for all of them.
-    foreach ($topic_ids as $topic_id) {
+    foreach ($npr_ids as $npr_id) {
       $params = [
-        'id' => $topic_id,
+        'id' => $npr_id,
         'numResults' => $num_results,
         'startDate' => $start,
         'endDate' => $end,
@@ -647,6 +623,65 @@ class NprPullClient extends NprClient {
       return 0;
     }
     return $term->id();
+  }
+
+  /**
+   * Get a list of NPR IDs subscribed to.
+   *
+   * @return array
+   *   A list of NPR IDs or just "News" if none are selected.
+   */
+  public function getSubscriptionIds() {
+    $pull_config = $this->config->get('npr_pull.settings');
+    $subscribe_method = $pull_config->get('subscribe_method');
+    if ($subscribe_method == 'taxonomy') {
+      if ($subscribed_terms = $this->getSubscriptionTerms()) {
+        // Get the NPR ids for all of the terms that have been subscribed to.
+        foreach ($subscribed_terms as $subscribed_term) {
+          if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
+            $npr_ids[$npr_id] = $npr_id;
+          }
+        }
+      }
+    }
+    // If the terms have been selected using the predetermined checkboxes, get
+    // those as a list of topic IDs.
+    elseif ($subscribe_method == 'checkbox') {
+      $npr_ids = $pull_config->get('npr_ids');
+    }
+    // If there are no topic IDs, just get "News".
+    if (empty($npr_ids)) {
+      $npr_ids = [1001 => 1001];
+    }
+    return $npr_ids;
+  }
+
+  /**
+   * Get taxonomy terms subscribed to.
+   *
+   * @return array
+   *   An array of taxonomy terms.
+   */
+  public function getSubscriptionTerms() {
+    $pull_config = $this->config->get('npr_pull.settings');
+    $topic_vocabularies = $pull_config->get('topic_vocabularies');
+    $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
+    $all_subscribed_terms = [];
+    // For each vocabularly used for subscription, check for taxonomy terms
+    // with the "subscribe" box checked.
+    foreach (array_keys($topic_vocabularies) as $vocabulary) {
+      $subscribed_terms = $taxonomy_manager->loadByProperties([
+        'field_npr_subscribe' => 1,
+        'vid' => $vocabulary,
+      ]);
+      foreach ($subscribed_terms as $term) {
+        // Only include subscribed terms that have a NPR ID.
+        if (!empty($term->get('field_npr_news_id')->value)) {
+          $all_subscribed_terms[] = $term;
+        }
+      }
+    }
+    return $all_subscribed_terms;
   }
 
   /**

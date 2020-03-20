@@ -7,6 +7,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
+use Drupal\npr_pull\NprPullClient;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -31,16 +33,26 @@ class NprPullConfigForm extends ConfigFormBase {
   protected $dateFormatter;
 
   /**
+   * The NPR Pull service.
+   *
+   * @var \Drupal\npr_pull\NprPullClient
+   */
+  protected $client;
+
+  /**
    * Constructs a new NprStoryConfigForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date Formatter service.
+   * @param \Drupal\npr_pull\NprPullClient $client
+   *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, NprPullClient $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->dateFormatter = $date_formatter;
+    $this->client = $client;
   }
 
   /**
@@ -49,7 +61,8 @@ class NprPullConfigForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
-      $container->get('date.formatter')
+      $container->get('date.formatter'),
+      $container->get('npr_pull.client')
     );
   }
 
@@ -213,6 +226,35 @@ class NprPullConfigForm extends ConfigFormBase {
       ],
     ];
 
+    if ($subscriptions = $this->client->getSubscriptionTerms()) {
+      foreach ($subscriptions as $subscription) {
+        // Name is a required field and can't be blank.
+        $tid = $subscription->get('tid')->value;
+        $name = $subscription->get('name')->value;
+        $npr_id = $subscription->get('field_npr_news_id')->value;
+        $bundle = $subscription->bundle();
+        $url = Url::fromRoute('entity.taxonomy_term.edit_form', [
+          'taxonomy_term' => $tid,
+        ])->toString(TRUE)->getGeneratedUrl();
+        $items[] = $this->t('<a href="@url">@name</a> (@bundle, @npr_id)', [
+          '@url' => $url,
+          '@name' => $name,
+          '@bundle' => $bundle,
+          '@npr_id' => $npr_id,
+        ]);
+      }
+      $form['story_queue']['method']['subscriptions'] = [
+        '#type' => 'markup',
+        '#theme' => 'item_list',
+        '#title' => 'Subscriptions',
+        '#items' => $items,
+        '#states' => [
+          'visible' => [
+            'select[name="subscribe_method"]' => ['value' => 'taxonomy'],
+          ],
+        ],
+      ];
+    }
 
     return parent::buildForm($form, $form_state);
   }
