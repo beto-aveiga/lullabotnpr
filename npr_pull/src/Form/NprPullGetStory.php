@@ -86,11 +86,38 @@ class NprPullGetStory extends ConfigFormBase {
     $user = $this->entityTypeManager->getStorage('user')->load($author_id);
     $username = $user->getUsername() ?: 'Anonymous';
 
-    $form['url'] = [
+    $form['retrieval_method'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Retrieval Method'),
+    ];
+    $form['retrieval_method']['url_or_id'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select a method to retrieve a story from the NPR API'),
+      '#default_value' => 'url',
+      '#options' => [
+        'url' => 'Story URL',
+        'id' => 'Story ID',
+      ],
+    ];
+    $form['retrieval_method']['story_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('NPR API story URL'),
-      '#required' => TRUE,
       '#description' => $this->t('Full URL for a story on NPR.org.'),
+      '#states' => [
+        'visible' => [
+          'select[name="url_or_id"]' => ['value' => 'url'],
+        ],
+      ],
+    ];
+    $form['retrieval_method']['story_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('NPR API story ID'),
+      '#description' => $this->t('Story ID on NPR.org.'),
+      '#states' => [
+        'visible' => [
+          'select[name="url_or_id"]' => ['value' => 'id'],
+        ],
+      ],
     ];
 
     $form['author'] = [
@@ -120,23 +147,36 @@ class NprPullGetStory extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
-    $url_value = $form_state->getValue(['url']);
+    $values = $form_state->getValues();
+    $url_or_id = $values['url_or_id'];
 
-    if (!UrlHelper::isValid($url_value, TRUE)) {
-      $form_state->setErrorByName('url', $this->t('Does not appear to be a valid URL.'));
-      return;
+    // If the retrieval method is URL, validate the URL before submitting.
+    if ($url_or_id == 'url') {
+      $url_value = $values['story_url'];
+
+      if (!UrlHelper::isValid($url_value, TRUE)) {
+        $form_state->setErrorByName('url', $this->t('Does not appear to be a valid URL.'));
+        return;
+      }
+
+      if (!$this->client->extractId($url_value)) {
+        $form_state->setErrorByName('url', $this->t('Could not extract an NPR ID from given URL.'));
+      }
+
+      $story_id = $this->client->extractId($url_value) ?: 0;
+      $story = $this->client->getStories(['id' => $story_id]);
+      if (empty($story)) {
+        $form_state->setErrorByName('url', $this->t('The NPR ID @id did not return stories.', [
+          '@id' => $story_id,
+        ]));
+      }
     }
-
-    if (!$this->client->extractId($url_value)) {
-      $form_state->setErrorByName('url', $this->t('Could not extract an NPR ID from given URL.'));
-    }
-
-    $story_id = $this->client->extractId($url_value) ?: 0;
-    $story = $this->client->getStories(['id' => $story_id]);
-    if (empty($story)) {
-      $form_state->setErrorByName('url', $this->t('The NPR ID @id did not return stories.', [
-        '@id' => $story_id,
-      ]));
+    // If the retrieval method is URL, validate the URL before submitting.
+    else {
+      $story_id = $values['story_id'];
+      if (!is_numeric($story_id)) {
+        $form_state->setErrorByName('id', $this->t('The NPR ID must be an integer.'));
+      }
     }
   }
 
@@ -145,16 +185,24 @@ class NprPullGetStory extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
-    // Get the ID of the story from the URL.
-    $url_value = $form_state->getValue(['url']);
-    $story_id = $this->client->extractId($url_value) ?: 0;
+    $values = $form_state->getValues();
+
+    $url_or_id = $form_state->getValue(['url_or_id']);
+    if ($url_or_id == 'url') {
+      // Get the ID of the story from the URL.
+      $url_value = $values['story_url'];
+      $story_id = $this->client->extractId($url_value) ?: 0;
+    }
+    else {
+      $story_id = $values['story_id'];
+    }
 
     // Load the story from NPR.
     $story = $this->client->getStories(['id' => $story_id]);
     $story = reset($story);
 
     // Add or update the story.
-    $published = $form_state->getValue(['publish_flag']);
+    $published = $values['publish_flag'];
     $display_messages = TRUE;
     $this->client->addOrUpdateNode($story, $published, $display_messages);
   }
