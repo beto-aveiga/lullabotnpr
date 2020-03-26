@@ -380,7 +380,7 @@ class NprClient implements ClientInterface {
       $msg[] = 'Request had no parameters.';
     }
 
-    if ($this->response->getStatusCode()) {
+    if (!empty($this->response->getStatusCode())) {
       $msg[] = 'Response code was ' . $this->response->getStatusCode() . '.';
     }
     if (!empty($this->stories)) {
