@@ -3,11 +3,29 @@
 namespace Drupal\npr_pull\Commands;
 
 use Drush\Commands\DrushCommands;
+use Drupal\npr_pull\NprPullClient;
 
 /**
  * A Drush commandfile.
  */
 class NprPullCommands extends DrushCommands {
+
+  /**
+   * The NPR Pull service.
+   *
+   * @var \Drupal\npr_pull\NprPullClient
+   */
+  protected $client;
+
+  /**
+   * Constructs a new DrushCommands object.
+   *
+   * @param \Drupal\npr_pull\NprPullClient $client
+   *   The NPR client.
+   */
+  public function __construct(NprPullClient $client) {
+    $this->client = $client;
+  }
 
   /**
    * Command to pull a single NPR story.
@@ -24,15 +42,12 @@ class NprPullCommands extends DrushCommands {
    */
   public function getStoryById($id, $published = TRUE, $display_messages = TRUE) {
 
-    // Get the story from the API.
-    /** @var \Drupal\npr_pull\NprPullClient $client */
-    $client = \Drupal::service('npr_pull.client');
     $params['id'] = $id;
-    $stories = $client->getStories($params);
+    $stories = $this->client->getStories($params);
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $client->addOrUpdateNode($story, $published, $display_messages);
+      $this->client->addOrUpdateNode($story, $published, $display_messages);
     }
   }
 
@@ -79,14 +94,11 @@ class NprPullCommands extends DrushCommands {
       $start_date = date("Y-m-d");
     }
 
-    // Get the stories from the API.
-    /** @var \Drupal\npr_pull\NprPullClient $client */
-    $client = \Drupal::service('npr_pull.client');
-    $stories = $client->getStories($params);
+    $stories = $this->client->getStories($params);
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $client->addOrUpdateNode($story, $published, $display_messages);
+      $this->client->addOrUpdateNode($story, $published, $display_messages);
     }
   }
 

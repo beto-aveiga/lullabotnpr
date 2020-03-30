@@ -1,5 +1,6 @@
 services:
   npr_pull.commands:
     class: \Drupal\npr_pull\Commands\NprPullCommands
+    arguments: ['@npr_pull.client']
     tags:
       - { name: drush.command }
