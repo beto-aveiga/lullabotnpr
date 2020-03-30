@@ -83,8 +83,10 @@ class NprPullGetStory extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
 
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
-    $user = $this->entityTypeManager->getStorage('user')->load($author_id);
-    $username = $user->getUsername() ?: 'Anonymous';
+    $username = 'Anonymous';
+    if ($user = $this->entityTypeManager->getStorage('user')->load($author_id)) {
+      $username = $user->getUsername();
+    }
 
     $form['retrieval_method'] = [
       '#type' => 'fieldset',
