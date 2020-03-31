@@ -440,7 +440,7 @@ class NprPullClient extends NprClient {
           $this->nprError(
             $this->t('More than one audio media item with the ID @id ("@title") exist. Please delete the duplicate audio media.', [
               '@id' => $audio->id,
-              '@title' => $audio->title,
+              '@title' => $story->title,
             ]));
           return;
         }
@@ -453,9 +453,10 @@ class NprPullClient extends NprClient {
 
       }
       else {
-        // Otherwise, create a new media audio entity.
+        // Otherwise, create a new media audio entity. Use the title of the
+        // story for the title of the audio.
         $media_audio = Media::create([
-          $mappings['audio_title'] => $audio->title->value,
+          $mappings['audio_title'] => $story->title,
           'bundle' => $audio_media_type,
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'langcode' => Language::LANGCODE_NOT_SPECIFIED,
