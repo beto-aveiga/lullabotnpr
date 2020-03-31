@@ -223,7 +223,7 @@ class NprPullClient extends NprClient {
               $uri = $author->link[0]->value;
             }
             else {
-              $uri = '<nolink>';
+              $uri = 'route:<nolink>';
             }
             $byline[] = [
               // It looks like we always want the first link ("html")
