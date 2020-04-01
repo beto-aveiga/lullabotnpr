@@ -219,7 +219,10 @@ class NprPullClient extends NprClient {
           }
           foreach ($story->byline as $author) {
             // Not all of the authors in the byline have a link.
-            if (isset($author->link[0]->value)) {
+            if (isset($author->link->value)) {
+              $uri = $author->link->value;
+            }
+            elseif (isset($author->link[0]->value)) {
               $uri = $author->link[0]->value;
             }
             else {
