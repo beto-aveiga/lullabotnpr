@@ -332,15 +332,21 @@ class NprPullClient extends NprClient {
       ]);
     }
 
-    // Create a image file.
-    if (!is_array($image->crop)) {
-      $image->crop = [$image->crop];
+    // Create a image file. First check the main image.
+    if (!empty($image->type) && $image->type == $crop_selected) {
+      $image_url = $image->src;
     }
-    if (!empty($image->crop)) {
-      foreach ($image->crop as $crop) {
-        if (!empty($crop->type) && $crop->type == $crop_selected) {
-          $image_url = $crop->src;
-          continue;
+    // Otherwise, check each of the images in the "crop" array.
+    else {
+      if (!is_array($image->crop)) {
+        $image->crop = [$image->crop];
+      }
+      if (!empty($image->crop)) {
+        foreach ($image->crop as $crop) {
+          if (!empty($crop->type) && $crop->type == $crop_selected) {
+            $image_url = $crop->src;
+            continue;
+          }
         }
       }
     }
