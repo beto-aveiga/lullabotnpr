@@ -177,18 +177,7 @@ class NprPullConfigForm extends ConfigFormBase {
       ],
     ];
 
-    $form['story_queue']['method'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Subscribe method'),
-      '#open' => TRUE,
-      '#states' => [
-        'visible' => [
-          'input[name="queue_enable"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-    $form['story_queue']['method']['subscribe_method'] = [
+    $form['story_queue']['subscribe_method'] = [
       '#type' => 'select',
       '#title' => $this->t('Select method for subscription'),
       '#description' => $this->t('Both methods produce a list of NPR tag and topic IDs to query. One method allows selecting terms for a list, while the other method is more flexible and uses data from a configurable taxonomy vocabulary.'),
@@ -197,9 +186,14 @@ class NprPullConfigForm extends ConfigFormBase {
         'checkbox' => 'Checkbox',
         'taxonomy' => 'Taxonomy',
       ],
+      '#states' => [
+        'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
-    $form['story_queue']['method']['topic_ids'] = [
+    $form['story_queue']['topic_ids'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Limit by topic'),
       '#default_value' => $config->get('topic_ids'),
@@ -213,7 +207,7 @@ class NprPullConfigForm extends ConfigFormBase {
 
     $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
     $vocabulary_options = array_combine($vocabs, $vocabs);
-    $form['story_queue']['method']['topic_vocabularies'] = [
+    $form['story_queue']['topic_vocabularies'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Select taxonomies to use for subscription'),
       '#default_value' => $config->get('topic_vocabularies'),
