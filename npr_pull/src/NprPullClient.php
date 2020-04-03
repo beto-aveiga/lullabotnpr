@@ -438,6 +438,14 @@ class NprPullClient extends NprClient {
         $m3u_uri = $audio->format->mp3['m3u']->value;
         // Get the mp3 file from the m3u file.
         $audio_uri = file_get_contents($m3u_uri);
+        $file_info = pathinfo($audio_uri);
+        if ($file_info['extension'] !== 'mp3') {
+          $this->nprError(
+            $this->t('The audio for the story @title does not contain a valid mp3 file.', [
+              '@title' => $story->title,
+            ]));
+          return;
+        }
       }
       elseif (!empty($audio->format->{$audio_format}->value)) {
         $audio_uri = $audio->format->{$audio_format}->value;
