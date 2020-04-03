@@ -183,7 +183,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('image_media_type'),
       '#options' => $media_type_options,
     ];
-    $image_sizes = ['standard', 'square', 'wide', 'enlargement', 'custom'];
+    $image_sizes = ['primary', 'standard', 'square', 'wide', 'enlargement', 'custom'];
     $image_options = array_combine($image_sizes, $image_sizes);
     $form['image_settings']['image_crop_size'] = [
       '#type' => 'select',

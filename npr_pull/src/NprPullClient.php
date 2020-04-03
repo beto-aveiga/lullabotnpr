@@ -358,6 +358,8 @@ class NprPullClient extends NprClient {
         ]));
       return;
     }
+    // Strip of any parameters.
+    $image_url = strtok($image_url, '?');
     // Download the image file contents.
     $file_data = file_get_contents($image_url);
     // Get the filename.
@@ -437,7 +439,9 @@ class NprPullClient extends NprClient {
       if ($audio_format == 'mp3' && !empty($audio->format->mp3['m3u']->value)) {
         $m3u_uri = $audio->format->mp3['m3u']->value;
         // Get the mp3 file from the m3u file.
-        $audio_uri = file_get_contents($m3u_uri);
+        $full_audio_uri = file_get_contents($m3u_uri);
+        // Strip of any parameters.
+        $audio_uri = strtok($full_audio_uri, '?');
         $file_info = pathinfo($audio_uri);
         if ($file_info['extension'] !== 'mp3') {
           $this->nprError(
