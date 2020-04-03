@@ -412,10 +412,7 @@ class NprPullClient extends NprClient {
     // Get and check the configuration.
     $story_config = $this->config->get('npr_story.settings');
     $audio_media_type = $story_config->get('audio_media_type');
-
-    // TODO: Currently this is not used. Do we need this config?
     $audio_format = $story_config->get('audio_format');
-
     if (empty($audio_media_type) || empty($audio_format)) {
       $this->nprError('Please configure the NPR story audio type and format.');
       return;
@@ -436,8 +433,12 @@ class NprPullClient extends NprClient {
     // Create the audio media item(s).
     foreach ($story->audio as $audio) {
 
-      if (!empty($audio->format->mp3['m3u']->value)) {
+      // MP3 files looks a little bit different.
+      if ($audio_format == 'mp3' && !empty($audio->format->mp3['m3u']->value)) {
         $audio_uri = $audio->format->mp3['m3u']->value;
+      }
+      elseif (!empty($audio->format->{$audio_format}->value)) {
+        $audio_uri = $audio->format->{$audio_format}->value;
       }
       else {
         return;
@@ -579,6 +580,7 @@ class NprPullClient extends NprClient {
         'numResults' => $num_results,
         'startDate' => $start,
         'endDate' => $end,
+        'fields' => 'all',
       ];
       $this->getStories($params);
 

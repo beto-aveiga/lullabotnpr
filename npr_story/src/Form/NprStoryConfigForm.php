@@ -239,7 +239,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#description' => $this->t('Out of the box, Drupal does not come with a "remote audio" media type, and neither the default "audio " format nor "remote video" should be used. Rather, the npr_story module includes a plugin so that provides the ability to create a media type of source "NPR Remote Audio" that can be used.'),
       '#options' => $media_type_options,
     ];
-    $formats = ['mp3', 'm3u', 'mp4', 'hlsOnDemand', 'mediastream'];
+    $formats = ['mp3', 'mp4', 'hlsOnDemand', 'mediastream'];
     $format_options = array_combine($formats, $formats);
     $form['audio_settings']['audio_format'] = [
       '#type' => 'select',

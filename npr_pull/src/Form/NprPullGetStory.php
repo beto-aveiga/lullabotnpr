@@ -200,7 +200,11 @@ class NprPullGetStory extends ConfigFormBase {
     }
 
     // Load the story from NPR.
-    $story = $this->client->getStories(['id' => $story_id]);
+    $params = [
+      'id' => $story_id,
+      'fields' => 'all',
+    ];
+    $story = $this->client->getStories($params);
     $story = reset($story);
 
     // Add or update the story.
