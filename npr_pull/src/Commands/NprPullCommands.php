@@ -2,7 +2,6 @@
 
 namespace Drupal\npr_pull\Commands;
 
-use Drupal\Core\CronInterface;
 use Drupal\npr_pull\NprPullClient;
 use Drush\Commands\DrushCommands;
 
@@ -19,38 +18,19 @@ class NprPullCommands extends DrushCommands {
   protected $client;
 
   /**
-   * The cron interface.
-   *
-   * @var \Drupal\Core\CronInterface
-   */
-  protected $cron;
-
-  /**
-   * Returns the cron interface.
-   *
-   * @return \Drupal\Core\CronInterface
-   */
-  public function getCron() {
-    return $this->cron;
-  }
-
-  /**
    * Constructs a new DrushCommands object.
    *
    * @param \Drupal\npr_pull\NprPullClient $client
    *   The NPR client.
-   * @param \Drupal\Core\CronInterface $cron
-   *   The cron interface.
    */
-  public function __construct(NprPullClient $client, CronInterface $cron) {
+  public function __construct(NprPullClient $client) {
     $this->client = $client;
-    $this->cron = $cron;
   }
 
   /**
    * Command to pull a single NPR story.
    *
-   * @param int $id
+   * @param int $story_id
    *   The NPR API id of the story.
    * @param bool $published
    *   Should the story be published or not.
@@ -60,9 +40,9 @@ class NprPullCommands extends DrushCommands {
    * @command npr_pull:getStory
    * @aliases npr-gs
    */
-  public function getStoryById($id, $published = TRUE, $display_messages = TRUE) {
+  public function getStoryById($story_id, $published = TRUE, $display_messages = TRUE) {
 
-    $params['id'] = $id;
+    $params['id'] = $story_id;
     $stories = $this->client->getStories($params);
 
     // Create the stories in Drupal.
@@ -111,15 +91,10 @@ class NprPullCommands extends DrushCommands {
       $start_date = date("Y-m-d");
     }
 
-    $stories = $this->client->getStories($params);
+    if ($stories = $this->client->getStories($params)) {
+      $this->processStories($stories);
+    };
 
-    // Create the stories in Drupal.
-    foreach ($stories as $story) {
-      $this->client->getQueue()->createItem($story);
-    }
-
-    // Run cron once.
-    $this->getCron()->run();
   }
 
   /**
@@ -159,13 +134,36 @@ class NprPullCommands extends DrushCommands {
       }
     }
 
-    // Create the stories in Drupal.
-    foreach ($stories as $story) {
-      $this->client->getQueue()->createItem($story);
-    }
+    if (!empty($stories)) {
+      $this->processStories($stories);
+    };
+  }
 
-    // Run cron once.
-    $this->getCron()->run();
+  /**
+   * Addes stories to the queue.
+   *
+   * @param object $stories
+   *   A parsed object of NPRML stories.
+   */
+  protected function processStories($stories) {
+    // Add the stories to the queue in Drupal.
+    $queue = $this->client->getQueue();
+    $count_before = $queue->numberOfItems();
+    foreach ($stories as $story) {
+      $queue->createItem($story);
+    }
+    $count_after = $queue->numberOfItems();
+    $total = $count_after - $count_before;
+
+    if ($count_after > $count_before) {
+      $this->output()->writeln(dt('@total stories have been added to the queue (@count_after total). Process the stories with `drush queue-run npr_api.queue.story` or run cron', [
+        '@total' => $total,
+        '@count_after' => $count_after,
+      ]));
+    }
+    else {
+      $this->output()->writeln(dt('No stories were added to the queue.'));
+    }
   }
 
 }
