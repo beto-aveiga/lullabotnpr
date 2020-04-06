@@ -72,6 +72,10 @@ class NprPullCommands extends DrushCommands {
    */
   public function getStoriesByTopicId($num_results = 1, $topic_id = 1001, $start_num = 0, $sort = 'dateDesc', $start_date = '', $end_date = '') {
 
+    if ($num_results > 50) {
+      throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
+    }
+
     $params = [
       'numResults' => $num_results,
       'id' => $topic_id,
