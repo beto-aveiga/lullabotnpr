@@ -50,11 +50,7 @@ class NprPullCommands extends DrushCommands {
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $this->client->addOrUpdateNode(
-        $story,
-        $options['published'],
-        $options['display_messages'],
-      );
+      $this->client->addOrUpdateNode($story, $options['published'], $options['display_messages']);
     }
   }
 

@@ -456,7 +456,7 @@ class NprClient implements ClientInterface {
    * @param string $text
    *   The message to log or display.
    */
-  private function nprStatus($text) {
+  public function nprStatus($text) {
     $this->logger->notice($text);
     if (!empty($this->displayMessages)) {
       $this->messenger->addStatus($text);
