@@ -355,7 +355,7 @@ class NprPullClient extends NprClient {
     }
     // If the preferred image size doesn't exist anywhere, but there is an
     // image, use the default image as a last resort.
-    elseif (!empty($image->src)) {
+    if (empty($image_url) && !empty($image->src)) {
       $image_url = $image->src;
     }
     if (empty($image_url)) {
