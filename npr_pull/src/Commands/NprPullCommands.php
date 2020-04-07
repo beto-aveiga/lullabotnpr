@@ -119,9 +119,9 @@ class NprPullCommands extends DrushCommands {
    * @param array $options
    *   Associative array of options.
    *
-   * @usage drush npr-gst 1 --num_results=5
+   * @usage drush npr-gso 1 --num_results=5
    *   Import the 5 most recent stories from National Public Radio.
-   * @usage drush npr-gst 449 --num_results=1000 --start_num=500
+   * @usage drush npr-gso 449 --num_results=1000 --start_num=500
    *   Add 1000 stories from Georgia Public Broadcasting to the queue, starting
    *   with the 500th result.
    *
@@ -144,6 +144,7 @@ class NprPullCommands extends DrushCommands {
     if ($options['num_results'] <= 50) {
       $params['numResults'] = $options['num_results'];
       $stories = $this->client->getStories($params);
+      $this->processStories($stories);
     }
     elseif ($options['num_results'] > 50) {
       for ($i = $options['start_num']; $i < ($options['num_results'] + $options['start_num']); $i += 50) {
