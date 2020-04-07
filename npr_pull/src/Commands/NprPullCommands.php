@@ -125,8 +125,8 @@ class NprPullCommands extends DrushCommands {
    *   Add 1000 stories from Georgia Public Broadcasting to the queue, starting
    *   with the 500th result.
    *
-   * @command npr_pull:getStoriesByTopicId
-   * @aliases npr-gst
+   * @command npr_pull:getStoriesByOrgId
+   * @aliases npr-gso
    */
   public function getStoriesByOrgId($org_id, array $options = ['num_results' => 1, 'start_num' => 0]) {
 
