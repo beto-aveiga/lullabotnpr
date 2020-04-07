@@ -55,7 +55,7 @@ class NprPullCommands extends DrushCommands {
   }
 
   /**
-   * Command to pull NPR stories by topic ID.
+   * Command to add NPR stories to the queue by topic ID.
    *
    * @param array $options
    *   Associative array of options.
@@ -160,7 +160,7 @@ class NprPullCommands extends DrushCommands {
   }
 
   /**
-   * Addes stories to the queue.
+   * Adds stories to the queue.
    *
    * @param object $stories
    *   A parsed object of NPRML stories.
