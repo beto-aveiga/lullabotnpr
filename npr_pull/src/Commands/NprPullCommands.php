@@ -123,9 +123,9 @@ class NprPullCommands extends DrushCommands {
     $params = [
       'orgId' => $org_id,
       'fields' => 'all',
+      'dateType' => 'story',
     ];
 
-    $stories = [];
     // The maximum number of stories per NRP API request is 50.
     if ($num_results <= 50) {
       $params['numResults'] = $num_results;
@@ -133,14 +133,14 @@ class NprPullCommands extends DrushCommands {
     }
     elseif ($num_results > 50) {
       for ($i = $start_num; $i < ($num_results + $start_num); $i += 50) {
-        $params['startNum'] = $start_num;
-        $stories = array_merge($stories, $this->client->getStories($params));
+        $params['numResults'] = 50;
+        $params['startNum'] = $i;
+        // Clear the stories.
+        $this->client->stories = [];
+        $stories = $this->client->getStories($params);
+        $this->processStories($stories);
       }
     }
-
-    if (!empty($stories)) {
-      $this->processStories($stories);
-    };
   }
 
   /**

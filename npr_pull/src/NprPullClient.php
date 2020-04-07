@@ -191,6 +191,9 @@ class NprPullClient extends NprClient {
           $parent_item_vocabulary_prefix = $story_config->get('parent_vocabulary_prefix.' . $key . '_prefix');
           // Get the story field for the current "parent" item.
           $parent_item_field = $story_config->get('story_field_mappings.' . $key);
+          if (empty($story->parent)) {
+            continue;
+          }
           foreach ($story->parent as $item) {
             if ($item->type == $key && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
@@ -336,8 +339,8 @@ class NprPullClient extends NprClient {
     if (!empty($image->type) && $image->type == $crop_selected) {
       $image_url = $image->src;
     }
-    // Otherwise, check each of the images in the "crop" array.
-    else {
+    // Next check the images in the "crop" array.
+    elseif (!empty($image->crop)) {
       if (!is_array($image->crop)) {
         $image->crop = [$image->crop];
       }
@@ -350,6 +353,11 @@ class NprPullClient extends NprClient {
         }
       }
     }
+    // If the preferred image size doesn't exist anywhere, but there is an
+    // image, use the default image as a last resort.
+    elseif (!empty($image->src)) {
+      $image_url = $image->src;
+    }
     if (empty($image_url)) {
       $this->nprError(
         $this->t('There is no image of type @crop available for story @title.', [
@@ -360,16 +368,33 @@ class NprPullClient extends NprClient {
     }
     // Strip of any parameters.
     $image_url = strtok($image_url, '?');
-    // Download the image file contents.
-    $file_data = file_get_contents($image_url);
     // Get the filename.
     $filename = basename($image_url);
-    // Get the directory in the form of YYYY/MM/DD and make sure it exists.
-    $full_directory = dirname($image_url);
-    $directory_uri = 'public://npr_story_images/' . substr($full_directory, -10);
+
+    $directory_uri = 'public://npr_story_images/';
+    if (preg_match("/[0-9]{4}\/(0[1-9]|1[0-2])\/(0[1-9]|[1-2][0-9]|3[0-1])/", $image_url)) {
+      // Get the directory as YYYY/MM/DD from the image URL, if it exists.
+      $full_directory = dirname($image_url);
+      $directory_uri .= substr($full_directory, -10);
+    }
+    else {
+      // Otherwise, create the directory from today's date as YYYY/MM/DD.
+      $directory_uri .= date('Y/m/d');
+    }
     $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
+
+    try {
+      $file_data = $this->client->request('GET', $image_url);
+    }
+    catch (\Exception $e) {
+      if ($e->hasResponse()) {
+        $this->messenger->addError($e->getMessage());
+      }
+      return;
+    }
+
     // Save the image.
-    $file = file_save_data($file_data, $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
+    $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
 
     // Attached the image file to the media item.
     $media_image->set($image_field, [
