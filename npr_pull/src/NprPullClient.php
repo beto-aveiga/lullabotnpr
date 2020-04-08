@@ -390,8 +390,9 @@ class NprPullClient extends NprClient {
     }
     catch (\Exception $e) {
       if ($e->hasResponse()) {
-        $this->messenger->addError($this->t('There is no image at @url.', [
+        $this->messenger->addError($this->t('There is no image at @url for story @title.', [
           '@url' => $image_url,
+          '@title' => $story->title,
         ]));
       }
       return;
