@@ -203,14 +203,16 @@ class NprPullClient extends NprClient {
               else {
                 $saved_term = $item->title->value;
               }
-              // Get the existing referenced item or create one.
-              $tid = $this->getTermId($saved_term, $item->id, $parent_item_vocabulary);
-              $ref_terms = $this->node->get($parent_item_field)->getValue();
-              // Get a list of all items already referenced in the field.
-              $referenced_ids = array_column($ref_terms, 'target_id');
-              // If the item is not already referenced, add a reference.
-              if ($tid > 0 && !in_array($tid, $referenced_ids)) {
-                $this->node->{$parent_item_field}[] = ['target_id' => $tid];
+              if (!empty($saved_term)) {
+                // Get the existing referenced item or create one.
+                $tid = $this->getTermId($saved_term, $item->id, $parent_item_vocabulary);
+                $ref_terms = $this->node->get($parent_item_field)->getValue();
+                // Get a list of all items already referenced in the field.
+                $referenced_ids = array_column($ref_terms, 'target_id');
+                // If the item is not already referenced, add a reference.
+                if ($tid > 0 && !in_array($tid, $referenced_ids)) {
+                  $this->node->{$parent_item_field}[] = ['target_id' => $tid];
+                }
               }
             }
           }
@@ -388,7 +390,9 @@ class NprPullClient extends NprClient {
     }
     catch (\Exception $e) {
       if ($e->hasResponse()) {
-        $this->messenger->addError($e->getMessage());
+        $this->messenger->addError($this->t('There is no image at @url.', [
+          '@url' => $image_url,
+        ]));
       }
       return;
     }
@@ -650,6 +654,9 @@ class NprPullClient extends NprClient {
    *   The integer of the taxonomy term.
    */
   protected function getTermId($term_name, $id, $vid) {
+    if (empty($term_name)) {
+      return 0;
+    }
     $term = $this->entityTypeManager->getStorage('taxonomy_term')
       ->loadByProperties(['field_npr_news_id' => $id]);
     $term = reset($term);
