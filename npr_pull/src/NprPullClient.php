@@ -389,10 +389,10 @@ class NprPullClient extends NprClient {
     }
     catch (\Exception $e) {
       if ($e->hasResponse()) {
-        $this->nprError($this->t('There is no image at @url for story @title (source URL: @url).', [
-          '@url' => $image_url,
+        $this->nprError($this->t('There is no image at @image_url for story @title (source URL: @story_url).', [
+          '@image_url' => $image_url,
           '@title' => $story->title,
-          '@url' => $story->link['html'],
+          '@story_url' => $story->link['html'],
         ]));
       }
       return;
