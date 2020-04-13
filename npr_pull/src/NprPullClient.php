@@ -272,7 +272,6 @@ class NprPullClient extends NprClient {
    *   A media image id or null.
    */
   protected function addOrUpdateMediaImage($story) {
-
     $media_manager = $this->entityTypeManager->getStorage('media');
 
     // Get reguired configuration.
@@ -390,9 +389,10 @@ class NprPullClient extends NprClient {
     }
     catch (\Exception $e) {
       if ($e->hasResponse()) {
-        $this->messenger->addError($this->t('There is no image at @url for story @title.', [
+        $this->nprError($this->t('There is no image at @url for story @title (source URL: @url).', [
           '@url' => $image_url,
           '@title' => $story->title,
+          '@url' => $story->link['html'],
         ]));
       }
       return;
