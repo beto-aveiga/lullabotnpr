@@ -118,13 +118,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#options' => $all_users,
     ];
 
-    $form['story_queue'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Stories queue settings'),
-      '#open' => TRUE,
-    ];
-
-    $form['story_queue']['queue_enable'] = [
+    $form['queue_enable'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable automated queue building'),
       '#description' => $this->t('Enable incremental updates to local Story
@@ -134,7 +128,7 @@ class NprPullConfigForm extends ConfigFormBase {
     ];
 
     $interval_options = [1, 3600, 10800, 21600, 43200, 86400, 604800];
-    $form['story_queue']['queue_interval'] = [
+    $form['queue_interval'] = [
       '#type' => 'select',
       '#title' => $this->t('Queue builder update interval'),
       '#description' => $this->t('How often to check the NPR API for new or
@@ -149,7 +143,7 @@ class NprPullConfigForm extends ConfigFormBase {
         ],
       ],
     ];
-    $form['story_queue']['num_results'] = [
+    $form['num_results'] = [
       '#type' => 'select',
       '#title' => $this->t('Number of stories to retrieve per cron run per topic'),
       '#default_value' => $config->get('num_results'),
@@ -165,7 +159,7 @@ class NprPullConfigForm extends ConfigFormBase {
         ],
       ],
     ];
-    $form['story_queue']['org_id'] = [
+    $form['org_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Limit by organization ID'),
       '#default_value' => $config->get('org_id'),
@@ -177,7 +171,7 @@ class NprPullConfigForm extends ConfigFormBase {
       ],
     ];
 
-    $form['story_queue']['subscribe_method'] = [
+    $form['subscribe_method'] = [
       '#type' => 'select',
       '#title' => $this->t('Select method for subscription'),
       '#description' => $this->t('Both methods produce a list of NPR tag and topic IDs to query. One method allows selecting terms for a list, while the other method is more flexible and uses data from a configurable taxonomy vocabulary.'),
@@ -193,13 +187,14 @@ class NprPullConfigForm extends ConfigFormBase {
       ],
     ];
 
-    $form['story_queue']['topic_ids'] = [
+    $form['topic_ids'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Limit by topic'),
       '#default_value' => $config->get('topic_ids'),
       '#options' => $this->getTopics(),
       '#states' => [
         'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
           'select[name="subscribe_method"]' => ['value' => 'checkbox'],
         ],
       ],
@@ -207,7 +202,7 @@ class NprPullConfigForm extends ConfigFormBase {
 
     $vocabs = array_keys($this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple());
     $vocabulary_options = array_combine($vocabs, $vocabs);
-    $form['story_queue']['topic_vocabularies'] = [
+    $form['topic_vocabularies'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Select taxonomies to use for subscription'),
       '#default_value' => $config->get('topic_vocabularies'),
@@ -215,6 +210,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#options' => $vocabulary_options,
       '#states' => [
         'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
           'select[name="subscribe_method"]' => ['value' => 'taxonomy'],
         ],
       ],
@@ -237,7 +233,7 @@ class NprPullConfigForm extends ConfigFormBase {
           '@npr_id' => $npr_id,
         ]);
       }
-      $form['story_queue']['method']['subscriptions'] = [
+      $form['subscriptions'] = [
         '#type' => 'markup',
         '#theme' => 'item_list',
         '#title' => 'Subscriptions',
