@@ -28,12 +28,6 @@ class NprApiConfigForm extends ConfigFormBase {
       $config->set($variable, $form_state->getValue($form[$variable]['#parents']));
     }
     $config->save();
-
-    if (method_exists($this, '_submitForm')) {
-      $this->_submitForm($form, $form_state);
-    }
-
-    parent::submitForm($form, $form_state);
   }
 
   /**
@@ -54,7 +48,7 @@ class NprApiConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('NPR API Key'),
       '#default_value' => $npr_api_config->get('npr_api_api_key'),
-      '#description' => $this->t('To get an API Key, visit <a href="http://api.npr.org" target="_blank">http://api.npr.org</a>'),
+      '#description' => $this->t('To get an API Key, visit <a href="https://api.npr.org" target="_blank">https://api.npr.org</a>'),
     ];
 
     $form['npr_api_production_url'] = [

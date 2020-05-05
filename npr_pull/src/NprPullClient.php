@@ -694,6 +694,7 @@ class NprPullClient extends NprClient {
     $subscribe_method = $pull_config->get('subscribe_method');
     if ($subscribe_method == 'taxonomy') {
       if ($subscribed_terms = $this->getSubscriptionTerms()) {
+        var_dump('in here');
         // Get the NPR ids for all of the terms that have been subscribed to.
         foreach ($subscribed_terms as $subscribed_term) {
           if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
@@ -723,6 +724,9 @@ class NprPullClient extends NprClient {
   public function getSubscriptionTerms() {
     $pull_config = $this->config->get('npr_pull.settings');
     $topic_vocabularies = $pull_config->get('topic_vocabularies');
+    if (empty(array_filter($topic_vocabularies))) {
+      return [];
+    }
     $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
     $all_subscribed_terms = [];
     // For each vocabularly used for subscription, check for taxonomy terms

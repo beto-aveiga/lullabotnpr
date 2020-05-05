@@ -13,7 +13,7 @@ The modules will do ALMOST NOTHING without an NPR API key. Get one at
 http://api.npr.org
 
 
- INSTALLATION
+INSTALLATION
 ------------
 
 Install as you would normally install a contributed Drupal module.

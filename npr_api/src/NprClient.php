@@ -184,7 +184,7 @@ class NprClient implements ClientInterface {
    * @param array $params
    *   An array of query-type parameters.
    *
-   * @return object
+   * @return object|null
    *   A parsed object of NPRML stories.
    */
   public function getStories(array $params) {
@@ -380,7 +380,7 @@ class NprClient implements ClientInterface {
       $msg[] = 'Request had no parameters.';
     }
 
-    if (!empty($this->response->getStatusCode())) {
+    if (!empty($this->response) && !empty($this->response->getStatusCode())) {
       $msg[] = 'Response code was ' . $this->response->getStatusCode() . '.';
     }
     if (!empty($this->stories)) {

@@ -97,7 +97,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $form['node_settings]']['body_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Body text format'),
-      '#description' => $this->t('The body field is selected below.'),
+      '#description' => $this->t('The body field is selected below'),
       '#default_value' => $config->get('body_text_format'),
       '#options' => $formats,
     ];
@@ -126,8 +126,11 @@ class NprStoryConfigForm extends ConfigFormBase {
         // TODO: Add form validation so required fields cannot be "unused".
         $form['story_field_mappings']['id']['#required'] = TRUE;
         $form['story_field_mappings']['audio']['#required'] = TRUE;
+        $form['story_field_mappings']['audio']['#description'] = $this->t('This must be a media reference field to a media type with a source of "NPR Remote Audio".');
         $form['story_field_mappings']['image']['#required'] = TRUE;
+        $form['story_field_mappings']['image']['#description'] = $this->t('This must be an image media reference field.');
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
+        $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
       }
     }
     else {
