@@ -93,7 +93,10 @@ npr_story.settings:
           label: 'Image media producer field'
         provider:
           type: text
-          label: 'Image media provider field'
+          label: 'Image media provider value field'
+        provider_url:
+          type: text
+          label: 'Image media provider URL field'
         copyright:
           type: text
           label: 'Image media copyright field'

@@ -52,6 +52,7 @@ image_field_mappings:
   caption: ''
   producer: ''
   provider: ''
+  provider_url: ''
   copyright: ''
 audio_media_type: ''
 audio_format: 'm3u'

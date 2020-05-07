@@ -415,6 +415,9 @@ class NprPullClient extends NprClient {
         if ($key == 'image_id') {
           $media_image->set($value, $image->id);
         }
+        elseif ($key == 'provider_url') {
+          $media_image->set($value, $image->provider->url);
+        }
         else {
           $media_image->set($value, $image->{$key}->value);
         }
@@ -694,7 +697,6 @@ class NprPullClient extends NprClient {
     $subscribe_method = $pull_config->get('subscribe_method');
     if ($subscribe_method == 'taxonomy') {
       if ($subscribed_terms = $this->getSubscriptionTerms()) {
-        var_dump('in here');
         // Get the NPR ids for all of the terms that have been subscribed to.
         foreach ($subscribed_terms as $subscribed_term) {
           if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
