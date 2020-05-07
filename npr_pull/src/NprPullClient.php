@@ -708,7 +708,7 @@ class NprPullClient extends NprClient {
     // If the terms have been selected using the predetermined checkboxes, get
     // those as a list of topic IDs.
     elseif ($subscribe_method == 'checkbox') {
-      $npr_ids = $pull_config->get('npr_ids');
+      $npr_ids = $pull_config->get('topic_ids');
     }
     // If there are no topic IDs, just get "News".
     if (empty($npr_ids)) {
