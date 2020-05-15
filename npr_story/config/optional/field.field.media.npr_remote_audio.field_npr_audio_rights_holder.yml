@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_audio_rights_holder
+    - media.type.npr_remote_audio
+id: media.npr_remote_audio.field_npr_audio_rights_holder
+field_name: field_npr_audio_rights_holder
+entity_type: media
+bundle: npr_remote_audio
+label: 'Rights Holder'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,77 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.npr_remote_audio.field_media_npr_remote_audio
+    - field.field.media.npr_remote_audio.field_npr_audio_description
+    - field.field.media.npr_remote_audio.field_npr_audio_duration
+    - field.field.media.npr_remote_audio.field_npr_audio_id
+    - field.field.media.npr_remote_audio.field_npr_audio_rights_holder
+    - field.field.media.npr_remote_audio.field_npr_audio_title
+    - media.type.npr_remote_audio
+  module:
+    - link
+id: media.npr_remote_audio.default
+targetEntityType: media
+bundle: npr_remote_audio
+mode: default
+content:
+  field_media_npr_remote_audio:
+    label: visually_hidden
+    weight: 0
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    type: link
+    region: content
+  field_npr_audio_description:
+    weight: 2
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_npr_audio_duration:
+    weight: 1
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_npr_audio_id:
+    weight: 3
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_npr_audio_rights_holder:
+    weight: 4
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_npr_audio_title:
+    weight: 5
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  created: true
+  name: true
+  thumbnail: true
+  uid: true

@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_media_npr_remote_audio
+    - media.type.npr_remote_audio
+  module:
+    - link
+id: media.npr_remote_audio.field_media_npr_remote_audio
+field_name: field_media_npr_remote_audio
+entity_type: media
+bundle: npr_remote_audio
+label: 'NPR Remote Audio'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  link_type: 16
+  title: 0
+field_type: link

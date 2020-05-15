@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_audio_duration
+    - media.type.npr_remote_audio
+id: media.npr_remote_audio.field_npr_audio_duration
+field_name: field_npr_audio_duration
+entity_type: media
+bundle: npr_remote_audio
+label: Duration
+description: 'The duration of the audio asset. All formats for the audio will have the same duration.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

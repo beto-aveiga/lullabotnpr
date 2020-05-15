@@ -1,0 +1,41 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.taxonomy_term.npr_categories.field_npr_news_id
+    - field.field.taxonomy_term.npr_categories.field_npr_subscribe
+    - taxonomy.vocabulary.npr_categories
+  module:
+    - text
+id: taxonomy_term.npr_categories.default
+targetEntityType: taxonomy_term
+bundle: npr_categories
+mode: default
+content:
+  description:
+    label: hidden
+    type: text_default
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_npr_news_id:
+    weight: 1
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_npr_subscribe:
+    weight: 2
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+hidden: {  }

@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_image_copyright
+    - media.type.npr_image
+  module:
+    - datetime
+id: media.npr_image.field_npr_image_copyright
+field_name: field_npr_image_copyright
+entity_type: media
+bundle: npr_image
+label: Copyright
+description: 'The copyright information (year) for the image.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

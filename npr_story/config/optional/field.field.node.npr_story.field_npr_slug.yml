@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_npr_slug
+    - node.type.npr_story
+id: node.npr_story.field_npr_slug
+field_name: field_npr_slug
+entity_type: node
+bundle: npr_story
+label: Slug
+description: 'The main association for the returned story, whether it is to a topic, series, column or some other list in the system.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

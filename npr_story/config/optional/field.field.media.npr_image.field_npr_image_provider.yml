@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_image_provider
+    - media.type.npr_image
+id: media.npr_image.field_npr_image_provider
+field_name: field_npr_image_provider
+entity_type: media
+bundle: npr_image
+label: Provider
+description: 'The owner or provider of the image, which may be independent from the image producer.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

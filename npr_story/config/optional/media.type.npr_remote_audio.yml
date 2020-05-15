@@ -1,0 +1,14 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - npr_story
+id: npr_remote_audio
+label: 'NPR Remote Audio'
+description: 'Remote audio from NPR'
+source: npr_remote_audio
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_media_npr_remote_audio
+field_map: {  }

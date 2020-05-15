@@ -1,15 +1,15 @@
-story_node_type: ''
-body_text_format: ''
+story_node_type: npr_story
+body_text_format: basic_html
 parent_vocabulary:
-  primaryTopic: ''
-  topic: ''
-  tag: ''
-  blog: ''
-  category: ''
-  genre: ''
-  artist: ''
-  series: ''
-  program: ''
+  primaryTopic: npr_topics
+  topic: npr_topics
+  tag: npr_tags
+  blog: npr_blogs
+  category: npr_categories
+  genre: npr_genres
+  artist: npr_artists
+  series: npr_series
+  program: npr_programs
 parent_vocabulary_prefix:
   primaryTopic_prefix: ''
   topic_prefix: ''
@@ -21,44 +21,44 @@ parent_vocabulary_prefix:
   series_prefix: ''
   program_prefix: ''
 story_field_mappings:
-  id: ''
-  lastModifiedDate: ''
-  image: ''
-  audio: ''
-  audioRunByDate: ''
-  body: ''
-  byline: ''
-  link: ''
-  miniTeaser: ''
-  pubDate: ''
-  shortTitle: ''
-  slug: ''
-  storyDate: ''
-  subtitle: ''
-  teaser: ''
-  primaryTopic: 'unused'
-  topic: 'unused'
-  tag: 'unused'
-  blog: 'unused'
-  category: 'unused'
-  genre: 'unused'
-  artist: 'unused'
-image_media_type: 'image'
-image_crop_size: 'standard'
+  id: field_npr_story_id
+  lastModifiedDate: field_npr_last_modified
+  image: field_npr_story_image
+  audio: field_npr_audio
+  audioRunByDate: field_npr_audio_run_by_date
+  body: field_npr_body
+  byline: field_npr_byline
+  link: field_npr_link
+  miniTeaser: unused
+  pubDate: field_npr_pubdate
+  shortTitle: field_npr_title_short
+  slug: field_npr_slug
+  storyDate: field_npr_story_date
+  subtitle: field_npr_subtitle
+  teaser: field_npr_teaser
+  primaryTopic: field_npr_primary_topic
+  topic: field_npr_topic
+  tag: field_npr_tags
+  blog: field_npr_blog
+  category: field_npr_categories
+  genre: field_npr_genre
+  artist: field_npr_artist
+image_media_type: npr_image
+image_crop_size: standard
 image_field_mappings:
-  image_id: ''
-  image_title: ''
-  image_field: ''
-  caption: ''
-  producer: ''
-  provider: ''
-  provider_url: ''
-  copyright: ''
-audio_media_type: ''
-audio_format: 'm3u'
+  image_id: field_npr_image_id
+  image_title: name
+  image_field: field_media_image_npr
+  caption: field_npr_image_caption
+  producer: field_npr_image_producer
+  provider: field_npr_image_provider
+  copyright: field_npr_image_copyright
+  provider_url: field_npr_image_provider_url
+audio_media_type: npr_remote_audio
+audio_format: mp3
 audio_field_mappings:
-  audio_id: ''
-  audio_title: ''
-  remote_audio: ''
-  duration: ''
-  rightsHolder: ''
+  audio_id: field_npr_audio_id
+  audio_title: name
+  remote_audio: field_media_npr_remote_audio
+  duration: field_npr_audio_duration
+  rightsHolder: field_npr_audio_rights_holder

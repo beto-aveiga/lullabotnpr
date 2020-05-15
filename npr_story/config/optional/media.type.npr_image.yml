@@ -1,0 +1,14 @@
+langcode: en
+status: true
+dependencies: {  }
+id: npr_image
+label: 'NPR Image'
+description: 'Images imported via the NPR Story API'
+source: image
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_media_image_npr
+field_map:
+  name: name
+  width: field_npr_image_width

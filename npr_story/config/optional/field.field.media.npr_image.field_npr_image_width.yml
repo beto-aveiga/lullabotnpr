@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_image_width
+    - media.type.npr_image
+id: media.npr_image.field_npr_image_width
+field_name: field_npr_image_width
+entity_type: media
+bundle: npr_image
+label: Width
+description: 'The width of the image in pixels.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

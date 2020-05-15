@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'NPR Artists'
+vid: npr_artists
+description: 'Artists from the NPR Story API'
+weight: 0

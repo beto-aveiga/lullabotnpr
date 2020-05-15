@@ -1,0 +1,63 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.npr_story.field_npr_artist
+    - field.field.node.npr_story.field_npr_audio
+    - field.field.node.npr_story.field_npr_audio_run_by_date
+    - field.field.node.npr_story.field_npr_blog
+    - field.field.node.npr_story.field_npr_body
+    - field.field.node.npr_story.field_npr_byline
+    - field.field.node.npr_story.field_npr_categories
+    - field.field.node.npr_story.field_npr_genre
+    - field.field.node.npr_story.field_npr_last_modified
+    - field.field.node.npr_story.field_npr_link
+    - field.field.node.npr_story.field_npr_mini_teaser
+    - field.field.node.npr_story.field_npr_primary_topic
+    - field.field.node.npr_story.field_npr_pubdate
+    - field.field.node.npr_story.field_npr_slug
+    - field.field.node.npr_story.field_npr_story_date
+    - field.field.node.npr_story.field_npr_story_id
+    - field.field.node.npr_story.field_npr_story_image
+    - field.field.node.npr_story.field_npr_subtitle
+    - field.field.node.npr_story.field_npr_tags
+    - field.field.node.npr_story.field_npr_teaser
+    - field.field.node.npr_story.field_npr_title_short
+    - field.field.node.npr_story.field_npr_topic
+    - node.type.npr_story
+  module:
+    - user
+id: node.npr_story.teaser
+targetEntityType: node
+bundle: npr_story
+mode: teaser
+content:
+  links:
+    weight: 100
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+hidden:
+  field_npr_artist: true
+  field_npr_audio: true
+  field_npr_audio_run_by_date: true
+  field_npr_blog: true
+  field_npr_body: true
+  field_npr_byline: true
+  field_npr_categories: true
+  field_npr_genre: true
+  field_npr_last_modified: true
+  field_npr_link: true
+  field_npr_mini_teaser: true
+  field_npr_primary_topic: true
+  field_npr_pubdate: true
+  field_npr_slug: true
+  field_npr_story_date: true
+  field_npr_story_id: true
+  field_npr_story_image: true
+  field_npr_subtitle: true
+  field_npr_tags: true
+  field_npr_teaser: true
+  field_npr_title_short: true
+  field_npr_topic: true

@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_npr_news_id
+    - taxonomy.vocabulary.npr_topics
+id: taxonomy_term.npr_topics.field_npr_news_id
+field_name: field_npr_news_id
+entity_type: taxonomy_term
+bundle: npr_topics
+label: 'NPR News ID'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

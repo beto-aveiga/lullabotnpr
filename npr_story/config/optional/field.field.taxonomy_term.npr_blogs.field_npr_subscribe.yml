@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_npr_subscribe
+    - taxonomy.vocabulary.npr_blogs
+id: taxonomy_term.npr_blogs.field_npr_subscribe
+field_name: field_npr_subscribe
+entity_type: taxonomy_term
+bundle: npr_blogs
+label: Subscribe
+description: 'When pulling stories based on taxonomy terms, include this term in the query.'
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

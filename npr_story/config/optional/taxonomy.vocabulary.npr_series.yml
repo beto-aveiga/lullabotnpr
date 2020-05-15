@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'NPR Series'
+vid: npr_series
+description: 'Series from the NPR Story API'
+weight: 0

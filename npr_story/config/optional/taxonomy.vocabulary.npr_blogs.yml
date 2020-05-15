@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'NPR Blogs'
+vid: npr_blogs
+description: 'Blogs from the NPR Story API'
+weight: 0

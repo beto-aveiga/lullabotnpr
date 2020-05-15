@@ -5,5 +5,7 @@ package: NPR
 type: module
 configure: npr_story.config_form
 dependencies:
-  - drupal:media
-  - npr:npr_api
+  - 'drupal:media'
+  - 'npr:npr_api'
+  - menu_ui
+  - npr_story

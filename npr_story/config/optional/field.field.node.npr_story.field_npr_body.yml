@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_npr_body
+    - node.type.npr_story
+  module:
+    - text
+id: node.npr_story.field_npr_body
+field_name: field_npr_body
+entity_type: node
+bundle: npr_story
+label: Body
+description: 'The full text of the story.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: text_long

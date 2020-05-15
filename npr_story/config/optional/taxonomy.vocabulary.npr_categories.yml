@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'NPR Categories'
+vid: npr_categories
+description: 'Categories from the NPR Story API'
+weight: 0

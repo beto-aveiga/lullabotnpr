@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_npr_pubdate
+    - node.type.npr_story
+id: node.npr_story.field_npr_pubdate
+field_name: field_npr_pubdate
+entity_type: node
+bundle: npr_story
+label: 'Publication Date'
+description: "The date/the returned time the story was initially published to NPR.org, or the last date a significant update was published to NPR.org.\t"
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'NPR Genres'
+vid: npr_genres
+description: 'Genres from the NPR Story API'
+weight: 0
