@@ -25,6 +25,8 @@ dependencies:
     - field.field.node.npr_story.field_npr_teaser
     - field.field.node.npr_story.field_npr_title_short
     - field.field.node.npr_story.field_npr_topic
+    - field.field.node.npr_story.field_npr_program
+    - field.field.node.npr_story.field_npr_series
     - node.type.npr_story
   module:
     - user
@@ -61,3 +63,5 @@ hidden:
   field_npr_teaser: true
   field_npr_title_short: true
   field_npr_topic: true
+  field_npr_program: true
+  field_npr_series: true

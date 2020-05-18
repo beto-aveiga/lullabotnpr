@@ -24,6 +24,8 @@ dependencies:
     - field.field.node.npr_story.field_npr_teaser
     - field.field.node.npr_story.field_npr_title_short
     - field.field.node.npr_story.field_npr_topic
+    - field.field.node.npr_story.field_npr_program
+    - field.field.node.npr_story.field_npr_series
     - node.type.npr_story
   module:
     - link
@@ -36,7 +38,7 @@ mode: default
 content:
   created:
     type: datetime_timestamp
-    weight: 24
+    weight: 26
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -61,7 +63,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio_run_by_date:
-    weight: 20
+    weight: 22
     settings:
       size: 60
       placeholder: ''
@@ -115,7 +117,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_last_modified:
-    weight: 19
+    weight: 21
     settings:
       size: 60
       placeholder: ''
@@ -149,7 +151,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_pubdate:
-    weight: 21
+    weight: 23
     settings:
       size: 60
       placeholder: ''
@@ -165,7 +167,7 @@ content:
     type: string_textfield
     region: content
   field_npr_story_date:
-    weight: 22
+    weight: 24
     settings:
       size: 60
       placeholder: ''
@@ -233,9 +235,29 @@ content:
     third_party_settings: {  }
     type: entity_reference_autocomplete
     region: content
+  field_npr_program:
+    weight: 20
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_npr_series:
+    weight: 19
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   path:
     type: path
-    weight: 27
+    weight: 29
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -243,21 +265,21 @@ content:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 25
+    weight: 27
     region: content
     third_party_settings: {  }
   status:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 28
+    weight: 30
     region: content
     third_party_settings: {  }
   sticky:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 26
+    weight: 28
     region: content
     third_party_settings: {  }
   title:
@@ -270,7 +292,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 23
+    weight: 25
     settings:
       match_operator: CONTAINS
       size: 60

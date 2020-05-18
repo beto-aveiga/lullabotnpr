@@ -43,6 +43,8 @@ story_field_mappings:
   category: field_npr_categories
   genre: field_npr_genre
   artist: field_npr_artist
+  series: field_npr_series
+  program: field_npr_program
 image_media_type: npr_image
 image_crop_size: standard
 image_field_mappings:
