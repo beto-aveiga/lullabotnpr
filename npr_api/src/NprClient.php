@@ -285,7 +285,7 @@ class NprClient implements ClientInterface {
         $body = '';
         if (!empty($parsed->textWithHtml->paragraphs)) {
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {
-            $body = $body . $paragraph->value . "\n\n";
+            $body = $body . _filter_autop($paragraph->value);
           }
         }
         $parsed->body = $body;
