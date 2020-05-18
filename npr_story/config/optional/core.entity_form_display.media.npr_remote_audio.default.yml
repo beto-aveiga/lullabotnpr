@@ -7,7 +7,6 @@ dependencies:
     - field.field.media.npr_remote_audio.field_npr_audio_duration
     - field.field.media.npr_remote_audio.field_npr_audio_id
     - field.field.media.npr_remote_audio.field_npr_audio_rights_holder
-    - field.field.media.npr_remote_audio.field_npr_audio_title
     - media.type.npr_remote_audio
   module:
     - link
@@ -55,14 +54,6 @@ content:
     region: content
   field_npr_audio_rights_holder:
     weight: 6
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: string_textfield
-    region: content
-  field_npr_audio_title:
-    weight: 1
     settings:
       size: 60
       placeholder: ''
