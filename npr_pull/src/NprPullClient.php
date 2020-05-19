@@ -434,8 +434,8 @@ class NprPullClient extends NprClient {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return string|null
-   *   A audo media id or null.
+   * @return array|null
+   *   An array of audio media ids or null.
    */
   protected function addOrUpdateMediaAudio($story) {
 
