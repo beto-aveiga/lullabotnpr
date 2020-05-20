@@ -142,9 +142,12 @@ class NprPullClient extends NprClient {
     $this->imageField = $story_mappings['image'];
     $image_field = $this->imageField;
     // Add a reference to the media image.
-    $media_image_id = $this->addOrUpdateMediaImage($story);
-    if (!empty($image_field) && $image_field !== 'unused' && !empty($media_image_id)) {
-      $this->node->{$image_field}[] = ['target_id' => $media_image_id];
+    $media_image_ids = $this->addOrUpdateMediaImage($story);
+    if (!empty($image_field) && $image_field !== 'unused' && !empty
+      ($media_image_ids)) {
+      foreach ($media_image_ids as $media_image_id) {
+        $this->node->{$image_field}[] = ['target_id' => $media_image_id];
+      }
     }
 
     // Make the audio field available to other methods.
@@ -268,13 +271,13 @@ class NprPullClient extends NprClient {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return string|null
-   *   A media image id or null.
+   * @return array
+   *   An array of media image ids or null.
    */
   protected function addOrUpdateMediaImage($story) {
     $media_manager = $this->entityTypeManager->getStorage('media');
 
-    // Get reguired configuration.
+    // Get required configuration.
     $story_config = $this->config->get('npr_story.settings');
     $mappings = $story_config->get('image_field_mappings');
     $image_media_type = $story_config->get('image_media_type');
@@ -293,139 +296,139 @@ class NprPullClient extends NprClient {
       return;
     }
 
-    // We will only get the first image (at least for now).
-    if (!empty($story->image[0])) {
-      $image = $story->image[0];
-    }
-    else {
+    // If there are no images, we're done.
+    if (empty($story->image)) {
       return;
     }
-
-    // Check to see if a media image already exists in Drupal.
-    if ($media_image = $media_manager->loadByProperties([$image_id_field => $image->id])) {
-      if (count($media_image) > 1) {
-        $this->nprError(
-          $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
-            '@id' => $image->id,
-            '@title' => $image->title->value,
-          ]));
-        return;
-      }
-      $media_image = reset($media_image);
-      // If the media item exists, delete all of the referenced image files.
-      $image_references = $media_image->{$image_field};
-      foreach ($image_references as $image_reference) {
-        $file_id = $image_reference->get('target_id')->getValue();
-        if ($referenced_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
-          $referenced_file->delete();
-        }
-      }
-      // Remove the references to the images on the media item.
-      $media_image->{$image_field} = NULL;
-      // Remove the references to the media image on the story node.
-      $this->node->set($this->imageField, NULL);
-    }
     else {
-      // Create a media entity.
-      $media_image = Media::create([
-        // TODO: determine if we have to truncate titles.
-        $mappings['image_title'] => substr($image->title->value, 0, 255),
-        'bundle' => $image_media_type,
-        'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
-        'langcode' => Language::LANGCODE_NOT_SPECIFIED,
-      ]);
-    }
-
-    // Create a image file. First check the main image.
-    if (!empty($image->type) && $image->type == $crop_selected) {
-      $image_url = $image->src;
-    }
-    // Next check the images in the "crop" array.
-    elseif (!empty($image->crop)) {
-      if (!is_array($image->crop)) {
-        $image->crop = [$image->crop];
-      }
-      if (!empty($image->crop)) {
-        foreach ($image->crop as $crop) {
-          if (!empty($crop->type) && $crop->type == $crop_selected) {
-            $image_url = $crop->src;
-            continue;
+      foreach ($story->image as $image) {
+        // Check to see if a media image already exists in Drupal.
+        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image->id])) {
+          if (count($media_image) > 1) {
+            $this->nprError(
+              $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
+                '@id' => $image->id,
+                '@title' => $image->title->value,
+              ]));
+            return;
           }
-        }
-      }
-    }
-    // If the preferred image size doesn't exist anywhere, but there is an
-    // image, use the default image as a last resort.
-    if (empty($image_url) && !empty($image->src)) {
-      $image_url = $image->src;
-    }
-    if (empty($image_url)) {
-      $this->nprError(
-        $this->t('There is no image of type @crop available for story @title.', [
-          '@crop' => $crop_selected,
-          '@title' => $story->title,
-        ]));
-      return;
-    }
-    // Strip of any parameters.
-    $image_url = strtok($image_url, '?');
-    // Get the filename.
-    $filename = basename($image_url);
-
-    $directory_uri = 'public://npr_story_images/';
-    if (preg_match("/[0-9]{4}\/(0[1-9]|1[0-2])\/(0[1-9]|[1-2][0-9]|3[0-1])/", $image_url)) {
-      // Get the directory as YYYY/MM/DD from the image URL, if it exists.
-      $full_directory = dirname($image_url);
-      $directory_uri .= substr($full_directory, -10);
-    }
-    else {
-      // Otherwise, create the directory from today's date as YYYY/MM/DD.
-      $directory_uri .= date('Y/m/d');
-    }
-    $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
-
-    try {
-      $file_data = $this->client->request('GET', $image_url);
-    }
-    catch (\Exception $e) {
-      if ($e->hasResponse()) {
-        $this->nprError($this->t('There is no image at @image_url for story @title (source URL: @story_url).', [
-          '@image_url' => $image_url,
-          '@title' => $story->title,
-          '@story_url' => $story->link['html'],
-        ]));
-      }
-      return;
-    }
-
-    // Save the image.
-    $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
-
-    // Attached the image file to the media item.
-    $media_image->set($image_field, [
-      'target_id' => $file->id(),
-      'alt' => $image->caption->value,
-    ]);
-
-    // Map all of the remaining fields except image_title and image_field,
-    // which are used above.
-    foreach ($mappings as $key => $value) {
-      if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
-        // ID doesn't have a "value" property.
-        if ($key == 'image_id') {
-          $media_image->set($value, $image->id);
-        }
-        elseif ($key == 'provider_url') {
-          $media_image->set($value, $image->provider->url);
+          $media_image = reset($media_image);
+          // If the media item exists, delete all of the referenced image files.
+          $image_references = $media_image->{$image_field};
+          foreach ($image_references as $image_reference) {
+            $file_id = $image_reference->get('target_id')->getValue();
+            if ($referenced_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
+              $referenced_file->delete();
+            }
+          }
+          // Remove the references to the images on the media item.
+          $media_image->{$image_field} = NULL;
+          // Remove the references to the media image on the story node.
+          $this->node->set($this->imageField, NULL);
         }
         else {
-          $media_image->set($value, $image->{$key}->value);
+          // Create a media entity.
+          $media_image = Media::create([
+            // TODO: determine if we have to truncate titles.
+            $mappings['image_title'] => substr($image->title->value, 0, 255),
+            'bundle' => $image_media_type,
+            'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+            'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+          ]);
         }
-      }
-    }
-    $media_image->save();
 
-    return $media_image->id();
+        // Create a image file. First check the main image.
+        if (!empty($image->type) && $image->type == $crop_selected) {
+          $image_url = $image->src;
+        }
+        // Next check the images in the "crop" array.
+        elseif (!empty($image->crop)) {
+          if (!is_array($image->crop)) {
+            $image->crop = [$image->crop];
+          }
+          if (!empty($image->crop)) {
+            foreach ($image->crop as $crop) {
+              if (!empty($crop->type) && $crop->type == $crop_selected) {
+                $image_url = $crop->src;
+                continue;
+              }
+            }
+          }
+        }
+        // If the preferred image size doesn't exist anywhere, but there is an
+        // image, use the default image as a last resort.
+        if (empty($image_url) && !empty($image->src)) {
+          $image_url = $image->src;
+        }
+        if (empty($image_url)) {
+          $this->nprError(
+            $this->t('There is no image of type @crop available for story @title.', [
+              '@crop' => $crop_selected,
+              '@title' => $story->title,
+            ]));
+          return;
+        }
+        // Strip of any parameters.
+        $image_url = strtok($image_url, '?');
+        // Get the filename.
+        $filename = basename($image_url);
+
+        $directory_uri = 'public://npr_story_images/';
+        if (preg_match("/[0-9]{4}\/(0[1-9]|1[0-2])\/(0[1-9]|[1-2][0-9]|3[0-1])/", $image_url)) {
+          // Get the directory as YYYY/MM/DD from the image URL, if it exists.
+          $full_directory = dirname($image_url);
+          $directory_uri .= substr($full_directory, -10);
+        }
+        else {
+          // Otherwise, create the directory from today's date as YYYY/MM/DD.
+          $directory_uri .= date('Y/m/d');
+        }
+        $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
+
+        try {
+          $file_data = $this->client->request('GET', $image_url);
+        }
+        catch (\Exception $e) {
+          if ($e->hasResponse()) {
+            $this->nprError($this->t('There is no image at @image_url for story @title (source URL: @story_url).', [
+              '@image_url' => $image_url,
+              '@title' => $story->title,
+              '@story_url' => $story->link['html'],
+            ]));
+          }
+          return;
+        }
+
+        // Save the image.
+        $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
+
+        // Attached the image file to the media item.
+        $media_image->set($image_field, [
+          'target_id' => $file->id(),
+          'alt' => $image->caption->value,
+        ]);
+
+        // Map all of the remaining fields except image_title and image_field,
+        // which are used above.
+        foreach ($mappings as $key => $value) {
+          if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
+            // ID doesn't have a "value" property.
+            if ($key == 'image_id') {
+              $media_image->set($value, $image->id);
+            }
+            elseif ($key == 'provider_url') {
+              $media_image->set($value, $image->provider->url);
+            }
+            else {
+              $media_image->set($value, $image->{$key}->value);
+            }
+          }
+        }
+        $media_image->save();
+        $image_ids[] = $media_image->id();
+      }
+      return $image_ids;
+    }
   }
 
   /**
