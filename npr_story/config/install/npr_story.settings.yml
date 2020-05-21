@@ -23,7 +23,8 @@ parent_vocabulary_prefix:
 story_field_mappings:
   id: field_npr_story_id
   lastModifiedDate: field_npr_last_modified
-  image: field_npr_story_image
+  primary_image: field_npr_primary_image
+  additional_images: field_npr_additional_images
   audio: field_npr_audio
   audioRunByDate: field_npr_audio_run_by_date
   body: field_npr_body
@@ -56,6 +57,7 @@ image_field_mappings:
   provider: field_npr_image_provider
   copyright: field_npr_image_copyright
   provider_url: field_npr_image_provider_url
+  type: field_npr_image_type
 audio_media_type: npr_remote_audio
 audio_format: mp3
 audio_field_mappings:

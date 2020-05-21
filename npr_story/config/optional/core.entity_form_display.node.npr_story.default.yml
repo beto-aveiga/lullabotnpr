@@ -2,6 +2,7 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
     - field.field.node.npr_story.field_npr_audio_run_by_date
@@ -13,19 +14,19 @@ dependencies:
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
     - field.field.node.npr_story.field_npr_mini_teaser
+    - field.field.node.npr_story.field_npr_primary_image
     - field.field.node.npr_story.field_npr_primary_topic
+    - field.field.node.npr_story.field_npr_program
     - field.field.node.npr_story.field_npr_pubdate
+    - field.field.node.npr_story.field_npr_series
     - field.field.node.npr_story.field_npr_slug
     - field.field.node.npr_story.field_npr_story_date
     - field.field.node.npr_story.field_npr_story_id
-    - field.field.node.npr_story.field_npr_story_image
     - field.field.node.npr_story.field_npr_subtitle
     - field.field.node.npr_story.field_npr_tags
     - field.field.node.npr_story.field_npr_teaser
     - field.field.node.npr_story.field_npr_title_short
     - field.field.node.npr_story.field_npr_topic
-    - field.field.node.npr_story.field_npr_program
-    - field.field.node.npr_story.field_npr_series
     - node.type.npr_story
   module:
     - link
@@ -38,12 +39,22 @@ mode: default
 content:
   created:
     type: datetime_timestamp
-    weight: 26
+    weight: 27
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_npr_additional_images:
+    weight: 5
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_artist:
-    weight: 18
+    weight: 19
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -53,7 +64,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio:
-    weight: 4
+    weight: 6
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -63,7 +74,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio_run_by_date:
-    weight: 22
+    weight: 23
     settings:
       size: 60
       placeholder: ''
@@ -71,42 +82,6 @@ content:
     type: string_textfield
     region: content
   field_npr_blog:
-    weight: 15
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_body:
-    weight: 9
-    settings:
-      rows: 5
-      placeholder: ''
-    third_party_settings: {  }
-    type: text_textarea
-    region: content
-  field_npr_byline:
-    weight: 6
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: string_textfield
-    region: content
-  field_npr_categories:
-    weight: 17
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_genre:
     weight: 16
     settings:
       match_operator: CONTAINS
@@ -116,8 +91,44 @@ content:
     third_party_settings: {  }
     type: entity_reference_autocomplete
     region: content
+  field_npr_body:
+    weight: 10
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: text_textarea
+    region: content
+  field_npr_byline:
+    weight: 7
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_npr_categories:
+    weight: 18
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_npr_genre:
+    weight: 17
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_last_modified:
-    weight: 21
+    weight: 22
     settings:
       size: 60
       placeholder: ''
@@ -125,7 +136,7 @@ content:
     type: string_textfield
     region: content
   field_npr_link:
-    weight: 10
+    weight: 11
     settings:
       placeholder_url: ''
       placeholder_title: ''
@@ -133,15 +144,35 @@ content:
     type: link_default
     region: content
   field_npr_mini_teaser:
-    weight: 8
+    weight: 9
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
     region: content
+  field_npr_primary_image:
+    weight: 4
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_primary_topic:
-    weight: 12
+    weight: 13
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_npr_program:
+    weight: 21
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -151,15 +182,25 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_pubdate:
-    weight: 23
+    weight: 24
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
     region: content
+  field_npr_series:
+    weight: 20
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_slug:
-    weight: 11
+    weight: 12
     settings:
       size: 60
       placeholder: ''
@@ -167,7 +208,7 @@ content:
     type: string_textfield
     region: content
   field_npr_story_date:
-    weight: 24
+    weight: 25
     settings:
       size: 60
       placeholder: ''
@@ -181,16 +222,6 @@ content:
     third_party_settings: {  }
     type: number
     region: content
-  field_npr_story_image:
-    weight: 5
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
   field_npr_subtitle:
     weight: 3
     settings:
@@ -200,7 +231,7 @@ content:
     type: string_textfield
     region: content
   field_npr_tags:
-    weight: 14
+    weight: 15
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -210,7 +241,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_teaser:
-    weight: 7
+    weight: 8
     settings:
       rows: 5
       placeholder: ''
@@ -226,27 +257,7 @@ content:
     type: string_textfield
     region: content
   field_npr_topic:
-    weight: 13
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_program:
-    weight: 20
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_series:
-    weight: 19
+    weight: 14
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -257,7 +268,7 @@ content:
     region: content
   path:
     type: path
-    weight: 29
+    weight: 30
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -265,21 +276,21 @@ content:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 27
+    weight: 28
     region: content
     third_party_settings: {  }
   status:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 30
+    weight: 31
     region: content
     third_party_settings: {  }
   sticky:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 28
+    weight: 29
     region: content
     third_party_settings: {  }
   title:
@@ -292,7 +303,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 25
+    weight: 26
     settings:
       match_operator: CONTAINS
       size: 60

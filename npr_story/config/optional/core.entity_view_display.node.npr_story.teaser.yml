@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.node.teaser
+    - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
     - field.field.node.npr_story.field_npr_audio_run_by_date
@@ -14,19 +15,19 @@ dependencies:
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
     - field.field.node.npr_story.field_npr_mini_teaser
+    - field.field.node.npr_story.field_npr_primary_image
     - field.field.node.npr_story.field_npr_primary_topic
+    - field.field.node.npr_story.field_npr_program
     - field.field.node.npr_story.field_npr_pubdate
+    - field.field.node.npr_story.field_npr_series
     - field.field.node.npr_story.field_npr_slug
     - field.field.node.npr_story.field_npr_story_date
     - field.field.node.npr_story.field_npr_story_id
-    - field.field.node.npr_story.field_npr_story_image
     - field.field.node.npr_story.field_npr_subtitle
     - field.field.node.npr_story.field_npr_tags
     - field.field.node.npr_story.field_npr_teaser
     - field.field.node.npr_story.field_npr_title_short
     - field.field.node.npr_story.field_npr_topic
-    - field.field.node.npr_story.field_npr_program
-    - field.field.node.npr_story.field_npr_series
     - node.type.npr_story
   module:
     - user
@@ -41,6 +42,7 @@ content:
     third_party_settings: {  }
     region: content
 hidden:
+  field_npr_additional_images: true
   field_npr_artist: true
   field_npr_audio: true
   field_npr_audio_run_by_date: true
@@ -52,16 +54,16 @@ hidden:
   field_npr_last_modified: true
   field_npr_link: true
   field_npr_mini_teaser: true
+  field_npr_primary_image: true
   field_npr_primary_topic: true
+  field_npr_program: true
   field_npr_pubdate: true
+  field_npr_series: true
   field_npr_slug: true
   field_npr_story_date: true
   field_npr_story_id: true
-  field_npr_story_image: true
   field_npr_subtitle: true
   field_npr_tags: true
   field_npr_teaser: true
   field_npr_title_short: true
   field_npr_topic: true
-  field_npr_program: true
-  field_npr_series: true

@@ -1,0 +1,27 @@
+uuid: 2519ad87-0df8-4612-9a6a-113fb1b6cc5d
+langcode: en
+status: true
+dependencies:
+  module:
+    - media
+    - options
+id: media.field_npr_image_type
+field_name: field_npr_image_type
+entity_type: media
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: primary
+      label: Primary
+    -
+      value: standard
+      label: Standard
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

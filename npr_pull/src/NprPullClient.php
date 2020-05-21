@@ -38,11 +38,18 @@ class NprPullClient extends NprClient {
   protected $audioField;
 
   /**
-   * The image field on the story.
+   * The primary image field on the story.
    *
    * @var string
    */
-  protected $imageField;
+  protected $primaryImageField;
+
+  /**
+   * The secondary images field on the story.
+   *
+   * @var string
+   */
+  protected $additionalImagesField;
 
   /**
    * Create a story node.
@@ -138,15 +145,24 @@ class NprPullClient extends NprClient {
       ]);
     }
 
-    // Make the image field available to other methods.
-    $this->imageField = $story_mappings['image'];
-    $image_field = $this->imageField;
-    // Add a reference to the media image.
-    $media_image_ids = $this->addOrUpdateMediaImage($story);
-    if (!empty($image_field) && $image_field !== 'unused' && !empty
-      ($media_image_ids)) {
-      foreach ($media_image_ids as $media_image_id) {
-        $this->node->{$image_field}[] = ['target_id' => $media_image_id];
+    // Make the image fields available to other methods.
+    $this->primaryImageField = $story_mappings['primary_image'];
+    $primary_image_field = $this->primaryImageField;
+    $this->additionalImagesField = $story_mappings['additional_images'];
+    $additional_images_field = $this->additionalImagesField;
+    // Create media images and add configured references.
+    $media_images = $this->addOrUpdateMediaImage($story);
+    if (((!empty($primary_image_field) && $primary_image_field !== 'unused') ||
+      (!empty($additional_images_field) && $additional_images_field !== 'unused')) &&
+      !empty($media_images)) {
+      foreach ($media_images as $media_image) {
+        $image_type = $story_config->get('image_field_mappings.type');
+        if ($media_image->{$image_type}->value == "primary") {
+          $this->node->{$primary_image_field}[] = ['target_id' => $media_image->id()];
+        }
+        elseif ($media_image->{$image_type}->value == "standard") {
+          $this->node->{$additional_images_field}[] = ['target_id' => $media_image->id()];
+        }
       }
     }
 
@@ -271,11 +287,12 @@ class NprPullClient extends NprClient {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return array
+   * @return array|null
    *   An array of media image ids or null.
    */
   protected function addOrUpdateMediaImage($story) {
     $media_manager = $this->entityTypeManager->getStorage('media');
+    $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
 
     // Get required configuration.
     $story_config = $this->config->get('npr_story.settings');
@@ -324,7 +341,8 @@ class NprPullClient extends NprClient {
           // Remove the references to the images on the media item.
           $media_image->{$image_field} = NULL;
           // Remove the references to the media image on the story node.
-          $this->node->set($this->imageField, NULL);
+          $this->node->set($this->primaryImageField, NULL);
+          $this->node->set($this->additionalImagesField, NULL);
         }
         else {
           // Create a media entity.
@@ -416,6 +434,9 @@ class NprPullClient extends NprClient {
             if ($key == 'image_id') {
               $media_image->set($value, $image->id);
             }
+            elseif ($key == 'type') {
+              $media_image->set($value, $image->type);
+            }
             elseif ($key == 'provider_url') {
               $media_image->set($value, $image->provider->url);
             }
@@ -425,9 +446,9 @@ class NprPullClient extends NprClient {
           }
         }
         $media_image->save();
-        $image_ids[] = $media_image->id();
+        $media_images[] = $media_image;
       }
-      return $image_ids;
+      return $media_images;
     }
   }
 

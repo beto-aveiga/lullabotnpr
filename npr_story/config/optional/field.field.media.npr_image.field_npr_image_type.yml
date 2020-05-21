@@ -1,0 +1,21 @@
+uuid: ed93e30e-760e-4cae-a53e-83d3a615ab9b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_image_type
+    - media.type.npr_image
+  module:
+    - options
+id: media.npr_image.field_npr_image_type
+field_name: field_npr_image_type
+entity_type: media
+bundle: npr_image
+label: 'Image Type'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
