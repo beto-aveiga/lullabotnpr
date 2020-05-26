@@ -283,7 +283,52 @@ class NprClient implements ClientInterface {
           }
         }
         $body = '';
-        if (!empty($parsed->textWithHtml->paragraphs)) {
+        if (!empty($parsed->layout->storytext) && !empty($parsed->textWithHtml->paragraphs)) {
+          // Get the paragraphs and put them into an array for reference later.
+          $paragraphs = [];
+          foreach ($parsed->textWithHtml->paragraphs as $paragraph) {
+            $paragraphs[$paragraph->num] = $paragraph->value;
+          }
+          // Add the content referenced by each storytext element to the body.
+          $body_content = [];
+          foreach ($parsed->layout->storytext as $type => $items) {
+            switch ($type) {
+              case 'text':
+                // Add each paragraph to the body.
+                // But check to see if the object is multidimensional first.
+                if (isset($items->num)) {
+                  $body_content[$items->num] = _filter_autop
+                  ($paragraphs[$items->paragraphNum]);
+                }
+                else {
+                  foreach ($items as $item) {
+                    $body_content[$item->num] = _filter_autop($paragraphs[$item->paragraphNum]);
+                  }
+                }
+
+                break;
+              case 'image':
+                // Add a placeholder for each referenced image to the body.
+                // But check to see if the object is multidimensional first.
+                if (isset($items->num)) {
+                  $body_content[$items->num] = "[npr_image:" . $items->refId . "]";
+                }
+                else {
+                  foreach ($items as $item) {
+                    $body_content[$item->num] = "[npr_image:" . $item->refId . "]";
+                  }
+                }
+                break;
+              default:
+                break;
+            }
+          }
+          // Sort it back into the correct order.
+          ksort($body_content);
+          // Stitch it together.
+          $body = implode(NULL, $body_content);
+        }
+        elseif (!empty($parsed->textWithHtml->paragraphs)) {
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {
             $body = $body . _filter_autop($paragraph->value);
           }

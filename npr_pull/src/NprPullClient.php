@@ -7,12 +7,13 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
 use Drupal\taxonomy\Entity\Term;
 
 /**
- * Performs CRUD opertions on Drupal nodes using data from the NPR API.
+ * Performs CRUD operations on Drupal nodes using data from the NPR API.
  */
 class NprPullClient extends NprClient {
 
@@ -195,6 +196,16 @@ class NprPullClient extends NprClient {
           $this->node->set($value, $story->id);
         }
         elseif ($key == 'body') {
+          // Find any image placeholders.
+          preg_match_all('(\[npr_image:\d*])', $story->body,
+            $image_placeholders);
+
+          if (!empty($image_placeholders[0])) {
+            // Get the associated <drupal-media> tags and replace the
+            // placeholders in the body text.
+            $image_replacements = $this->replaceImages($image_placeholders[0]);
+            $story->body = str_replace(array_keys($image_replacements), array_values($image_replacements), $story->body);
+          }
           $this->node->set($value, [
             'value' => $story->body,
             'format' => $text_format,
@@ -280,6 +291,81 @@ class NprPullClient extends NprClient {
       ]));
     }
   }
+
+  /**
+  * Replace image media items in body text.
+  *
+  * @param array $images
+  *   An array of image "tokens" in the format [npr_image:xxxx].
+  *
+  * @return array|null
+  *   An array with the "token" as the key and the media embed code
+  * (<drupal-media>) as the value, or null.
+  *
+  */
+  protected function replaceImages(array $images) {
+    // Get the image field information.
+    $primary_image_field = $this->primaryImageField;
+    $additional_images_field = $this->additionalImagesField;
+    // Get the images referenced in the fields.
+    $referenced_images = array_merge($this->node->{$primary_image_field}->referencedEntities(), $this->node->{$additional_images_field}->referencedEntities());
+
+    $image_refs = [];
+    foreach ($referenced_images as $referenced_image) {
+      // Retrieve the required information for each image
+      $npr_id = $referenced_image->get('field_npr_image_id')->value;
+      $uuid = $referenced_image->uuid();
+      $caption = $referenced_image->get('field_npr_image_caption')->value;
+      $copyright = $referenced_image->get('field_npr_image_copyright')->value;
+      $provider = $referenced_image->get('field_npr_image_provider')->value;
+      $provider_url = $referenced_image->get('field_npr_image_provider_url')
+        ->value;
+
+      // NOTE: The API doesn't send seem to send alt text, so re-using the
+      // caption.
+      $alt = $referenced_image->get('field_npr_image_caption')->value;
+
+      // Set up the image credit.
+
+      // If a provider URL is available, create a link
+      if (!empty($provider_url) && !empty($provider)) {
+        $provider = Link::fromTextAndUrl($provider, Url::fromUri($provider_url));
+      }
+
+      // If there is either a provider or a copyright, create a credit and add
+      // it to the caption.
+      // For security reasons, only a limited number of HTML tags, are allowed
+      // in the caption, so using <cite> to differentiate the credit.
+      if (!empty($provider) || !empty($copyright)) {
+        $credit = '<cite class="npr-credit">' . $provider . ' ' . $copyright . '</cite>';
+        $caption .= $credit;
+      }
+
+      // Encode any HTML entities in the caption so it doesn't get stripped.
+      $caption = htmlentities($caption);
+
+      // Add image information to an array with the NPR ID as the key.
+      $image_refs[$npr_id] = [
+        'uuid' => $uuid,
+        'caption' => $caption,
+        'alt' => $alt,
+      ];
+    }
+
+    $image_embed = [];
+    // Loop through the images in the API response.
+    foreach ($images as $image) {
+      // Get the NPR refId and use it to retrieve the correct image out of the array.
+      $ref_id = (int) filter_var($image, FILTER_SANITIZE_NUMBER_INT);
+      if (isset($image_refs[$ref_id])) {
+        // Build the embedded media tag, using the original "token" as the
+        // array key.
+        $image_embed[$image] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $image_refs[$ref_id]['uuid'] . '" data-caption="' . $image_refs[$ref_id]['caption'] . '" alt="' . $image_refs[$ref_id]['alt'] . '"></drupal-media>';
+      }
+    }
+
+    return $image_embed;
+   }
 
   /**
    * Creates a image media item based on the configured field values.

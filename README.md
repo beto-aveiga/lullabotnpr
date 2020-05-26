@@ -10,7 +10,12 @@ REQUIREMENTS
 ------------
 
 The modules will do ALMOST NOTHING without an NPR API key. Get one at
-http://api.npr.org
+http://api.npr.org.
+
+In order to ensure proper display of stories, the NPR Story module includes the
+NPR Story text format that is preconfigured with the necessary filters and
+requires the Allowed Formats module to ensure that this text format is used by
+default by the NPR Story body field.
 
 
 INSTALLATION

@@ -7,5 +7,5 @@ configure: npr_story.config_form
 dependencies:
   - 'drupal:media'
   - 'npr:npr_api'
-  - menu_ui
-  - npr_story
+  - 'allowed_formats:allowed_formats'
+  - 'drupal:menu_ui'

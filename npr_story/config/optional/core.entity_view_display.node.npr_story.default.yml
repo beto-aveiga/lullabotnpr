@@ -37,17 +37,8 @@ targetEntityType: node
 bundle: npr_story
 mode: default
 content:
-  field_npr_additional_images:
-    type: entity_reference_entity_view
-    weight: 3
-    label: above
-    settings:
-      view_mode: default
-      link: false
-    third_party_settings: {  }
-    region: content
   field_npr_artist:
-    weight: 19
+    weight: 17
     label: above
     settings:
       link: true
@@ -56,7 +47,7 @@ content:
     region: content
   field_npr_audio:
     type: entity_reference_entity_view
-    weight: 4
+    weight: 2
     label: above
     settings:
       view_mode: default
@@ -64,7 +55,7 @@ content:
     third_party_settings: {  }
     region: content
   field_npr_audio_run_by_date:
-    weight: 23
+    weight: 21
     label: above
     settings:
       link_to_entity: false
@@ -72,7 +63,7 @@ content:
     type: string
     region: content
   field_npr_blog:
-    weight: 16
+    weight: 14
     label: above
     settings:
       link: true
@@ -80,14 +71,14 @@ content:
     type: entity_reference_label
     region: content
   field_npr_body:
-    weight: 5
+    weight: 3
     label: above
     settings: {  }
     third_party_settings: {  }
     type: text_default
     region: content
   field_npr_byline:
-    weight: 6
+    weight: 4
     label: above
     settings:
       link_to_entity: false
@@ -95,7 +86,7 @@ content:
     type: string
     region: content
   field_npr_categories:
-    weight: 18
+    weight: 16
     label: above
     settings:
       link: true
@@ -103,7 +94,7 @@ content:
     type: entity_reference_label
     region: content
   field_npr_genre:
-    weight: 17
+    weight: 15
     label: above
     settings:
       link: true
@@ -111,7 +102,7 @@ content:
     type: entity_reference_label
     region: content
   field_npr_last_modified:
-    weight: 22
+    weight: 20
     label: above
     settings:
       link_to_entity: false
@@ -119,7 +110,7 @@ content:
     type: string
     region: content
   field_npr_link:
-    weight: 7
+    weight: 5
     label: above
     settings:
       trim_length: 80
@@ -131,24 +122,15 @@ content:
     type: link
     region: content
   field_npr_mini_teaser:
-    weight: 12
+    weight: 10
     label: above
     settings:
       link_to_entity: false
     third_party_settings: {  }
     type: string
     region: content
-  field_npr_primary_image:
-    type: entity_reference_entity_view
-    weight: 2
-    label: above
-    settings:
-      view_mode: default
-      link: false
-    third_party_settings: {  }
-    region: content
   field_npr_primary_topic:
-    weight: 13
+    weight: 11
     label: above
     settings:
       link: true
@@ -156,7 +138,7 @@ content:
     type: entity_reference_label
     region: content
   field_npr_program:
-    weight: 21
+    weight: 19
     label: above
     settings:
       link: true
@@ -164,7 +146,7 @@ content:
     type: entity_reference_label
     region: content
   field_npr_pubdate:
-    weight: 24
+    weight: 22
     label: above
     settings:
       link_to_entity: false
@@ -172,7 +154,7 @@ content:
     type: string
     region: content
   field_npr_series:
-    weight: 20
+    weight: 18
     label: above
     settings:
       link: true
@@ -180,7 +162,7 @@ content:
     type: entity_reference_label
     region: content
   field_npr_slug:
-    weight: 9
+    weight: 7
     label: above
     settings:
       link_to_entity: false
@@ -188,7 +170,7 @@ content:
     type: string
     region: content
   field_npr_story_date:
-    weight: 25
+    weight: 23
     label: above
     settings:
       link_to_entity: false
@@ -205,29 +187,6 @@ content:
     type: number_integer
     region: content
   field_npr_subtitle:
-    weight: 10
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    type: string
-    region: content
-  field_npr_tags:
-    weight: 15
-    label: above
-    settings:
-      link: true
-    third_party_settings: {  }
-    type: entity_reference_label
-    region: content
-  field_npr_teaser:
-    weight: 11
-    label: above
-    settings: {  }
-    third_party_settings: {  }
-    type: text_default
-    region: content
-  field_npr_title_short:
     weight: 8
     label: above
     settings:
@@ -235,8 +194,31 @@ content:
     third_party_settings: {  }
     type: string
     region: content
+  field_npr_tags:
+    weight: 13
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_npr_teaser:
+    weight: 9
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: text_default
+    region: content
+  field_npr_title_short:
+    weight: 6
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
   field_npr_topic:
-    weight: 14
+    weight: 12
     label: above
     settings:
       link: true
@@ -248,4 +230,6 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-hidden: {  }
+hidden:
+  field_npr_additional_images: true
+  field_npr_primary_image: true
