@@ -30,7 +30,7 @@ story_field_mappings:
   body: field_npr_body
   byline: field_npr_byline
   link: field_npr_link
-  miniTeaser: unused
+  miniTeaser: field_npr_mini_teaser
   pubDate: field_npr_pubdate
   shortTitle: field_npr_title_short
   slug: field_npr_slug

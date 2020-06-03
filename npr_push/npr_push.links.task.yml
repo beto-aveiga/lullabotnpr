@@ -1,0 +1,4 @@
+npr_push.config_form:
+  route_name: npr_push.config_form
+  title: 'Push Settings'
+  base_route: npr_api.config_form

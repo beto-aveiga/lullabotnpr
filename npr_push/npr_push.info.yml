@@ -1,0 +1,8 @@
+name: 'NPR API Push'
+description: 'Push NPR stories to the NPR API'
+core: 8.x
+package: NPR
+type: module
+dependencies:
+  - npr:npr_api
+  - npr:npr_story

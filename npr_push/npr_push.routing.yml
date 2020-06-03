@@ -1,0 +1,7 @@
+npr_push.config_form:
+  path: /admin/config/services/npr/push
+  defaults:
+    _title: 'Push Settings'
+    _form: \Drupal\npr_push\Form\NprPushConfigForm
+  requirements:
+    _permission: 'administer npr api'
