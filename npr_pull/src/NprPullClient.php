@@ -293,41 +293,51 @@ class NprPullClient extends NprClient {
   }
 
   /**
-  * Replace image media items in body text.
-  *
-  * @param array $images
-  *   An array of image "tokens" in the format [npr_image:xxxx].
-  *
-  * @return array|null
-  *   An array with the "token" as the key and the media embed code
-  * (<drupal-media>) as the value, or null.
-  *
-  */
+   * Replace image media items in body text.
+   *
+   * @param array $images
+   *   An array of image "tokens" in the format [npr_image:xxxx].
+   *
+   * @return array|null
+   *   An array with the "token" as the key and the media embed code
+   * (<drupal-media>) as the value, or null.
+   *
+   */
   protected function replaceImages(array $images) {
     // Get the image field information.
     $primary_image_field = $this->primaryImageField;
     $additional_images_field = $this->additionalImagesField;
     // Get the images referenced in the fields.
-    $referenced_images = array_merge($this->node->{$primary_image_field}->referencedEntities(), $this->node->{$additional_images_field}->referencedEntities());
+    $referenced_images = array_merge(
+      $this->node->{$primary_image_field}->referencedEntities(),
+      $this->node->{$additional_images_field}->referencedEntities()
+    );
+
+    // Get mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $mappings = $story_config->get('image_field_mappings');
+    $image_id_field = $mappings['image_id'];
+    $caption_field = $mappings['caption'];
+    $copyright_field = $mappings['copyright'];
+    $provider_field = $mappings['provider'];
+    $provider_url_field = $mappings['provider_url'];
 
     $image_refs = [];
     foreach ($referenced_images as $referenced_image) {
-      // Retrieve the required information for each image
-      $npr_id = $referenced_image->get('field_npr_image_id')->value;
+      // Retrieve the required information for each image.
+      $npr_id = $referenced_image->get($image_id_field)->value;
       $uuid = $referenced_image->uuid();
-      $caption = $referenced_image->get('field_npr_image_caption')->value;
-      $copyright = $referenced_image->get('field_npr_image_copyright')->value;
-      $provider = $referenced_image->get('field_npr_image_provider')->value;
-      $provider_url = $referenced_image->get('field_npr_image_provider_url')
-        ->value;
+      $caption = $referenced_image->get($caption_field)->value;
+      $copyright = $referenced_image->get($copyright_field)->value;
+      $provider = $referenced_image->get($provider_field)->value;
+      $provider_url = $referenced_image->get($provider_url_field)->value;
 
       // NOTE: The API doesn't send seem to send alt text, so re-using the
       // caption.
-      $alt = $referenced_image->get('field_npr_image_caption')->value;
+      $alt = $referenced_image->get($caption_field)->value;
 
       // Set up the image credit.
-
-      // If a provider URL is available, create a link
+      // If a provider URL is available, create a link.
       if (!empty($provider_url) && !empty($provider)) {
         $provider = Link::fromTextAndUrl($provider, Url::fromUri($provider_url));
       }
@@ -355,7 +365,8 @@ class NprPullClient extends NprClient {
     $image_embed = [];
     // Loop through the images in the API response.
     foreach ($images as $image) {
-      // Get the NPR refId and use it to retrieve the correct image out of the array.
+      // Get the NPR refId and use it to retrieve the correct image out of the
+      // array.
       $ref_id = (int) filter_var($image, FILTER_SANITIZE_NUMBER_INT);
       if (isset($image_refs[$ref_id])) {
         // Build the embedded media tag, using the original "token" as the
@@ -365,7 +376,7 @@ class NprPullClient extends NprClient {
     }
 
     return $image_embed;
-   }
+  }
 
   /**
    * Creates a image media item based on the configured field values.
