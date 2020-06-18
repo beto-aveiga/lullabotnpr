@@ -325,16 +325,24 @@ class NprPullClient extends NprClient {
     $image_refs = [];
     foreach ($referenced_images as $referenced_image) {
       // Retrieve the required information for each image.
-      $npr_id = $referenced_image->get($image_id_field)->value;
       $uuid = $referenced_image->uuid();
-      $caption = $referenced_image->get($caption_field)->value;
-      $copyright = $referenced_image->get($copyright_field)->value;
-      $provider = $referenced_image->get($provider_field)->value;
-      $provider_url = $referenced_image->get($provider_url_field)->value;
-
-      // NOTE: The API doesn't send seem to send alt text, so re-using the
-      // caption.
-      $alt = $referenced_image->get($caption_field)->value;
+      if (!empty($image_id_field) && $image_id_field != 'unused') {
+        $npr_id = $referenced_image->get($image_id_field)->value;
+      }
+      if (!empty($caption_field) && $caption_field != 'unused') {
+        $caption = $referenced_image->get($caption_field)->value;
+        // NOTE: The API doesn't seem to send alt text, so re-using caption.
+        $alt = $caption;
+      }
+      if (!empty($copyright_field) && $copyright_field != 'unused') {
+        $copyright = $referenced_image->get($copyright_field)->value;
+      }
+      if (!empty($provider_field) && $provider_field != 'unused') {
+        $provider = $referenced_image->get($provider_field)->value;
+      }
+      if (!empty($provider_url_field) && $provider_url_field != 'unused') {
+        $provider_url = $referenced_image->get($provider_url_field)->value;
+      }
 
       // Set up the image credit.
       // If a provider URL is available, create a link.
