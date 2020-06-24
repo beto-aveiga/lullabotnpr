@@ -262,7 +262,7 @@ class NprPushClient extends NprClient {
 
     $list->appendChild($story);
     return $xml->saveXML();
-    }
+    // }
   }
 
   /**
