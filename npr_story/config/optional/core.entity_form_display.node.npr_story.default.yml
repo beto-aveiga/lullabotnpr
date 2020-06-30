@@ -2,6 +2,7 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.node.npr_story.field_external_assets
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -39,10 +40,20 @@ mode: default
 content:
   created:
     type: datetime_timestamp
-    weight: 27
+    weight: 28
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_external_assets:
+    weight: 7
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_additional_images:
     weight: 5
     settings:
@@ -54,7 +65,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_artist:
-    weight: 19
+    weight: 20
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -74,7 +85,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio_run_by_date:
-    weight: 23
+    weight: 24
     settings:
       size: 60
       placeholder: ''
@@ -82,42 +93,6 @@ content:
     type: string_textfield
     region: content
   field_npr_blog:
-    weight: 16
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_body:
-    weight: 10
-    settings:
-      rows: 5
-      placeholder: ''
-    third_party_settings: {  }
-    type: text_textarea
-    region: content
-  field_npr_byline:
-    weight: 7
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: string_textfield
-    region: content
-  field_npr_categories:
-    weight: 18
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
-  field_npr_genre:
     weight: 17
     settings:
       match_operator: CONTAINS
@@ -127,8 +102,44 @@ content:
     third_party_settings: {  }
     type: entity_reference_autocomplete
     region: content
+  field_npr_body:
+    weight: 11
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: text_textarea
+    region: content
+  field_npr_byline:
+    weight: 8
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_npr_categories:
+    weight: 19
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_npr_genre:
+    weight: 18
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
   field_npr_last_modified:
-    weight: 22
+    weight: 23
     settings:
       size: 60
       placeholder: ''
@@ -136,7 +147,7 @@ content:
     type: string_textfield
     region: content
   field_npr_link:
-    weight: 11
+    weight: 12
     settings:
       placeholder_url: ''
       placeholder_title: ''
@@ -144,7 +155,7 @@ content:
     type: link_default
     region: content
   field_npr_mini_teaser:
-    weight: 9
+    weight: 10
     settings:
       size: 60
       placeholder: ''
@@ -162,7 +173,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_primary_topic:
-    weight: 13
+    weight: 14
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -172,7 +183,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_program:
-    weight: 21
+    weight: 22
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -182,7 +193,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_pubdate:
-    weight: 24
+    weight: 25
     settings:
       size: 60
       placeholder: ''
@@ -190,7 +201,7 @@ content:
     type: string_textfield
     region: content
   field_npr_series:
-    weight: 20
+    weight: 21
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -200,7 +211,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_slug:
-    weight: 12
+    weight: 13
     settings:
       size: 60
       placeholder: ''
@@ -208,7 +219,7 @@ content:
     type: string_textfield
     region: content
   field_npr_story_date:
-    weight: 25
+    weight: 26
     settings:
       size: 60
       placeholder: ''
@@ -231,7 +242,7 @@ content:
     type: string_textfield
     region: content
   field_npr_tags:
-    weight: 15
+    weight: 16
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -241,7 +252,7 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_teaser:
-    weight: 8
+    weight: 9
     settings:
       rows: 5
       placeholder: ''
@@ -257,7 +268,7 @@ content:
     type: string_textfield
     region: content
   field_npr_topic:
-    weight: 14
+    weight: 15
     settings:
       match_operator: CONTAINS
       match_limit: 10
@@ -268,7 +279,7 @@ content:
     region: content
   path:
     type: path
-    weight: 30
+    weight: 31
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -276,21 +287,21 @@ content:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 28
+    weight: 29
     region: content
     third_party_settings: {  }
   status:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 31
+    weight: 32
     region: content
     third_party_settings: {  }
   sticky:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 29
+    weight: 30
     region: content
     third_party_settings: {  }
   title:
@@ -303,7 +314,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 26
+    weight: 27
     settings:
       match_operator: CONTAINS
       size: 60

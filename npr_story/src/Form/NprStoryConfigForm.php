@@ -289,6 +289,52 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
+    // External asset media type configuration.
+    $form['external_asset_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('External Asset Settings'),
+      '#open' => FALSE,
+    ];
+    $external_asset_media_type = $config->get('external_asset_media_type');
+    $form['external_asset_settings']['external_asset_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal external asset media type'),
+      '#default_value' => $external_asset_media_type,
+      '#description' => $this->t('Probably just use the Drupal "Remote video" media type.'),
+      '#options' => $media_type_options,
+    ];
+    $form['external_asset_settings']['external_asset_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('external_asset field mappings'),
+      '#open' => TRUE,
+    ];
+    if (!empty($external_asset_media_type)) {
+      $external_asset_media_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('media', $external_asset_media_type));
+      $external_asset_field_options = ['unused' => 'unused'] +
+        array_combine($external_asset_media_fields, $external_asset_media_fields);
+      $external_asset_field_mappings = $config->get('external_asset_field_mappings');
+      foreach ($external_asset_field_mappings as $npr_external_asset_field => $external_asset_field_value) {
+        $form['external_asset_settings']['external_asset_field_mappings'][$npr_external_asset_field] = [
+          '#type' => 'select',
+          '#title' => $npr_external_asset_field,
+          '#options' => $external_asset_field_options,
+          '#default_value' => $external_asset_field_mappings[$npr_external_asset_field],
+        ];
+        // Mark the required fields.
+        $form['external_asset_settings']['external_asset_field_mappings']['external_asset_id']['#required'] = TRUE;
+        $form['external_asset_settings']['external_asset_field_mappings']['external_asset_title']['#required'] = TRUE;
+        $form['external_asset_settings']['external_asset_field_mappings']['remote_external_asset']['#required'] = TRUE;
+      }
+    }
+    else {
+      $form['external_asset_settings']['external_asset_field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save the Drupal external_asset media type to choose field mappings.',
+      ];
+    }
+
     return parent::buildForm($form, $form_state);
   }
 

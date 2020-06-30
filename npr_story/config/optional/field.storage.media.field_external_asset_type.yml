@@ -4,18 +4,18 @@ dependencies:
   module:
     - media
     - options
-id: media.field_npr_image_type
-field_name: field_npr_image_type
+id: media.field_external_asset_type
+field_name: field_external_asset_type
 entity_type: media
 type: list_string
 settings:
   allowed_values:
     -
-      value: primary
-      label: Primary
+      value: youtube
+      label: YouTube
     -
-      value: standard
-      label: Standard
+      value: vimeo
+      label: Vimeo
   allowed_values_function: ''
 module: options
 locked: false

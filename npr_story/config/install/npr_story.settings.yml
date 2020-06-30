@@ -26,7 +26,8 @@ story_field_mappings:
   primary_image: field_npr_primary_image
   additional_images: field_npr_additional_images
   audio: field_npr_audio
-  audioRunByDate: field_npr_audio_run_by_date
+  externalAsset: field_external_assets
+  udioRunByDate: field_npr_audio_run_by_date
   body: field_npr_body
   byline: field_npr_byline
   link: field_npr_link
@@ -66,3 +67,9 @@ audio_field_mappings:
   remote_audio: field_media_npr_remote_audio
   duration: field_npr_audio_duration
   rightsHolder: field_npr_audio_rights_holder
+external_asset_media_type: npr_external_asset
+external_asset_field_mappings:
+  id: field_external_asset_id
+  type: field_external_asset_type
+  oEmbed: field_media_oembed_video_1
+  externalId: field_external_id

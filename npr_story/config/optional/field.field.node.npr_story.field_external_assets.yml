@@ -1,0 +1,27 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_external_assets
+    - media.type.npr_external_asset
+    - node.type.npr_story
+id: node.npr_story.field_external_assets
+field_name: field_external_assets
+entity_type: node
+bundle: npr_story
+label: 'External Assets'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:media'
+  handler_settings:
+    target_bundles:
+      npr_external_asset: npr_external_asset
+    sort:
+      field: _none
+    auto_create: false
+    auto_create_bundle: npr_external_asset
+field_type: entity_reference
