@@ -30,6 +30,7 @@ dependencies:
     - field.field.node.npr_story.field_npr_topic
     - node.type.npr_story
   module:
+    - datetime
     - link
     - path
     - text
@@ -85,12 +86,10 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio_run_by_date:
-    weight: 24
-    settings:
-      size: 60
-      placeholder: ''
+    weight: 26
+    settings: {  }
     third_party_settings: {  }
-    type: string_textfield
+    type: datetime_default
     region: content
   field_npr_blog:
     weight: 17
@@ -139,12 +138,10 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_last_modified:
-    weight: 23
-    settings:
-      size: 60
-      placeholder: ''
+    weight: 25
+    settings: {  }
     third_party_settings: {  }
-    type: string_textfield
+    type: datetime_default
     region: content
   field_npr_link:
     weight: 12
@@ -193,12 +190,10 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_pubdate:
-    weight: 25
-    settings:
-      size: 60
-      placeholder: ''
+    weight: 24
+    settings: {  }
     third_party_settings: {  }
-    type: string_textfield
+    type: datetime_default
     region: content
   field_npr_series:
     weight: 21
@@ -219,12 +214,10 @@ content:
     type: string_textfield
     region: content
   field_npr_story_date:
-    weight: 26
-    settings:
-      size: 60
-      placeholder: ''
+    weight: 23
+    settings: {  }
     third_party_settings: {  }
-    type: string_textfield
+    type: datetime_default
     region: content
   field_npr_story_id:
     weight: 0

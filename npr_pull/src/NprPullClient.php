@@ -3,6 +3,8 @@
 namespace Drupal\npr_pull;
 
 use DateTime;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
@@ -189,6 +191,12 @@ class NprPullClient extends NprClient {
         continue;
       }
 
+      $date_fields = [
+        'storyDate',
+        'pubDate',
+        'lastModifiedDate',
+        'audioRunByDate',
+      ];
       if (!in_array($key, ['image', 'audio'])) {
 
         // ID doesn't have a "value" property.
@@ -272,6 +280,18 @@ class NprPullClient extends NprClient {
             $this->node->set($value, $byline);
             $this->node->save();
           }
+        }
+        elseif (in_array($key, $date_fields)) {
+          // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
+          $dt_npr = DrupalDateTime::createFromFormat(
+            "D, d M Y H:i:s O",
+            $story->{$key}->value
+          );
+          $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+          $this->node->set(
+            $value,
+            $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT)
+          );
         }
         // All of the other fields have a "value" property.
         elseif (!empty($story->{$key}->value)) {

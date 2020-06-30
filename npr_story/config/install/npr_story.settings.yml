@@ -22,22 +22,22 @@ parent_vocabulary_prefix:
   program_prefix: ''
 story_field_mappings:
   id: field_npr_story_id
-  lastModifiedDate: field_npr_last_modified
   primary_image: field_npr_primary_image
   additional_images: field_npr_additional_images
   audio: field_npr_audio
   externalAsset: field_external_assets
-  udioRunByDate: field_npr_audio_run_by_date
   body: field_npr_body
   byline: field_npr_byline
   link: field_npr_link
   miniTeaser: field_npr_mini_teaser
-  pubDate: field_npr_pubdate
   shortTitle: field_npr_title_short
   slug: field_npr_slug
-  storyDate: field_npr_story_date
   subtitle: field_npr_subtitle
   teaser: field_npr_teaser
+  audioRunByDate: field_npr_audio_run_by_date
+  lastModifiedDate: field_npr_last_modified
+  pubDate: field_npr_pubdate
+  storyDate: field_npr_story_date
   primaryTopic: field_npr_primary_topic
   topic: field_npr_topic
   tag: field_npr_tags
