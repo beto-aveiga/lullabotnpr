@@ -159,6 +159,18 @@ class NprPullConfigForm extends ConfigFormBase {
         ],
       ],
     ];
+    $form['start_date'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Days back'),
+      '#default_value' => $config->get('start_date'),
+      '#description' => $this->t('The numbers of days back (from today) to query for stories.'),
+      '#size' => 3,
+      '#states' => [
+        'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
     $form['org_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Limit by organization ID'),
@@ -261,6 +273,7 @@ class NprPullConfigForm extends ConfigFormBase {
     $config->set('queue_interval', $values['queue_interval']);
     $config->set('queue_enable', $values['queue_enable']);
     $config->set('num_results', $values['num_results']);
+    $config->set('start_date', $values['start_date']);
     $config->set('org_id', $values['org_id']);
     $config->set('subscribe_method', $values['subscribe_method']);
     $config->set('topic_vocabularies', array_filter($values['topic_vocabularies']));

@@ -281,7 +281,7 @@ class NprPullClient extends NprClient {
             $this->node->save();
           }
         }
-        elseif (in_array($key, $date_fields)) {
+        elseif (!empty($story->{$key}->value) && in_array($key, $date_fields)) {
           // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
           $dt_npr = DrupalDateTime::createFromFormat(
             "D, d M Y H:i:s O",
@@ -747,25 +747,19 @@ class NprPullClient extends NprClient {
   /**
    * Adds items to the API story queue based on a time constraint.
    *
-   * @param \DateTime|null $since
-   *   Time constraint for the queue cutoff. Defaults to the last time the queue
-   *   was updated.
-   *
    * @return bool
    *   TRUE if the queue update fully completes, FALSE if it does not.
    */
-  public function updateQueue(DateTime $since = NULL): bool {
+  public function updateQueue(): bool {
     $dt_start = new DateTime();
 
     $this->stories = [];
-    if (empty($since)) {
-      $since = $this->getLastUpdateTime();
-    }
 
     $pull_config = $this->config->get('npr_pull.settings');
     $num_results = $pull_config->get('num_results');
-    // By default, check stories for the past 3 days.
-    $start = date("Y-m-d", time() - 259200);
+    $start_date = $pull_config->get('start_date');
+    $start_timestamp = time() - ($start_date * 86400);
+    $start = date("Y-m-d", $start_timestamp);
     $end = date("Y-m-d");
 
     // Get a list of IDs subscribed to.
@@ -782,15 +776,10 @@ class NprPullClient extends NprClient {
         'fields' => 'all',
       ];
       $this->getStories($params);
-
       foreach ($this->stories as $story) {
-        $updated_at = new DateTime($story->lastModifiedDate);
-        if ($updated_at > $since) {
-          $this->getQueue()->createItem($story);
-        }
+        $this->getQueue()->createItem($story);
       }
     }
-
     $this->setLastUpdateTime($dt_start);
 
     return TRUE;
