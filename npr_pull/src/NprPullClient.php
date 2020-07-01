@@ -288,10 +288,13 @@ class NprPullClient extends NprClient {
             $story->{$key}->value
           );
           $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
-          $this->node->set(
-            $value,
-            $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT)
-          );
+          if (in_array($value, ['created', 'changed'])) {
+            $date_value = $dt_npr->getTimestamp();
+          }
+          else {
+            $date_value = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+          }
+          $this->node->set($value, $date_value);
         }
         // All of the other fields have a "value" property.
         elseif (!empty($story->{$key}->value)) {
