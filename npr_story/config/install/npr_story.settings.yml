@@ -69,7 +69,8 @@ audio_field_mappings:
   rightsHolder: field_npr_audio_rights_holder
 external_asset_media_type: npr_external_asset
 external_asset_field_mappings:
-  id: field_external_asset_id
-  type: field_external_asset_type
+  external_asset_title: name
+  external_asset_id: field_external_asset_id
+  external_asset_type: field_external_asset_type
   oEmbed: field_media_oembed_video_1
   externalId: field_external_id

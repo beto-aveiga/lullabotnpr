@@ -323,9 +323,9 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#default_value' => $external_asset_field_mappings[$npr_external_asset_field],
         ];
         // Mark the required fields.
-        $form['external_asset_settings']['external_asset_field_mappings']['external_asset_id']['#required'] = TRUE;
         $form['external_asset_settings']['external_asset_field_mappings']['external_asset_title']['#required'] = TRUE;
-        $form['external_asset_settings']['external_asset_field_mappings']['remote_external_asset']['#required'] = TRUE;
+        $form['external_asset_settings']['external_asset_field_mappings']['external_asset_id']['#required'] = TRUE;
+        $form['external_asset_settings']['external_asset_field_mappings']['oEmbed']['#required'] = TRUE;
       }
     }
     else {
@@ -376,6 +376,13 @@ class NprStoryConfigForm extends ConfigFormBase {
         $config->set('audio_field_mappings.' . $field_name, $values[$field_name]);
       }
     }
+    $external_asset_fields = $config->get('external_asset_field_mappings');
+    foreach ($external_asset_fields as $field_name => $field_value) {
+      if (isset($values[$field_name])) {
+        $config->set('external_asset_field_mappings.' . $field_name, $values[$field_name]);
+      }
+    }
+
     $config->save();
 
     parent::submitForm($form, $form_state);
