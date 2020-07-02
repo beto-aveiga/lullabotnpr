@@ -204,13 +204,22 @@ class NprPullGetStory extends ConfigFormBase {
       'id' => $story_id,
       'fields' => 'all',
     ];
-    $story = $this->client->getStories($params);
-    $story = reset($story);
+    if ($story = $this->client->getStories($params)) {
+      $story = reset($story);
 
-    // Add or update the story.
-    $published = $values['publish_flag'];
-    $display_messages = TRUE;
-    $this->client->addOrUpdateNode($story, $published, $display_messages);
+      // Add or update the story.
+      $published = $values['publish_flag'];
+      $display_messages = TRUE;
+      $this->client->addOrUpdateNode($story, $published, $display_messages);
+    }
+    else {
+      $this->messenger()->addError(
+        $this->t('The story id @id did not return any results. The story ID
+        might be incorrect or the API key could be misconfigued.', [
+          '@id' => $story_id,
+        ])
+      );
+    }
   }
 
 }
