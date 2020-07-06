@@ -447,13 +447,19 @@ class NprPullClient extends NprClient {
     }
     else {
       foreach ($story->image as $image) {
+
+        // Truncate and clean up the title field.
+        $image_title = htmlentities($image->title->value);
+        $image_title = html_entity_decode($image_title, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $image_title = substr($image_title, 0, 255);
+
         // Check to see if a media image already exists in Drupal.
         if ($media_image = $media_manager->loadByProperties([$image_id_field => $image->id])) {
           if (count($media_image) > 1) {
             $this->nprError(
               $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
                 '@id' => $image->id,
-                '@title' => $image->title->value,
+                '@title' => $image_title,
               ]));
             return;
           }
@@ -475,8 +481,7 @@ class NprPullClient extends NprClient {
         else {
           // Create a media entity.
           $media_image = Media::create([
-            // TODO: determine if we have to truncate titles.
-            $mappings['image_title'] => substr($image->title->value, 0, 255),
+            $mappings['image_title'] => $image_title,
             'bundle' => $image_media_type,
             'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
             'langcode' => Language::LANGCODE_NOT_SPECIFIED,
