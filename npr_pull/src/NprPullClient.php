@@ -761,6 +761,12 @@ class NprPullClient extends NprClient {
     $pull_config = $this->config->get('npr_pull.settings');
     $num_results = $pull_config->get('num_results');
     $start_date = $pull_config->get('start_date');
+
+    if (empty($start_date)) {
+      $this->nprError('The configured both the "Days back" setting on the "Pull Settings" tab.');
+      return FALSE;
+    }
+
     $start_timestamp = time() - ($start_date * 86400);
     $start = date("Y-m-d", $start_timestamp);
     $end = date("Y-m-d");

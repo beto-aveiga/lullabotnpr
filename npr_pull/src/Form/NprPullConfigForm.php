@@ -164,6 +164,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#title' => $this->t('Days back'),
       '#default_value' => $config->get('start_date'),
       '#description' => $this->t('The numbers of days back (from today) to query for stories.'),
+      '#required' => TRUE,
       '#size' => 3,
       '#states' => [
         'visible' => [
