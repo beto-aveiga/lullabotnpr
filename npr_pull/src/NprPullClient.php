@@ -758,8 +758,6 @@ class NprPullClient extends NprClient {
   public function updateQueue(): bool {
     $dt_start = new DateTime();
 
-    $this->stories = [];
-
     $pull_config = $this->config->get('npr_pull.settings');
     $num_results = $pull_config->get('num_results');
     $start_date = $pull_config->get('start_date');

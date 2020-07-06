@@ -241,6 +241,7 @@ class NprClient implements ClientInterface {
     $object = simplexml_load_string($xml);
     $this->addSimplexmlAttributes($object, $this);
 
+    $this->stories = [];
     if (!empty($object->list->story)) {
       foreach ($object->list->story as $story) {
         $parsed = new NPRMLEntity();
@@ -297,16 +298,15 @@ class NprClient implements ClientInterface {
                 // Add each paragraph to the body.
                 // But check to see if the object is multidimensional first.
                 if (isset($items->num)) {
-                  $body_content[$items->num] = _filter_autop
-                  ($paragraphs[$items->paragraphNum]);
+                  $body_content[$items->num] = _filter_autop($paragraphs[$items->paragraphNum]);
                 }
                 else {
                   foreach ($items as $item) {
                     $body_content[$item->num] = _filter_autop($paragraphs[$item->paragraphNum]);
                   }
                 }
-
                 break;
+
               case 'image':
                 // Add a placeholder for each referenced image to the body.
                 // But check to see if the object is multidimensional first.
@@ -319,6 +319,7 @@ class NprClient implements ClientInterface {
                   }
                 }
                 break;
+
               default:
                 break;
             }
@@ -455,19 +456,6 @@ class NprClient implements ClientInterface {
     if (count($element->attributes())) {
       foreach ($element->attributes() as $attr => $value) {
         $object->$attr = (string) $value;
-      }
-    }
-  }
-
-  /**
-   * Helper function to "flatten" the NPR story.
-   */
-  protected function flatten() {
-    foreach ($this->stories as $i => $story) {
-      foreach ($story->parent as $parent) {
-        if ($parent->type == 'tag') {
-          $this->stories[$i]->tags[] = $parent->title->value;
-        }
       }
     }
   }
