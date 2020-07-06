@@ -61,6 +61,7 @@ image_field_mappings:
   type: field_npr_image_type
 audio_media_type: npr_remote_audio
 audio_format: mp3
+alternate_audio_format: mp4
 audio_field_mappings:
   audio_id: field_npr_audio_id
   audio_title: name

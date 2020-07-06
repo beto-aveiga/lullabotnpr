@@ -620,6 +620,11 @@ class NprPullClient extends NprClient {
     // Create the audio media item(s).
     foreach ($story->audio as $audio) {
 
+      // If the audio format is not available, use the alternate audio format.
+      if ($audio_format == 'mp3' && empty($audio->format->mp3['m3u']->value)) {
+        $audio_format = $story_config->get('alternate_audio_format');
+      }
+
       // MP3 files looks a little bit different.
       if ($audio_format == 'mp3' && !empty($audio->format->mp3['m3u']->value)) {
         $m3u_uri = $audio->format->mp3['m3u']->value;

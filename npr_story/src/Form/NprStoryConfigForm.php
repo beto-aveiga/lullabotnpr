@@ -255,6 +255,14 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#title' => 'Audio format',
       '#options' => $format_options,
       '#default_value' => $config->get('audio_format'),
+      '#disabled' => TRUE,
+    ];
+    $form['audio_settings']['alternate_audio_format'] = [
+      '#type' => 'select',
+      '#title' => 'Alternate audio format',
+      '#options' => $format_options,
+      '#default_value' => $config->get('alternate_audio_format'),
+      '#disabled' => TRUE,
     ];
     $audio_media_type = $config->get('audio_media_type');
     $form['audio_settings']['audio_field_mappings'] = [
