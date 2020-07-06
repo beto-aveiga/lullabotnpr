@@ -763,7 +763,7 @@ class NprPullClient extends NprClient {
     $start_date = $pull_config->get('start_date');
 
     if (empty($start_date)) {
-      $this->nprError('The configured both the "Days back" setting on the "Pull Settings" tab.');
+      $this->nprError('Please configure the "Days back" setting on the "Pull Settings" tab.');
       return FALSE;
     }
 
