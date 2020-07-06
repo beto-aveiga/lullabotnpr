@@ -776,6 +776,7 @@ class NprPullClient extends NprClient {
 
     // Make separate API calls for each topic. If there are many, many topics
     // slected, we may not get data for all of them.
+    $update_stories = [];
     foreach ($npr_ids as $npr_id) {
       $params = [
         'id' => $npr_id,
@@ -786,9 +787,19 @@ class NprPullClient extends NprClient {
       ];
       $this->getStories($params);
       foreach ($this->stories as $story) {
-        $this->getQueue()->createItem($story);
+        $update_stories[] = $story;
       }
     }
+
+    $stories_updated = [];
+    foreach ($update_stories as $update_story) {
+      // Only add a story to the queue once.
+      if (!in_array($update_story->id, $stories_updated)) {
+        $this->getQueue()->createItem($update_story);
+        $stories_updated[] = $update_story->id;
+      }
+    }
+
     $this->setLastUpdateTime($dt_start);
 
     return TRUE;
