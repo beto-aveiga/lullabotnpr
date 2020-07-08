@@ -84,8 +84,15 @@ class NprPushClient extends NprClient {
       return;
     }
     if ($body = $node->{$body_field}->value) {
+
+      $body = check_markup($body, $node->{$body_field}->format);
+      /** @var \Drupal\filter\FilterPluginManager $filter_plugin_manager */
+      $filter_plugin_manager = \Drupal::service('plugin.manager.filter');
+      /** @var \Drupal\npr_push\Plugin\Filter\RelToAbs $rel_to_abs */
+      $rel_to_abs = $filter_plugin_manager->createInstance('npr_rel_to_abs');
+      $body = $rel_to_abs->process($body, 'en')->getProcessedText();
       $body_cdata = $xml->createCDATASection($body);
-      $text = $xml->createElement('text');
+      $text = $xml->createElement('textWithHtml');
       $text->appendChild($body_cdata);
       $story->appendChild($text);
 
@@ -98,20 +105,21 @@ class NprPushClient extends NprClient {
     // Story date and publication date.
     $now = format_date(REQUEST_TIME, 'custom', "D, d M Y G:i:s O ");
     $story_date = ($node->getChangedTime() == $node->getCreatedTime()) ? $now :
-      format_date($node->getCreatedTime(), 'custom', "D, d M Y G:i:s O ") ;
+    format_date($node->getCreatedTime(), 'custom', "D, d M Y G:i:s O ");
     $story->appendChild($xml->createElement('storyDate', $story_date));
     $story->appendChild($xml->createElement('pubDate', $now));
 
     // Story URL.
-    $url = $node->toUrl()->setAbsolute()->toString();
-    $url_cdata = $xml->createCDATASection($url);
-    $url_type = $xml->createAttribute('type');
-    $url_type->value = 'html';
-    $url_element = $xml->createElement('link');
-    $url_element->appendChild($url_cdata);
-    $url_element->appendChild($url_type);
-    $story->appendChild($url_element);
-
+    if (!$node->isNew()) {
+      $url = $node->toUrl()->setAbsolute()->toString();
+      $url_cdata = $xml->createCDATASection($url);
+      $url_type = $xml->createAttribute('type');
+      $url_type->value = 'html';
+      $url_element = $xml->createElement('link');
+      $url_element->appendChild($url_cdata);
+      $url_element->appendChild($url_type);
+      $story->appendChild($url_element);
+    }
     // The station's org ID.
     $org_element = $xml->createElement('organization');
     $org_id = $xml->createAttribute('orgId');
@@ -124,13 +132,17 @@ class NprPushClient extends NprClient {
     $story->appendChild($partner_id);
 
     // Subtitle.
-    $subtitle_field = $story_mappings['subtitle'];
-    $subtitle = $node->{$subtitle_field}->value;
-    if (!empty($subtitle) && !empty($subtitle_field) && $subtitle_field !== 'unused') {
-      $element = $xml->createElement($subtitle_field, $subtitle);
-      $element = $xml->createAttribute('subtitle');
-      $element->value = $subtitle;
-      $story->appendChild($element);
+    if ($subtitle_field = $story_mappings['subtitle']) {
+      if (!empty($node->{$subtitle_field}->value) &&
+        !empty($subtitle_field)
+        && $subtitle_field !== 'unused'
+      ) {
+        $subtitle = $node->{$subtitle_field}->value;
+        $element = $xml->createElement($subtitle_field, $subtitle);
+        $element = $xml->createAttribute('subtitle');
+        $element->value = $subtitle;
+        $story->appendChild($element);
+      }
     }
 
     $textfields = ['subtitle', 'shortTitle', 'miniTeaser', 'slug'];
@@ -161,108 +173,33 @@ class NprPushClient extends NprClient {
 
         $media_image = $node->get($image_field)->referencedEntities();
         $media_image = reset($media_image);
-        $image_references = $media_image->{$image_image_field};
-        foreach ($image_references as $image_reference) {
-          $file_id = $image_reference->get('target_id')->getValue();
-          if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
-            // Get the image URL.
-            $image_uri = $image_file->get('uri')->getString();
-            $image_url = \file_create_url($image_uri);
+        if (!empty($media_image->{$image_image_field}) &&
+          $image_references = $media_image->{$image_image_field}
+        ) {
+          foreach ($image_references as $image_reference) {
+            $file_id = $image_reference->get('target_id')->getValue();
+            if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
+              // Get the image URL.
+              $image_uri = $image_file->get('uri')->getString();
+              $image_url = \file_create_url($image_uri);
 
-            // Create the primary image NPRML element.
-            $element = $xml->createElement('image');
-            $image_type = $xml->createAttribute('type');
-            $image_type->value = 'primary';
-            $element->appendChild($image_type);
-            $src = $xml->createAttribute('src');
-            $src->value = $image_url;
-            $element->appendChild($src);
-            $story->appendChild($element);
+              // Create the primary image NPRML element.
+              $element = $xml->createElement('image');
+              $image_type = $xml->createAttribute('type');
+              $image_type->value = 'primary';
+              $element->appendChild($image_type);
+              $src = $xml->createAttribute('src');
+              $src->value = $image_url;
+              $element->appendChild($src);
+              $story->appendChild($element);
+            }
           }
         }
       }
     }
 
-    /*************************
-    // Audio.
-    // TODO: This code does not quite work. Add audio functionality.
-    if ($audio_field = $story_mappings['audio']) {
-      if (!empty($audio_field) && $audio_field !== 'unused') {
-
-        // Get and check the configuration.
-        $audio_media_type = $story_config->get('audio_media_type');
-        $audio_format = $story_config->get('audio_format');
-        $audio_mappings = $story_config->get('audio_field_mappings');
-        $duration_value = $audio_mappings['duration'];
-        if (empty($audio_media_type) || empty($audio_format) || $duration_value == 'unused') {
-          $this->nprError('Please configure the NPR story audio type, format, and duration to push audio to NPR.');
-          return;
-        }
-        $media_audio = $node->get($audio_field)->referencedEntities();
-        $media_audio = reset($media_audio);
-
-        $element = $xml->createElement('audio');
-        if (!empty($audio_primary_set)) {
-          $audio_type = $xml->createAttribute('type');
-          $audio_type->value = 'primary';
-          $element->appendChild($audio_type);
-          $audio_primary_set = TRUE;
-        }
-        $title = $xml->createElement('title', $media_audio->getName());
-        $element->appendChild($title);
-
-        $duration = $xml->createElement('duration', $media_audio->get($duration_value)->getValue());
-        $element->appendChild($duration);
-
-        // $description = $xml->createElement('description', $v['description']);
-        // $element->appendChild($description);
-
-        $format = $xml->createElement('format');
-        $mp3 = $xml->createElement('mp3', $v['mp3']);
-        $mp3type = $xml->createAttribute('type');
-        $mp3type->value = 'm3u';
-        $mp3->appendChild($mp3type);
-        $format->appendChild($mp3);
-
-        // $mediastream = $xml->createElement('mediastream', $v['mediastream']);
-        // $format->appendChild($mediastream);
-
-        // $wm = $xml->createElement('wm', $v['wm']);
-        // $format->appendChild($wm);
-
-        $element->appendChild($format);
-
-        // $permissions = $xml->createElement('permissions');
-
-        // $download = $xml->createElement('download');
-        // $download_allow = $xml->createAttribute('allow');
-        // $download_allow->value = $v['download'] ? 'true' : 'false';
-        // $download->appendChild($download_allow);
-        // $permissions->appendChild($download);
-
-        // $stream = $xml->createElement('stream');
-        // $stream_allow = $xml->createAttribute('stream');
-        // $stream_allow->value = $v['stream'] ? 'true' : 'false';
-        // $stream->appendChild($stream_allow);
-        // $permissions->appendChild($stream);
-
-        // $embed = $xml->createElement('embed');
-        // $embed_allow = $xml->createAttribute('allow');
-        // $embed_allow->value = $v['embed'] ? 'true' : 'false';
-        // $embed->appendChild($embed_allow);
-        // $permissions->appendChild($embed);
-
-        // $element->appendChild($permissions);
-
-        if (is_object($element)) {
-          $story->appendChild($element);
-        }
-      }
-      **************************/
-
     $list->appendChild($story);
     return $xml->saveXML();
-    // }
   }
 
   /**
