@@ -101,6 +101,13 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('body_text_format'),
       '#options' => $formats,
     ];
+    $form['node_settings]']['teaser_text_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Teaser text format'),
+      '#description' => $this->t('The teaser field is selected below'),
+      '#default_value' => $config->get('teaser_text_format'),
+      '#options' => $formats,
+    ];
 
     // Story node field mappings.
     $form['story_field_mappings'] = [
@@ -355,6 +362,7 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     $config->set('story_node_type', $values['story_node_type']);
     $config->set('body_text_format', $values['body_text_format']);
+    $config->set('teaser_text_format', $values['teaser_text_format']);
     $config->set('image_media_type', $values['image_media_type']);
     $config->set('image_crop_size', $values['image_crop_size']);
     $config->set('audio_media_type', $values['audio_media_type']);

@@ -1,5 +1,6 @@
 story_node_type: npr_story
 body_text_format: npr_story
+teaser_text_format: npr_story
 parent_vocabulary:
   primaryTopic: npr_topics
   topic: npr_topics

@@ -8,6 +8,9 @@ npr_story.settings:
     body_text_format:
       type: text
       label: 'The format of the body text'
+    teaser_text_format:
+      type: text
+      label: 'The format of the teaser text'
     topic_vocabulary_primary:
       type: text
       label: 'Primary topic vocabulary'

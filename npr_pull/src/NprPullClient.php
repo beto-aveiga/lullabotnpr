@@ -98,6 +98,11 @@ class NprPullClient extends NprClient {
       $this->nprError('Please configure the story body text format.');
       return;
     }
+    $teaser_text_format = $story_config->get('teaser_text_format');
+    if ($story_mappings['teaser'] !== 'unused' && empty($teaser_text_format)) {
+      $this->nprError('Please configure the story teaser text format.');
+      return;
+    }
 
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
@@ -217,6 +222,12 @@ class NprPullClient extends NprClient {
           $this->node->set($value, [
             'value' => $story->body,
             'format' => $text_format,
+          ]);
+        }
+        elseif ($key == 'teaser') {
+          $this->node->set($value, [
+            'value' => $story->teaser->value,
+            'format' => $teaser_text_format,
           ]);
         }
         elseif ($key == 'link') {
