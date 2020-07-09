@@ -112,11 +112,9 @@ class NprPushClient extends NprClient {
     // Story URL.
     if (!$node->isNew()) {
       $url = $node->toUrl()->setAbsolute()->toString();
-      $url_cdata = $xml->createCDATASection($url);
       $url_type = $xml->createAttribute('type');
       $url_type->value = 'html';
-      $url_element = $xml->createElement('link');
-      $url_element->appendChild($url_cdata);
+      $url_element = $xml->createElement('link', $url);
       $url_element->appendChild($url_type);
       $story->appendChild($url_element);
     }
