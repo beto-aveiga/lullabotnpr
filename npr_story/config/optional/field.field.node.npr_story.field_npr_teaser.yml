@@ -5,7 +5,15 @@ dependencies:
     - field.storage.node.field_npr_teaser
     - node.type.npr_story
   module:
+    - allowed_formats
     - text
+third_party_settings:
+  allowed_formats:
+    basic_html: '0'
+    npr_story: '0'
+    restricted_html: '0'
+    full_html: '0'
+    plain_text: '0'
 id: node.npr_story.field_npr_teaser
 field_name: field_npr_teaser
 entity_type: node
