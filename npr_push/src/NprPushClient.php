@@ -45,7 +45,7 @@ class NprPushClient extends NprClient {
 
     $nprml_element = $xml->createElement('nprml');
     $nprml_version = $xml->createAttribute('version');
-    $nprml_version->value = self::NPRML_VERSION;
+    $nprml_version->value = '0.94';
     $nprml_element->appendChild($nprml_version);
 
     $nprml = $xml->appendChild($nprml_element);

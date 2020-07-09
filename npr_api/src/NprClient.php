@@ -27,7 +27,6 @@ class NprClient implements ClientInterface {
   // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
   const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
-  const NPRML_VERSION = '0.92.2';
 
   /**
    * The logger.
