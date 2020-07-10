@@ -127,7 +127,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#return_value' => TRUE,
     ];
 
-    $interval_options = [1, 3600, 10800, 21600, 43200, 86400, 604800];
+    $interval_options = [1, 600, 1800, 3600, 10800, 21600, 43200, 86400, 604800];
     $form['queue_interval'] = [
       '#type' => 'select',
       '#title' => $this->t('Queue builder update interval'),
