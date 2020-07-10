@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @QueueWorker(
  *   id = "npr_api.queue.story",
  *   title = @Translation("NPR API story processor"),
- *   cron = {"time" = 60}
+ *   cron = {"time" = 120}
  * )
  *
  * @see npr_pull_cron()
