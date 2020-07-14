@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.npr_remote_multimedia.field_media_npr_multimedia
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_duration
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_height
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_id
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_width
+    - media.type.npr_remote_multimedia
+  module:
+    - npr_story
+id: media.npr_remote_multimedia.default
+targetEntityType: media
+bundle: npr_remote_multimedia
+mode: default
+content:
+  field_media_npr_multimedia:
+    label: hidden
+    weight: 0
+    settings: {  }
+    third_party_settings: {  }
+    type: NPR_Multimedia
+    region: content
+hidden:
+  created: true
+  field_npr_multimedia_duration: true
+  field_npr_multimedia_height: true
+  field_npr_multimedia_id: true
+  field_npr_multimedia_width: true
+  name: true
+  thumbnail: true
+  uid: true

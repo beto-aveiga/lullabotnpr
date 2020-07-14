@@ -136,6 +136,9 @@ class NprStoryConfigForm extends ConfigFormBase {
         $form['story_field_mappings']['audio']['#description'] = $this->t('This must be a media reference field to a media type with a source of "NPR Remote Audio".');
         $form['story_field_mappings']['primary_image']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add an entity (media) reference to the primary image from the story node, configure this field.');
         $form['story_field_mappings']['additional_images']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add entity (media) references to the additional media image(s) from the story node, configure this field.');
+        $form['story_field_mappings']['multimedia']['#required'] = TRUE;
+        $form['story_field_mappings']['multimedia']['#description'] = $this->t
+        ('This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
         $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
       }
@@ -304,6 +307,57 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
+    // Multimedia media type configuration.
+    $form['multimedia_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Multimedia settings'),
+      '#open' => FALSE,
+    ];
+    $form['multimedia_settings']['multimedia_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal multimedia media type'),
+      '#default_value' => $config->get('multimedia_media_type'),
+      '#description' => $this->t('The npr_story module includes a plugin so that provides the ability to create a media type of source "NPR Remote Multimedia" that can be used.'),
+      '#options' => $media_type_options,
+    ];
+    $multimedia_media_type = $config->get('multimedia_media_type');
+    $form['multimedia_settings']['multimedia_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Multimedia field mappings'),
+      '#open' => TRUE,
+    ];
+    if (!empty($multimedia_media_type)) {
+      $multimedia_media_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('media', $multimedia_media_type));
+      $multimedia_field_options = ['unused' => 'unused'] +
+        array_combine($multimedia_media_fields, $multimedia_media_fields);
+      $multimedia_field_mappings = $config->get('multimedia_field_mappings');
+      foreach ($multimedia_field_mappings as $npr_multimedia_field =>
+               $multimedia_field_value) {
+        $form['multimedia_settings']['multimedia_field_mappings'][$npr_multimedia_field]
+          = [
+          '#type' => 'select',
+          '#title' => $npr_multimedia_field,
+          '#options' => $multimedia_field_options,
+          '#default_value' => $multimedia_field_mappings[$npr_multimedia_field],
+        ];
+        // Mark the required fields.
+        $form['multimedia_settings']['multimedia_field_mappings']['multimedia_id
+        ']['#required'] = TRUE;
+        $form['multimedia_settings']['multimedia_field_mappings']['multimedia_title
+        ']['#required'] = TRUE;
+        $form['multimedia_settings']['multimedia_field_mappings']['remote_multimedia
+        ']['#required'] = TRUE;
+      }
+    }
+    else {
+      $form['multimedia_settings']['multimedia_field_mappings']['mappings_required']
+        = [
+        '#type' => 'item',
+        '#markup' => 'Select and save the Drupal multimedia media type to choose field mappings.',
+      ];
+    }
     // External asset media type configuration.
     $form['external_asset_settings'] = [
       '#type' => 'details',

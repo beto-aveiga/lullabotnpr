@@ -1,0 +1,19 @@
+{#
+/**
+ * @file
+ * Default theme implementation to print an NPR Multimedia player.
+ *
+ * Available variables:
+ *   - url
+ *   - width
+ *   - height
+ *   - id
+ *   - duration
+ *
+ * @ingroup themeable
+ */
+#}
+
+<div class="npr-multimedia" id="npr-multimedia-{{ id }}">
+  <iframe id="jw_embed" width="{{ width }}" height="{{ height }}" src="{{ url }}" frameborder="0" scrolling="no"></iframe>
+</div>

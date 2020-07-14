@@ -26,6 +26,7 @@ story_field_mappings:
   primary_image: field_npr_primary_image
   additional_images: field_npr_additional_images
   audio: field_npr_audio
+  multimedia: field_npr_multimedia
   externalAsset: field_external_assets
   body: field_npr_body
   byline: field_npr_byline
@@ -69,6 +70,14 @@ audio_field_mappings:
   remote_audio: field_media_npr_remote_audio
   duration: field_npr_audio_duration
   rightsHolder: field_npr_audio_rights_holder
+multimedia_media_type: npr_remote_multimedia
+multimedia_field_mappings:
+  multimedia_id: field_npr_multimedia_id
+  multimedia_title: name
+  remote_multimedia: field_media_npr_multimedia
+  multimedia_duration: field_npr_multimedia_duration
+  width: field_npr_multimedia_width
+  height: field_npr_multimedia_height
 external_asset_media_type: npr_external_asset
 external_asset_field_mappings:
   external_asset_title: name

@@ -3,7 +3,6 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.node.teaser
-    - field.field.node.npr_story.field_external_assets
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -16,6 +15,7 @@ dependencies:
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
     - field.field.node.npr_story.field_npr_mini_teaser
+    - field.field.node.npr_story.field_npr_multimedia
     - field.field.node.npr_story.field_npr_primary_image
     - field.field.node.npr_story.field_npr_primary_topic
     - field.field.node.npr_story.field_npr_program
@@ -31,27 +31,18 @@ dependencies:
     - field.field.node.npr_story.field_npr_topic
     - node.type.npr_story
   module:
-    - text
     - user
 id: node.npr_story.teaser
 targetEntityType: node
 bundle: npr_story
 mode: teaser
 content:
-  field_npr_teaser:
-    type: text_default
-    weight: 1
-    region: content
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
   links:
-    weight: 0
-    region: content
+    weight: 100
     settings: {  }
     third_party_settings: {  }
+    region: content
 hidden:
-  field_external_assets: true
   field_npr_additional_images: true
   field_npr_artist: true
   field_npr_audio: true
@@ -64,6 +55,7 @@ hidden:
   field_npr_last_modified: true
   field_npr_link: true
   field_npr_mini_teaser: true
+  field_npr_multimedia: true
   field_npr_primary_image: true
   field_npr_primary_topic: true
   field_npr_program: true
@@ -74,5 +66,6 @@ hidden:
   field_npr_story_id: true
   field_npr_subtitle: true
   field_npr_tags: true
+  field_npr_teaser: true
   field_npr_title_short: true
   field_npr_topic: true

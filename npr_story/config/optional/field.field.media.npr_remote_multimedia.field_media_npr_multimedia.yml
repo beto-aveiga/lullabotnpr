@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_media_npr_multimedia
+    - media.type.npr_remote_multimedia
+  module:
+    - link
+id: media.npr_remote_multimedia.field_media_npr_multimedia
+field_name: field_media_npr_multimedia
+entity_type: media
+bundle: npr_remote_multimedia
+label: 'NPR Remote Multimedia'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 17
+field_type: link

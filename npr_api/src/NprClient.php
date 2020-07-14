@@ -254,11 +254,14 @@ class NprClient implements ClientInterface {
           $current = $xml_iterator->current();
           $key = $xml_iterator->key();
 
-          if ($key == 'image' || $key == 'audio' || $key == 'link') {
+          if ($key == 'image' || $key == 'audio' || $key == 'multimedia' || $key == 'link') {
             if ($key == 'image') {
               $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
             if ($key == 'audio') {
+              $parsed->{$key}[] = $this->parseSimplexmlElement($current);
+            }
+            if ($key == 'multimedia') {
               $parsed->{$key}[] = $this->parseSimplexmlElement($current);
             }
             if ($key == 'link') {
@@ -318,7 +321,20 @@ class NprClient implements ClientInterface {
                   }
                 }
                 break;
-
+              case 'multimedia':
+                // Add a placeholder for each referenced image to the body.
+                // But check to see if the object is multidimensional first.
+                if (isset($items->num)) {
+                  $body_content[$items->num] = "[npr_multimedia:" .
+                    $items->refId . "]";
+                }
+                else {
+                  foreach ($items as $item) {
+                    $body_content[$item->num] = "[npr_multimedia:" .
+                      $item->refId . "]";
+                  }
+                }
+                break;
               default:
                 break;
             }

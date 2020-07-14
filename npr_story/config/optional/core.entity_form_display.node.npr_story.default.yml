@@ -2,7 +2,6 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.node.npr_story.field_external_assets
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -15,6 +14,7 @@ dependencies:
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
     - field.field.node.npr_story.field_npr_mini_teaser
+    - field.field.node.npr_story.field_npr_multimedia
     - field.field.node.npr_story.field_npr_primary_image
     - field.field.node.npr_story.field_npr_primary_topic
     - field.field.node.npr_story.field_npr_program
@@ -30,7 +30,6 @@ dependencies:
     - field.field.node.npr_story.field_npr_topic
     - node.type.npr_story
   module:
-    - datetime
     - link
     - path
     - text
@@ -45,16 +44,6 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_external_assets:
-    weight: 7
-    settings:
-      match_operator: CONTAINS
-      match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: entity_reference_autocomplete
-    region: content
   field_npr_additional_images:
     weight: 5
     settings:
@@ -86,10 +75,12 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_audio_run_by_date:
-    weight: 26
-    settings: {  }
+    weight: 24
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
-    type: datetime_default
+    type: string_textfield
     region: content
   field_npr_blog:
     weight: 17
@@ -138,10 +129,12 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_last_modified:
-    weight: 25
-    settings: {  }
+    weight: 23
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
-    type: datetime_default
+    type: string_textfield
     region: content
   field_npr_link:
     weight: 12
@@ -158,6 +151,16 @@ content:
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
+    region: content
+  field_npr_multimedia:
+    weight: 7
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
     region: content
   field_npr_primary_image:
     weight: 4
@@ -190,10 +193,12 @@ content:
     type: entity_reference_autocomplete
     region: content
   field_npr_pubdate:
-    weight: 24
-    settings: {  }
+    weight: 25
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
-    type: datetime_default
+    type: string_textfield
     region: content
   field_npr_series:
     weight: 21
@@ -214,10 +219,12 @@ content:
     type: string_textfield
     region: content
   field_npr_story_date:
-    weight: 23
-    settings: {  }
+    weight: 26
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
-    type: datetime_default
+    type: string_textfield
     region: content
   field_npr_story_id:
     weight: 0

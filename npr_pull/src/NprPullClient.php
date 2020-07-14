@@ -55,6 +55,13 @@ class NprPullClient extends NprClient {
   protected $additionalImagesField;
 
   /**
+   * The multimedia field on the story.
+   *
+   * @var string
+   */
+  protected $multimediaField;
+
+  /**
    * Create a story node.
    *
    * Converts an NPRMLEntity story object to a node object and saves it to the
@@ -180,7 +187,7 @@ class NprPullClient extends NprClient {
     // Add a reference to the media audio.
     $media_audio_ids = $this->addOrUpdateMediaAudio($story);
     if ($audio_field == 'unused') {
-      $this->nprError('This story contains audio, but the audio field for NPR stories has not been configured. Please configured it.');
+      $this->nprError('This story contains audio, but the audio field for NPR stories has not been configured. Please configure it.');
       return;
     }
     if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
@@ -188,6 +195,23 @@ class NprPullClient extends NprClient {
         $this->node->{$audio_field}[] = ['target_id' => $media_audio_id];
       }
     }
+
+    // Make the multimedia field available to other methods.
+    $this->multimediaField = $story_mappings['multimedia'];
+    $multimedia_field = $this->multimediaField;
+    // Add a reference to the media audio.
+    $media_multimedia_ids = $this->addOrUpdateMediaMultimedia($story);
+    if ($multimedia_field == 'unused') {
+      $this->nprError('This story contains multimedia, but the multimedia field for NPR stories has not been configured. Please configure it.');
+      return;
+    }
+    if (!empty($multimedia_field) && $multimedia_field !== 'unused' && !empty
+      ($media_multimedia_ids)) {
+      foreach ($media_multimedia_ids as $media_multimedia_id) {
+        $this->node->{$multimedia_field}[] = ['target_id' => $media_multimedia_id];
+      }
+    }
+
     // Add data to the remaining fields except image and audio.
     foreach ($story_mappings as $key => $value) {
 
@@ -210,8 +234,7 @@ class NprPullClient extends NprClient {
         }
         elseif ($key == 'body') {
           // Find any image placeholders.
-          preg_match_all('(\[npr_image:\d*])', $story->body,
-            $image_placeholders);
+          preg_match_all('(\[npr_image:\d*])', $story->body, $image_placeholders);
 
           if (!empty($image_placeholders[0])) {
             // Get the associated <drupal-media> tags and replace the
@@ -219,6 +242,17 @@ class NprPullClient extends NprClient {
             $image_replacements = $this->replaceImages($image_placeholders[0]);
             $story->body = str_replace(array_keys($image_replacements), array_values($image_replacements), $story->body);
           }
+
+          // Find any multimedia placeholders.
+          preg_match_all('(\[npr_multimedia:\d*])', $story->body, $multimedia_placeholders);
+          if (!empty($multimedia_placeholders[0])) {
+            // Get the associated items and replace the placeholders in the
+            // body text.
+            $multimedia_replacements = $this->replaceMultimedia($multimedia_placeholders[0]);
+            $story->body = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story->body);
+          }
+
+
           $this->node->set($value, [
             'value' => $story->body,
             'format' => $text_format,
@@ -418,6 +452,71 @@ class NprPullClient extends NprClient {
     }
 
     return $image_embed;
+  }
+
+  /**
+   * Replace multimedia items in body text.
+   *
+   * @param array $multimedia
+   *   An array of multimedia "tokens" in the format [npr_multimedia:xxxx].
+   *
+   * @return array|null
+   *   An array with the "token" as the key and the rendered multimedia item
+   *  as the value, or null.
+   *
+   */
+  protected function replaceMultimedia(array $multimedia) {
+    // Get the multimedia field information.
+    $multimedia_field = $this->multimediaField;
+
+    // Get the multimedia items referenced in the fields.
+    $referenced_multimedia = $this->node->{$multimedia_field}->referencedEntities();
+
+    // Get mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $mappings = $story_config->get('multimedia_field_mappings');
+    $multimedia_id_field = $mappings['multimedia_id'];
+    $url_field = $mappings['remote_multimedia'];
+
+    $multimedia_refs = [];
+    foreach ($referenced_multimedia as $multimedia_item) {
+      // Retrieve the npr_id for each item.
+      if (!empty($multimedia_id_field) && $multimedia_id_field != 'unused') {
+        $npr_id = $multimedia_item->get($multimedia_id_field)->value;
+      }
+
+      if (!empty($url_field) && $url_field != 'unused') {
+        $rendered_multimedia =
+          $multimedia_item->get($url_field)->view('default');
+        $rendered_multimedia = trim(render($rendered_multimedia)->__toString());
+      }
+
+      if (isset($npr_id) && isset($rendered_multimedia)) {
+        // Add rendered multimedia to an array with the NPR ID as the key.
+        $multimedia_refs[$npr_id] = [
+          'item' => $rendered_multimedia,
+        ];
+      }
+
+    }
+
+
+    $multimedia_embed = [];
+    if (!empty($multimedia_refs)) {
+      // Loop through the multimedia items in the API response.
+      foreach ($multimedia as $media_item) {
+        // Get the NPR refId and use it to retrieve the correct multimedia item
+        // out of the array.
+        $ref_id = (int) filter_var($media_item, FILTER_SANITIZE_NUMBER_INT);
+        if (isset($multimedia_refs[$ref_id])) {
+          // Build the embedded media tag, using the original "token" as the
+          // array key.
+          $multimedia_embed[$media_item] = $multimedia_refs[$ref_id]['item'];
+        }
+      }
+    }
+
+    return $multimedia_embed;
   }
 
   /**
@@ -709,6 +808,110 @@ class NprPullClient extends NprClient {
       $audio_ids[] = $media_audio->id();
     }
     return $audio_ids;
+  }
+
+  /**
+   * Creates a media multimedia item based on the configured field values.
+   *
+   * The assumption here is that NPR is sending content suitable for their
+   * embedded, shareable JW Player. If the response is something else, this
+   * will likely not work as expected.
+   *
+   * @param object $story
+   *   A single NPRMLEntity.
+   *
+   * @return array|null
+   *   An array of multimedia media ids or null.
+   */
+  protected function addOrUpdateMediaMultimedia($story) {
+
+    // Skip if there is no multimedia.
+    if (empty($story->multimedia)) {
+      return;
+    }
+
+    // Get and check the configuration.
+    $story_config = $this->config->get('npr_story.settings');
+    $multimedia_media_type = $story_config->get('multimedia_media_type');
+
+    // Get the entity manager.
+    $media_manager = $this->entityTypeManager->getStorage('media');
+
+    // Get, and verify, the necessary configuration.
+    $mappings = $this->config->get('npr_story.settings')->get('multimedia_field_mappings');
+    $multimedia_id_field = $mappings['multimedia_id'];
+    if ($multimedia_id_field == 'unused' || $mappings['multimedia_title'] == 'unused' || $mappings['remote_multimedia'] == 'unused') {
+      $this->nprError('Please configure the multimedia_id, multimedia_title, and remote_multimedia settings.');
+      return NULL;
+    }
+    $remote_multimedia_field = $mappings['remote_multimedia'];
+
+    // Create the multimedia media item(s).
+    foreach ($story->multimedia as $i => $multimedia) {
+      if (!empty($multimedia->id)) {
+        $uri = 'https://www.npr.org/embedded-video';
+        $query = [
+          'storyId' => $story->id,
+          'mediaId' => $multimedia->id,
+        ];
+        $options = [
+          'query' => $query,
+        ];
+        $multimedia_uri = URL::fromUri($uri, $options)->toString();
+      }
+      else {
+        return;
+      }
+
+      // Check to see if a story node already exists in Drupal.
+      if ($media_multimedia = $media_manager->loadByProperties([$multimedia_id_field => $multimedia->id])) {
+        if (count($media_multimedia) > 1) {
+          $this->nprError(
+            $this->t('More than one multimedia media item with the ID @id ("@title") exists. Please delete the duplicate multimedia media.', [
+              '@id' => $multimedia->id,
+              '@title' => $story->title,
+            ]));
+          return;
+        }
+        $media_multimedia = reset($media_multimedia);
+        // Replace the multimedia field.
+        $media_multimedia->set($remote_multimedia_field, ['uri' => $multimedia_uri]);
+        $media_multimedia->set('uid', $this->config->get('npr_pull.settings')->get('npr_pull_author'));
+        // Clear the reference from the story node.
+        $this->node->set($this->multimediaField, NULL);
+
+      }
+      else {
+        // Otherwise, create a new media multimedia entity. Use the title of the
+        // story for the title of the multimedia.
+        $media_multimedia = Media::create([
+          $mappings['multimedia_title'] => $story->title,
+          'bundle' => $multimedia_media_type,
+          'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+          'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+          $remote_multimedia_field => ['uri' => $multimedia_uri],
+        ]);
+      }
+      // Map all of the remaining fields except title and remote_audio.
+      foreach ($mappings as $key => $value) {
+        if (!empty($value) && $value !== 'unused' && !in_array($key, ['multimedia_title', 'remote_multimedia'])) {
+          // ID doesn't have a "value" property.
+          if ($key == 'multimedia_id') {
+            $media_multimedia->set($value, $multimedia->id);
+          }
+          // "duration" is used by audio in config, so the key name doesn't align
+          elseif ($key == 'multimedia_duration') {
+            $media_multimedia->set($value, $multimedia->duration->value);
+          }
+          else {
+            $media_multimedia->set($value, $multimedia->{$key}->value);
+          }
+        }
+      }
+      $media_multimedia->save();
+      $multimedia_ids[] = $media_multimedia->id();
+    }
+    return $multimedia_ids;
   }
 
   /**

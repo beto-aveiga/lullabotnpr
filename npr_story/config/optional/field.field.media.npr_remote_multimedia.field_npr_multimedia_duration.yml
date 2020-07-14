@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_npr_multimedia_duration
+    - media.type.npr_remote_multimedia
+id: media.npr_remote_multimedia.field_npr_multimedia_duration
+field_name: field_npr_multimedia_duration
+entity_type: media
+bundle: npr_remote_multimedia
+label: 'NPR Multimedia Duration'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

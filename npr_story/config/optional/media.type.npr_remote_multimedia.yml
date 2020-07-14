@@ -1,0 +1,14 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - npr_story
+id: npr_remote_multimedia
+label: 'NPR Remote Multimedia'
+description: 'Remote multimedia, such as Tiny Desk Concert videos, from NPR'
+source: npr_multimedia
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_media_npr_multimedia
+field_map: {  }

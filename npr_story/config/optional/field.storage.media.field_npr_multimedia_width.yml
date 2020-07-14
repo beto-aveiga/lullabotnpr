@@ -2,15 +2,14 @@ langcode: en
 status: true
 dependencies:
   module:
-    - node
-id: node.field_npr_pubdate
-field_name: field_npr_pubdate
-entity_type: node
-type: string
+    - media
+id: media.field_npr_multimedia_width
+field_name: field_npr_multimedia_width
+entity_type: media
+type: integer
 settings:
-  max_length: 255
-  is_ascii: false
-  case_sensitive: false
+  unsigned: false
+  size: normal
 module: core
 locked: false
 cardinality: 1
