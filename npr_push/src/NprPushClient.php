@@ -84,7 +84,6 @@ class NprPushClient extends NprClient {
       return;
     }
     if ($body = $node->{$body_field}->value) {
-
       $body = check_markup($body, $node->{$body_field}->format);
       /** @var \Drupal\filter\FilterPluginManager $filter_plugin_manager */
       $filter_plugin_manager = \Drupal::service('plugin.manager.filter');
@@ -110,14 +109,13 @@ class NprPushClient extends NprClient {
     $story->appendChild($xml->createElement('pubDate', $now));
 
     // Story URL.
-    if (!$node->isNew()) {
-      $url = $node->toUrl()->setAbsolute()->toString();
-      $url_type = $xml->createAttribute('type');
-      $url_type->value = 'html';
-      $url_element = $xml->createElement('link', $url);
-      $url_element->appendChild($url_type);
-      $story->appendChild($url_element);
-    }
+    $url = $node->toUrl()->setAbsolute()->toString();
+    $url_type = $xml->createAttribute('type');
+    $url_type->value = 'html';
+    $url_element = $xml->createElement('link', $url);
+    $url_element->appendChild($url_type);
+    $story->appendChild($url_element);
+
     // The station's org ID.
     $org_element = $xml->createElement('organization');
     $org_id = $xml->createAttribute('orgId');
@@ -128,6 +126,38 @@ class NprPushClient extends NprClient {
     // Partner ID (the Drupal node ID)
     $partner_id = $xml->createElement('partnerId', $node->id());
     $story->appendChild($partner_id);
+
+    // Primary topic.
+    $primary_topic_field = $story_mappings['primaryTopic'];
+    $primary_topic = $node->get($primary_topic_field)->referencedEntities();
+    if (!empty($primary_topic_field) && $primary_topic_field != 'unused' && is_array($primary_topic)) {
+      $primary_topic = reset($primary_topic);
+      $primary_topic_id_value = $primary_topic->field_npr_news_id->value;
+      dpm($primary_topic_id_value);
+      $primary_topic_title_value = $primary_topic->getName();
+      dpm($primary_topic_title_value);
+      if (!empty($primary_topic_id_value) && !empty($primary_topic_title_value)) {
+        // Create the outermost element, the parent.
+        $primary_topic_element = $xml->createElement('parent');
+        // Add the id to the parent.
+        $primary_topic_id = $xml->createAttribute('id');
+        $primary_topic_id->value = $primary_topic_id_value;
+        $primary_topic_element->appendChild($primary_topic_id);
+        // Add the type to the parent.
+        $primary_topic_type = $xml->createAttribute('type');
+        $primary_topic_type->value = 'primaryTopic';
+        $primary_topic_element->appendChild($primary_topic_type);
+        // Add the title element to the parent.
+        $primary_topic_title = $xml->createElement('title', $primary_topic_title_value);
+        $primary_topic_element->appendChild($primary_topic_title);
+        // Add the parent to the story.
+        $story->appendChild($primary_topic_element);
+      }
+    }
+
+    // Secondary topics.
+    $secondary_topic_field = $story_mappings['topic'];
+    $secondary_topics = $node->get($secondary_topic_field)->referencedEntities();
 
     // Subtitle.
     if ($subtitle_field = $story_mappings['subtitle']) {
