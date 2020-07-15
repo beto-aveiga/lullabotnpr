@@ -133,9 +133,7 @@ class NprPushClient extends NprClient {
     if (!empty($primary_topic_field) && $primary_topic_field != 'unused' && is_array($primary_topic)) {
       $primary_topic = reset($primary_topic);
       $primary_topic_id_value = $primary_topic->field_npr_news_id->value;
-      dpm($primary_topic_id_value);
       $primary_topic_title_value = $primary_topic->getName();
-      dpm($primary_topic_title_value);
       if (!empty($primary_topic_id_value) && !empty($primary_topic_title_value)) {
         // Create the outermost element, the parent.
         $primary_topic_element = $xml->createElement('parent');
@@ -154,10 +152,6 @@ class NprPushClient extends NprClient {
         $story->appendChild($primary_topic_element);
       }
     }
-
-    // Secondary topics.
-    $secondary_topic_field = $story_mappings['topic'];
-    $secondary_topics = $node->get($secondary_topic_field)->referencedEntities();
 
     // Subtitle.
     if ($subtitle_field = $story_mappings['subtitle']) {
