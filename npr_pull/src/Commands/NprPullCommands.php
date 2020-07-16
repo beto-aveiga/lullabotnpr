@@ -98,11 +98,24 @@ class NprPullCommands extends DrushCommands {
       $params['startNum'] = $options['start_num'];
     }
 
-    if (!empty($options['start_date'])) {
-      $params['startDate'] = $options['start_date'];
+    // Add start and end dates, if included.
+    $start_date = $options['start_date'];
+    if (!empty($start_date)) {
+      if ($this->validateDate($start_date)) {
+        $params['startDate'] = $options['start_date'];
+      }
+      else {
+        throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
+      }
     }
-    if (!empty($options['end_date'])) {
-      $params['endDate'] = $options['end_date'];
+    $end_date = $options['end_date'];
+    if (!empty($end_date)) {
+      if ($this->validateDate($end_date)) {
+        $params['endDate'] = $options['end_date'];
+      }
+      else {
+        throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
+      }
     }
 
     if ($stories = $this->client->getStories($params)) {
@@ -124,11 +137,19 @@ class NprPullCommands extends DrushCommands {
    * @usage drush npr-gso 449 --num_results=1000 --start_num=500
    *   Add 1000 stories from Georgia Public Broadcasting to the queue, starting
    *   with the 500th result.
+   * @usage drush npr-gso 1 --num_results=10 --start_date=2020-06-10 --end_date=2020-06-11
+   *   Get 10 stories from National Public Radio between June 10 and June 12,
+   *   2020.
    *
    * @command npr_pull:getStoriesByOrgId
    * @aliases npr-gso
    */
-  public function getStoriesByOrgId($org_id, array $options = ['num_results' => 1, 'start_num' => 0]) {
+  public function getStoriesByOrgId($org_id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'start_date' => '',
+    'end_date' => '',
+  ]) {
 
     if (is_null($org_id)) {
       $this->logger()->info(dt('An organization ID is required.'));
@@ -139,6 +160,26 @@ class NprPullCommands extends DrushCommands {
       'fields' => 'all',
       'dateType' => 'story',
     ];
+
+    // Add start and end dates, if included.
+    $start_date = $options['start_date'];
+    if (!empty($start_date)) {
+      if ($this->validateDate($start_date)) {
+        $params['startDate'] = $options['start_date'];
+      }
+      else {
+        throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
+      }
+    }
+    $end_date = $options['end_date'];
+    if (!empty($end_date)) {
+      if ($this->validateDate($end_date)) {
+        $params['endDate'] = $options['end_date'];
+      }
+      else {
+        throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
+      }
+    }
 
     // The maximum number of stories per NRP API request is 50.
     if ($options['num_results'] <= 50) {
@@ -184,6 +225,17 @@ class NprPullCommands extends DrushCommands {
     else {
       $this->output()->writeln(dt('No stories were added to the queue.'));
     }
+  }
+
+  /**
+   * Confirm that a date is in the yyyy-mm-dd format.
+   *
+   * @return bool
+   *   Whether the date is in the correct format or not.
+   */
+  public function validateDate($date, $format = 'Y-m-d') {
+    $dt = \DateTime::createFromFormat($format, $date);
+    return $dt && $dt->format($format) === $date;
   }
 
 }
