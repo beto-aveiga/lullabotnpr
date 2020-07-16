@@ -153,6 +153,33 @@ class NprPushClient extends NprClient {
       }
     }
 
+    // Secondary topics.
+    // $secondary_topic_field = $story_mappings['topic'];
+    // $secondary_topics = $node->get($secondary_topic_field)->referencedEntities();
+    // if (!empty($secondary_topic_field) && $secondary_topic_field != 'unused' && is_array($secondary_topics)) {
+      // foreach ($secondary_topics as $secondary_topics) {
+        // $secondary_topic_id_value = $secondary_topic->field_npr_news_id->value;
+        // $secondary_topic_title_value = $secondary_topic->getName();
+        // if (!empty($secondary_topic_id_value) && !empty($secondary_topic_title_value)) {
+          // // Create the outermost element, the parent.
+          // $secondary_topic_element = $xml->createElement('parent');
+          // // Add the id to the parent.
+          // $secondary_topic_id = $xml->createAttribute('id');
+          // $secondary_topic_id->value = $secondary_topic_id_value;
+          // $secondary_topic_element->appendChild($secondary_topic_id);
+          // // Add the type to the parent.
+          // $secondary_topic_type = $xml->createAttribute('type');
+          // $secondary_topic_type->value = 'secondaryTopic';
+          // $secondary_topic_element->appendChild($secondary_topic_type);
+          // // Add the title element to the parent.
+          // $secondary_topic_title = $xml->createElement('title', $secondary_topic_title_value);
+          // $secondary_topic_element->appendChild($secondary_topic_title);
+          // // Add the parent to the story.
+          // $story->appendChild($secondary_topic_element);
+        // }
+      // }
+    // }
+
     // Subtitle.
     if ($subtitle_field = $story_mappings['subtitle']) {
       if (!empty($node->{$subtitle_field}->value) &&
