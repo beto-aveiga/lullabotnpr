@@ -168,7 +168,7 @@ class NprPushClient extends NprClient {
           $secondary_topic_element->appendChild($secondary_topic_id);
           // Add the type to the parent.
           $secondary_topic_type = $xml->createAttribute('type');
-          $secondary_topic_type->value = 'secondaryTopic';
+          $secondary_topic_type->value = 'topic';
           $secondary_topic_element->appendChild($secondary_topic_type);
           // Add the title element to the parent.
           $secondary_topic_title = $xml->createElement('title', $secondary_topic_title_value);
