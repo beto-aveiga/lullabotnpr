@@ -309,6 +309,26 @@ class NprClient implements ClientInterface {
                 }
                 break;
 
+              case 'staticHtml':
+                // Add the static html assets in the body.
+                if (isset($items->num)) {
+                  foreach ($parsed->htmlAsset as $html_asset) {
+                    if ($html_asset->id == $items->refId) {
+                      $body_content[$items->num] = $html_asset->value;
+                    }
+                  }
+                }
+                else {
+                  foreach ($items as $item) {
+                    foreach ($parsed->htmlAsset as $html_asset) {
+                      if ($html_asset->id == $item->refId) {
+                        $body_content[$item->num] = $html_asset->value;
+                      }
+                    }
+                  }
+                }
+                break;
+
               case 'image':
                 // Add a placeholder for each referenced image to the body.
                 // But check to see if the object is multidimensional first.
@@ -321,6 +341,7 @@ class NprClient implements ClientInterface {
                   }
                 }
                 break;
+
               case 'multimedia':
                 // Add a placeholder for each referenced image to the body.
                 // But check to see if the object is multidimensional first.
@@ -335,6 +356,7 @@ class NprClient implements ClientInterface {
                   }
                 }
                 break;
+
               default:
                 break;
             }

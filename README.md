@@ -34,3 +34,13 @@ $config['npr_api.settings']['npr_api_api_key'] = 'YOUR_NPR_API_KEY';
 
 To test that the key is configured correctly, visit the "API Test" tab:
 admin/config/services/npr/npr_api_test.
+
+
+SECURITY CONSIDERATIONS
+-----------------------
+
+The body field of the NPR Story content type uses the NPR Story text format,
+which allows the `<script>` tag. This was added to accommodate stories that
+include "HTML assets" in the body such as:
+https://www.npr.org/sections/health-shots/2020/03/16/816707182/map-tracking-the-spread-of-the-coronavirus-in-the-u-s
+Consider the security risks to allowing this tags on your site.
