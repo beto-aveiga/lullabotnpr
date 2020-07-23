@@ -131,7 +131,7 @@ class NprPullClient extends NprClient {
       // Don't update stories that have not been updated.
       $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
 
-      // Convert the NPR item's last modified date the the form used in Drupal.
+      // Convert the NPR item's last modified date to the form used in Drupal.
       $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $story->lastModifiedDate->value);
       $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
       $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
