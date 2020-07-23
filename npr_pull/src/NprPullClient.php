@@ -130,17 +130,21 @@ class NprPullClient extends NprClient {
 
       // Don't update stories that have not been updated.
       $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
-      $npr_story_last_modified = strtotime($story->lastModifiedDate->value);
-      if ($drupal_story_last_modified == $npr_story_last_modified) {
-        if ($this->displayMessages) {
-          // No need to log this message, so just display it.
-          $this->messenger->addStatus(
-            $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
-              '@id' => $story->id,
-            ]
-          ));
-          return;
-        }
+
+      // Convert the NPR item's last modified date the the form used in Drupal.
+      $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $story->lastModifiedDate->value);
+      $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+      $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+      $npr_story_last_modified = strtotime($story_last_modified);
+
+      if ($drupal_story_last_modified >= $npr_story_last_modified) {
+        $this->nprStatus(
+          $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
+            '@id' => $story->id,
+          ]
+        ));
+        $operation = "skipped";
+        return;
       }
 
       // Otherwise, update the title, status, and author.
@@ -205,8 +209,7 @@ class NprPullClient extends NprClient {
       $this->nprError('This story contains multimedia, but the multimedia field for NPR stories has not been configured. Please configure it.');
       return;
     }
-    if (!empty($multimedia_field) && $multimedia_field !== 'unused' && !empty
-      ($media_multimedia_ids)) {
+    if (!empty($multimedia_field) && $multimedia_field !== 'unused' && !empty($media_multimedia_ids)) {
       foreach ($media_multimedia_ids as $media_multimedia_id) {
         $this->node->{$multimedia_field}[] = ['target_id' => $media_multimedia_id];
       }
@@ -994,7 +997,7 @@ class NprPullClient extends NprClient {
     $npr_ids = $this->getSubscriptionIds();
 
     // Make separate API calls for each topic. If there are many, many topics
-    // slected, we may not get data for all of them.
+    // selected, we may not get data for all of them.
     $update_stories = [];
     foreach ($npr_ids as $npr_id) {
       $params = [
