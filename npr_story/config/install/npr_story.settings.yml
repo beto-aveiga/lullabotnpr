@@ -1,6 +1,7 @@
 story_node_type: npr_story
 body_text_format: npr_story
 teaser_text_format: npr_story
+correction_text_format: npr_story
 parent_vocabulary:
   primaryTopic: npr_topics
   topic: npr_topics
@@ -36,6 +37,9 @@ story_field_mappings:
   slug: field_npr_slug
   subtitle: field_npr_subtitle
   teaser: field_npr_teaser
+  correctionTitle: field_npr_correction_title
+  correctionText: field_npr_correction_text
+  correctionDate: field_npr_correction_date
   audioRunByDate: field_npr_audio_run_by_date
   lastModifiedDate: field_npr_last_modified
   pubDate: field_npr_pubdate

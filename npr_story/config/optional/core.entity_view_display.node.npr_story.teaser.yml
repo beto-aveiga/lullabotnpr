@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.node.teaser
+    - field.field.node.npr_story.field_external_assets
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -11,6 +12,9 @@ dependencies:
     - field.field.node.npr_story.field_npr_body
     - field.field.node.npr_story.field_npr_byline
     - field.field.node.npr_story.field_npr_categories
+    - field.field.node.npr_story.field_npr_correction_date
+    - field.field.node.npr_story.field_npr_correction_text
+    - field.field.node.npr_story.field_npr_correction_title
     - field.field.node.npr_story.field_npr_genre
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
@@ -43,6 +47,7 @@ content:
     third_party_settings: {  }
     region: content
 hidden:
+  field_external_assets: true
   field_npr_additional_images: true
   field_npr_artist: true
   field_npr_audio: true
@@ -51,6 +56,9 @@ hidden:
   field_npr_body: true
   field_npr_byline: true
   field_npr_categories: true
+  field_npr_correction_date: true
+  field_npr_correction_text: true
+  field_npr_correction_title: true
   field_npr_genre: true
   field_npr_last_modified: true
   field_npr_link: true

@@ -2,6 +2,7 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.node.npr_story.field_external_assets
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -10,6 +11,9 @@ dependencies:
     - field.field.node.npr_story.field_npr_body
     - field.field.node.npr_story.field_npr_byline
     - field.field.node.npr_story.field_npr_categories
+    - field.field.node.npr_story.field_npr_correction_date
+    - field.field.node.npr_story.field_npr_correction_text
+    - field.field.node.npr_story.field_npr_correction_title
     - field.field.node.npr_story.field_npr_genre
     - field.field.node.npr_story.field_npr_last_modified
     - field.field.node.npr_story.field_npr_link
@@ -85,6 +89,29 @@ content:
     third_party_settings: {  }
     type: entity_reference_label
     region: content
+  field_npr_correction_date:
+    weight: 17
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_npr_correction_text:
+    weight: 16
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: text_default
+    region: content
+  field_npr_correction_title:
+    weight: 15
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
   field_npr_genre:
     weight: 9
     label: above
@@ -155,6 +182,7 @@ content:
     settings: {  }
     third_party_settings: {  }
 hidden:
+  field_external_assets: true
   field_npr_additional_images: true
   field_npr_audio_run_by_date: true
   field_npr_last_modified: true

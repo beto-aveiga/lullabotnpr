@@ -117,6 +117,11 @@ class NprPullClient extends NprClient {
       $this->nprError('Please configure the story teaser text format.');
       return;
     }
+    $correction_text_format = $story_config->get('correction_text_format');
+    if ($story_mappings['correctionText'] !== 'unused' && empty($correction_text_format)) {
+      $this->nprError('Please configure the story correction text format.');
+      return;
+    }
 
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
@@ -238,8 +243,6 @@ class NprPullClient extends NprClient {
       }
     }
 
-
-
     // Add data to the remaining fields except image and audio.
     foreach ($story_mappings as $key => $value) {
 
@@ -254,6 +257,13 @@ class NprPullClient extends NprClient {
         'lastModifiedDate',
         'audioRunByDate',
       ];
+
+      $correction_fields = [
+        'correctionTitle',
+        'correctionText',
+        'correctionDate'
+      ];
+
       if (!in_array($key, ['image', 'audio'])) {
 
         // ID doesn't have a "value" property.
@@ -301,6 +311,7 @@ class NprPullClient extends NprClient {
             'format' => $teaser_text_format,
           ]);
         }
+
         elseif ($key == 'link') {
           $this->node->set($value, ['uri' => $story->link['html']]);
         }
@@ -337,6 +348,21 @@ class NprPullClient extends NprClient {
             }
           }
         }
+        elseif (in_array($key, $correction_fields) && !empty($story->correction)) {
+          if ($key == 'correctionText') {
+            $this->node->set($value, [
+              'value' => $story->correction->{$key}->value,
+              'format' => $correction_text_format,
+            ]);
+          }
+          elseif ($key == 'correctionDate') {
+            $date_value = $this->formatDate($story->correction->{$key}->value, $value);
+            $this->node->set($value, $date_value);
+          }
+          else {
+            $this->node->set($value, $story->correction->{$key}->value);
+          }
+        }
         elseif ($key == 'byline' && !empty($story->byline)) {
           // Make byline an array if it is not.
           if (!is_array($story->byline)) {
@@ -364,18 +390,7 @@ class NprPullClient extends NprClient {
           }
         }
         elseif (!empty($story->{$key}->value) && in_array($key, $date_fields)) {
-          // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
-          $dt_npr = DrupalDateTime::createFromFormat(
-            "D, d M Y H:i:s O",
-            $story->{$key}->value
-          );
-          $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
-          if (in_array($value, ['created', 'changed'])) {
-            $date_value = $dt_npr->getTimestamp();
-          }
-          else {
-            $date_value = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
-          }
+          $date_value = $this->formatDate($story->{$key}->value, $value);
           $this->node->set($value, $date_value);
         }
         // All of the other fields have a "value" property.
@@ -398,6 +413,32 @@ class NprPullClient extends NprClient {
   }
 
   /**
+   * Convert dates from NPR's format to Drupal's.
+   *
+   * @param string $date
+   *   A date from the API.
+   * @param string $field
+   *   The name of the date field.
+   *
+   * @return string
+   *   The formatted date
+   */
+  protected function formatDate($date, $field) {
+    // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
+    $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $date);
+    $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+
+    if (in_array($field, ['created', 'changed'])) {
+      $date_value = $dt_npr->getTimestamp();
+    }
+    else {
+      $date_value = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+    }
+
+    return $date_value;
+  }
+
+  /**
    * Replace image media items in body text.
    *
    * @param array $images
@@ -405,7 +446,7 @@ class NprPullClient extends NprClient {
    *
    * @return array|null
    *   An array with the "token" as the key and the media embed code
-   * (<drupal-media>) as the value, or null.
+   *  (<drupal-media>) as the value, or null.
    *
    */
   protected function replaceImages(array $images) {

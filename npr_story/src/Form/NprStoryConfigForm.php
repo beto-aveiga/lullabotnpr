@@ -108,6 +108,13 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('teaser_text_format'),
       '#options' => $formats,
     ];
+    $form['node_settings]']['correction_text_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Correction text format'),
+      '#description' => $this->t('The correction field is selected below'),
+      '#default_value' => $config->get('correction_text_format'),
+      '#options' => $formats,
+    ];
 
     // Story node field mappings.
     $form['story_field_mappings'] = [
