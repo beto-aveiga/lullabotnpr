@@ -83,5 +83,7 @@ external_asset_field_mappings:
   external_asset_title: name
   external_asset_id: field_external_asset_id
   external_asset_type: field_external_asset_type
-  oEmbed: field_media_oembed_video_1
+  oEmbed: field_media_npr_oembed
   externalId: field_external_id
+  external_asset_caption: field_external_asset_caption
+  external_asset_credit: field_external_asset_credit

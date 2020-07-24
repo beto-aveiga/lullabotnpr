@@ -2,14 +2,14 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.media.field_external_asset_type
+    - field.storage.media.field_media_npr_oembed
     - media.type.npr_external_asset
-id: media.npr_external_asset.field_external_asset_type
-field_name: field_external_asset_type
+id: media.npr_external_asset.field_media_npr_oembed
+field_name: field_media_npr_oembed
 entity_type: media
 bundle: npr_external_asset
-label: 'External Asset Type'
-description: 'YouTube, Twitter, etc.'
+label: 'NPR oEmbed'
+description: ''
 required: false
 translatable: false
 default_value: {  }

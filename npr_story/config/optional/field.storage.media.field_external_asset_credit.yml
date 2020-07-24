@@ -3,8 +3,8 @@ status: true
 dependencies:
   module:
     - media
-id: media.field_external_asset_type
-field_name: field_external_asset_type
+id: media.field_external_asset_credit
+field_name: field_external_asset_credit
 entity_type: media
 type: string
 settings:

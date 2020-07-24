@@ -2,16 +2,16 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.media.field_media_oembed_video_1
+    - field.storage.media.field_external_asset_credit
     - media.type.npr_external_asset
-id: media.npr_external_asset.field_media_oembed_video_1
-field_name: field_media_oembed_video_1
+id: media.npr_external_asset.field_external_asset_credit
+field_name: field_external_asset_credit
 entity_type: media
 bundle: npr_external_asset
-label: 'oEmbed URL'
+label: 'External Asset Credit'
 description: ''
-required: true
-translatable: true
+required: false
+translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }

@@ -62,6 +62,13 @@ class NprPullClient extends NprClient {
   protected $multimediaField;
 
   /**
+   * The external asset field on the story.
+   *
+   * @var string
+   */
+  protected $externalAssetField;
+
+  /**
    * Create a story node.
    *
    * Converts an NPRMLEntity story object to a node object and saves it to the
@@ -215,6 +222,24 @@ class NprPullClient extends NprClient {
       }
     }
 
+    // Make the external asset field available to other methods.
+    $this->externalAssetField = $story_mappings['externalAsset'];
+    $external_asset_field = $this->externalAssetField;
+    // Add a reference to the external asset.
+    $media_external_asset_ids = $this->addOrUpdateMediaExternalAsset($story);
+
+    if ($external_asset_field == 'unused') {
+      $this->nprError('This story contains external assets, but the external asset field for NPR stories has not been configured. Please configure it.');
+      return;
+    }
+    if (!empty($external_asset_field) && $external_asset_field !== 'unused' && !empty($media_external_asset_ids)) {
+      foreach ($media_external_asset_ids as $media_external_asset_id) {
+        $this->node->{$external_asset_field}[] = ['target_id' => $media_external_asset_id];
+      }
+    }
+
+
+
     // Add data to the remaining fields except image and audio.
     foreach ($story_mappings as $key => $value) {
 
@@ -253,6 +278,15 @@ class NprPullClient extends NprClient {
             // body text.
             $multimedia_replacements = $this->replaceMultimedia($multimedia_placeholders[0]);
             $story->body = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story->body);
+          }
+
+          // Find any external asset placeholders.
+          preg_match_all('(\[npr_external:\d*])', $story->body, $external_placeholders);
+          if (!empty($external_placeholders[0])) {
+            // Get the associated items and replace the placeholders in the
+            // body text.
+            $external_replacements = $this->replaceExternalAssets($external_placeholders[0]);
+            $story->body = str_replace(array_keys($external_replacements), array_values($external_replacements), $story->body);
           }
 
 
@@ -520,6 +554,80 @@ class NprPullClient extends NprClient {
     }
 
     return $multimedia_embed;
+  }
+
+  /**
+   * Replace external asset media items in body text.
+   *
+   * @param array $assets
+   *   An array of asset "tokens" in the format [npr_external:xxxx].
+   *
+   * @return array|null
+   *   An array with the "token" as the key and the media embed code
+   * (<drupal-media>) as the value, or null.
+   *
+   */
+  protected function replaceExternalAssets(array $assets) {
+    // Get the external asset field information.
+    $external_asset_field = $this->externalAssetField;
+
+    // Get the assets referenced in the fields.
+    $referenced_assets = $this->node->{$external_asset_field}->referencedEntities();
+
+
+    // Get mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $mappings = $story_config->get('external_asset_field_mappings');
+    $external_asset_id_field = $mappings['external_asset_id'];
+    $caption_field = $mappings['external_asset_caption'];
+    $credit_field = $mappings['external_asset_credit'];
+
+    $external_refs = [];
+    foreach ($referenced_assets as $asset) {
+      $uuid = $asset->uuid();
+      // Retrieve the npr_id for each item.
+      if (!empty($external_asset_id_field) && $external_asset_id_field != 'unused') {
+        $npr_id = $asset->get($external_asset_id_field)->value;
+      }
+
+      $caption = '';
+      if (!empty($caption_field) && $caption_field != 'unused') {
+        $caption = $asset->get($caption_field)->value;
+      }
+
+      if (!empty($credit_field) && $credit_field != 'unused') {
+        $credit = $asset->get($credit_field)->value;
+        // For security reasons, only a limited number of HTML tags, are allowed
+        // in the caption, so using <cite> to differentiate the credit.
+        $credit = '<cite class="npr-credit">' . $credit . '</cite>';
+        $caption .= $credit;
+      }
+
+      if (isset($npr_id)) {
+
+        // Add rendered external asset to an array with the NPR ID as the key.
+        $external_refs[$npr_id] = [
+          'uuid' => $uuid,
+          'caption' => $caption,
+        ];
+      }
+
+    }
+
+    $external_embed = [];
+    // Loop through the external assets in the API response.
+    foreach ($assets as $asset) {
+      // Get the NPR refId and use it to retrieve the correct asset out of the
+      // array.
+      $ref_id = (int) filter_var($asset, FILTER_SANITIZE_NUMBER_INT);
+      if (isset($external_refs[$ref_id])) {
+        // Build the embedded media tag, using the original "token" as the
+        // array key.
+        $external_embed[$asset] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $external_refs[$ref_id]['uuid'] . '" data-caption="' . $external_refs[$ref_id]['caption'] . '"></drupal-media>';
+      }
+    }
+
+    return $external_embed;
   }
 
   /**
@@ -916,6 +1024,148 @@ class NprPullClient extends NprClient {
     }
     return $multimedia_ids;
   }
+
+
+  /**
+   * Creates a media external asset item based on the configured field values.
+   *
+   * @param object $story
+   *   A single NPRMLEntity.
+   *
+   * @return array|null
+   *   An array of External Asset media ids or null.
+   */
+  protected function addOrUpdateMediaExternalAsset($story) {
+
+    // Skip if there is no external asset.
+    if (empty($story->externalAsset)) {
+      return;
+    }
+
+    // Get the entity manager.
+    $media_manager = $this->entityTypeManager->getStorage('media');
+
+    // Get, and verify, the necessary configuration.
+    $mappings = $this->config->get('npr_story.settings')->get('external_asset_field_mappings');
+    $external_asset_id_field = $mappings['external_asset_id'];
+    if ($external_asset_id_field == 'unused' || $mappings['external_asset_title'] == 'unused' || $mappings['oEmbed'] == 'unused') {
+      $this->nprError('Please configure the external_asset_id, external_asset_title, and oEmbed settings.');
+      return NULL;
+    }
+
+    // Create the external asset media item(s), checking to see if the array is multidimensional.
+    $external_asset_ids = [];
+    if (isset($story->externalAsset->url)) {
+      $external_asset_ids[] = $this->createExternalAsset($story->externalAsset, $story, $mappings, $media_manager);
+    }
+    else {
+      foreach ($story->externalAsset as $external_asset) {
+        $external_asset_ids[] = $this->createExternalAsset($external_asset, $story, $mappings, $media_manager);
+      }
+    }
+
+    return $external_asset_ids;
+  }
+
+  /**
+   * Create an External Asset.
+   *
+   * @param array $external_asset
+   *   An external asset as provided by the API.
+   *
+   * @param object $story
+   *   A single NPRMLEntity.
+   *
+   * @param array $mappings
+   *   The configured mappings for the NPRMLEntity.
+   *
+   * @param object $media_manager
+   *   The media entity manager.
+   *
+   * @return string|null
+   *   An external asset id or NULL.
+   */
+  function createExternalAsset($external_asset, $story, $mappings, $media_manager) {
+    // Skip if there is no URL.
+    if (!empty($external_asset->url->value)) {
+      $external_asset_uri = $external_asset->url->value;
+    }
+    else {
+      return;
+    }
+
+    // Get and check the configuration.
+    $story_config = $this->config->get('npr_story.settings');
+    $external_asset_media_type = $story_config->get('external_asset_media_type');
+
+    // Retrieve necessary mappings.
+    $external_asset_id_field = $mappings['external_asset_id'];
+    $oembed_field = $mappings['oEmbed'];
+
+    // Construct the asset title.
+    if (!empty($external_asset->type) && !empty($external_asset->externalId->value)) {
+      $asset_title = $external_asset->type . ' (' . $external_asset->externalId->value . '): ' . $story->title;
+      // This could get long, so truncate it.
+      if (strlen($asset_title) > 255) {
+        $asset_title = substr($asset_title, 0, 250) . '[...]';
+      }
+    }
+    else {
+      $asset_title = $story->title;
+    }
+
+    // Check to see if an external asset entity already exists in Drupal.
+    if ($media_external = $media_manager->loadByProperties([$external_asset_id_field => $external_asset->id])) {
+      if (count($media_external) > 1) {
+        $this->nprError(
+          $this->t('More than one external asset media item with the ID @id ("@title") exists. Please delete the duplicate external asset media.', [
+            '@id' => $external_asset->id,
+            '@title' => $asset_title,
+          ]));
+        return;
+      }
+
+      $media_external = reset($media_external);
+      // Replace the external asset field.
+      $media_external->set($mappings['external_asset_title'], $asset_title);
+      $media_external->set($oembed_field, ['value' => $external_asset_uri]);
+      $media_external->set('uid', $this->config->get('npr_pull.settings')->get('npr_pull_author'));
+      // Clear the reference from the story node.
+      $this->node->set($this->externalAssetField, NULL);
+
+    }
+    else {
+
+      // Otherwise, create a new external asset media entity.
+      $media_external = Media::create([
+        $mappings['external_asset_title'] => $asset_title,
+        'bundle' => $external_asset_media_type,
+        'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+        'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+        $oembed_field => ['value' => $external_asset_uri],
+      ]);
+    }
+    // Map all of the remaining fields except title and the external asset field.
+    foreach ($mappings as $key => $value) {
+      if (!empty($value) && $value !== 'unused' && !in_array($key, ['external_asset_title', 'oEmbed'])) {
+        // ID and Type don't have a "value" property.
+        if ($key == 'external_asset_id') {
+          $media_external->set($value, $external_asset->id);
+        }
+        elseif ($key == 'external_asset_type') {
+          $media_external->set($value, $external_asset->type);
+        }
+        else {
+          // remove the external asset prefix from the key
+          $key = str_replace('external_asset_', '', $key);
+          $media_external->set($value, $external_asset->{$key}->value);
+        }
+      }
+    }
+    $media_external->save();
+    return $media_external->id();
+  }
+
 
   /**
    * Extracts an NPR ID from an NPR URL.

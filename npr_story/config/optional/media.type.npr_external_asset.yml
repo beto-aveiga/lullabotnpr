@@ -3,14 +3,12 @@ status: true
 dependencies: {  }
 id: npr_external_asset
 label: 'NPR External Asset'
-description: 'A remote videos, such as YouTube or Vimeo.'
+description: 'Remote NPR assets from third-party oEmbed providers, such as YouTube and Twitter.'
 source: 'oembed:video'
 queue_thumbnail_downloads: false
 new_revision: false
 source_configuration:
   thumbnails_directory: 'public://oembed_thumbnails'
-  providers:
-    - YouTube
-    - Vimeo
-  source_field: field_media_oembed_video_1
+  providers: {  }
+  source_field: field_media_npr_oembed
 field_map: {  }

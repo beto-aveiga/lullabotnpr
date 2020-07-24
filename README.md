@@ -17,6 +17,14 @@ NPR Story text format that is preconfigured with the necessary filters and
 requires the Allowed Formats module to ensure that this text format is used by
 default by the NPR Story body field.
 
+Stories sometimes have external assets embedded in them, such as YouTube videos
+and Tweets. The NPR Story module contains a media source to hold these assets
+via oEmbed. However, Drupal only enables YouTube and Vimeo as oEmbed providers
+out-of-the box, so you will need to enable additional providers yourself. This
+can be done through custom code using hook_media_source_info_alter(), or via the
+oEmbed Providers module:
+https://drupal.org/project/oembed_providers
+
 
 INSTALLATION
 ------------

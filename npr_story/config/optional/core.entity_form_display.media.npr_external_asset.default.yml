@@ -2,13 +2,14 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.media.npr_external_asset.field_external_asset_caption
+    - field.field.media.npr_external_asset.field_external_asset_credit
     - field.field.media.npr_external_asset.field_external_asset_id
     - field.field.media.npr_external_asset.field_external_asset_type
     - field.field.media.npr_external_asset.field_external_id
-    - field.field.media.npr_external_asset.field_media_oembed_video_1
+    - field.field.media.npr_external_asset.field_media_npr_oembed
     - media.type.npr_external_asset
   module:
-    - media
     - path
 id: media.npr_external_asset.default
 targetEntityType: media
@@ -21,6 +22,22 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_external_asset_caption:
+    weight: 30
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  field_external_asset_credit:
+    weight: 31
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
   field_external_asset_id:
     weight: 1
     settings:
@@ -30,10 +47,12 @@ content:
     type: string_textfield
     region: content
   field_external_asset_type:
-    weight: 2
-    settings: {  }
+    weight: 28
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
-    type: options_select
+    type: string_textfield
     region: content
   field_external_id:
     weight: 3
@@ -43,13 +62,13 @@ content:
     third_party_settings: {  }
     type: string_textfield
     region: content
-  field_media_oembed_video_1:
-    type: oembed_textfield
-    weight: 0
+  field_media_npr_oembed:
+    weight: 27
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+    type: string_textfield
     region: content
   path:
     type: path

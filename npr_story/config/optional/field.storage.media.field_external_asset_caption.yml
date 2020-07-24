@@ -3,13 +3,11 @@ status: true
 dependencies:
   module:
     - media
-id: media.field_external_asset_type
-field_name: field_external_asset_type
+id: media.field_external_asset_caption
+field_name: field_external_asset_caption
 entity_type: media
-type: string
+type: string_long
 settings:
-  max_length: 255
-  is_ascii: false
   case_sensitive: false
 module: core
 locked: false

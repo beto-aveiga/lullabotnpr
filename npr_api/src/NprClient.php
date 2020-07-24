@@ -343,7 +343,7 @@ class NprClient implements ClientInterface {
                 break;
 
               case 'multimedia':
-                // Add a placeholder for each referenced image to the body.
+                // Add a placeholder for each referenced multimedia to the body.
                 // But check to see if the object is multidimensional first.
                 if (isset($items->num)) {
                   $body_content[$items->num] = "[npr_multimedia:" .
@@ -352,6 +352,21 @@ class NprClient implements ClientInterface {
                 else {
                   foreach ($items as $item) {
                     $body_content[$item->num] = "[npr_multimedia:" .
+                      $item->refId . "]";
+                  }
+                }
+                break;
+
+              case 'externalAsset':
+                // Add a placeholder for each referenced asset to the body.
+                // But check to see if the object is multidimensional first.
+                if (isset($items->num)) {
+                  $body_content[$items->num] = "[npr_external:" .
+                    $items->refId . "]";
+                }
+                else {
+                  foreach ($items as $item) {
+                    $body_content[$item->num] = "[npr_external:" .
                       $item->refId . "]";
                   }
                 }
