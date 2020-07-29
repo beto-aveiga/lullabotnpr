@@ -118,7 +118,8 @@ class NprPullClient extends NprClient {
       return;
     }
     $correction_text_format = $story_config->get('correction_text_format');
-    if ($story_mappings['correctionText'] !== 'unused' && empty($correction_text_format)) {
+    $correctionText = $story_mappings['correctionText'];
+    if (!empty($correctionText) && $correctionText !== 'unused' && empty($correction_text_format)) {
       $this->nprError('Please configure the story correction text format.');
       return;
     }
