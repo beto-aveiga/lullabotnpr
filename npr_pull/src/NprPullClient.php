@@ -603,16 +603,19 @@ class NprPullClient extends NprClient {
    *
    * @return array|null
    *   An array with the "token" as the key and the media embed code
-   * (<drupal-media>) as the value, or null.
-   *
+   *   (<drupal-media>) as the value, or null.
    */
   protected function replaceExternalAssets(array $assets) {
     // Get the external asset field information.
     $external_asset_field = $this->externalAssetField;
 
     // Get the assets referenced in the fields.
-    $referenced_assets = $this->node->{$external_asset_field}->referencedEntities();
-
+    if (!$this->node->{$external_asset_field}->isEmpty()) {
+      $referenced_assets = $this->node->{$external_asset_field}->referencedEntities();
+    }
+    else {
+      return;
+    }
 
     // Get mappings.
     $story_config = $this->config->get('npr_story.settings');
