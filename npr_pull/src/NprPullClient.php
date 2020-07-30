@@ -205,7 +205,6 @@ class NprPullClient extends NprClient {
     $media_audio_ids = $this->addOrUpdateMediaAudio($story);
     if ($audio_field == 'unused') {
       $this->nprError('This story contains audio, but the audio field for NPR stories has not been configured. Please configure it.');
-      return;
     }
     if (!empty($audio_field) && $audio_field !== 'unused' && !empty($media_audio_ids)) {
       foreach ($media_audio_ids as $media_audio_id) {
@@ -220,7 +219,6 @@ class NprPullClient extends NprClient {
     $media_multimedia_ids = $this->addOrUpdateMediaMultimedia($story);
     if ($multimedia_field == 'unused') {
       $this->nprError('This story contains multimedia, but the multimedia field for NPR stories has not been configured. Please configure it.');
-      return;
     }
     if (!empty($multimedia_field) && $multimedia_field !== 'unused' && !empty($media_multimedia_ids)) {
       foreach ($media_multimedia_ids as $media_multimedia_id) {
@@ -236,7 +234,6 @@ class NprPullClient extends NprClient {
 
     if ($external_asset_field == 'unused') {
       $this->nprError('This story contains external assets, but the external asset field for NPR stories has not been configured. Please configure it.');
-      return;
     }
     if (!empty($external_asset_field) && $external_asset_field !== 'unused' && !empty($media_external_asset_ids)) {
       foreach ($media_external_asset_ids as $media_external_asset_id) {
