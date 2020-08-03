@@ -312,10 +312,8 @@ class NprClient implements ClientInterface {
               case 'staticHtml':
                 // Add the static html assets in the body.
                 if (isset($items->num)) {
-                  foreach ($parsed->htmlAsset as $html_asset) {
-                    if ($html_asset->id == $items->refId) {
-                      $body_content[$items->num] = $html_asset->value;
-                    }
+                  if ($parsed->htmlAsset->id == $items->refId) {
+                    $body_content[$items->num] = $parsed->htmlAsset->value;
                   }
                 }
                 else {
