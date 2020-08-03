@@ -195,7 +195,8 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#open' => FALSE,
     ];
     $media_types = array_keys($this->entityTypeManager->getStorage('media_type')->loadMultiple());
-    $media_type_options = array_combine($media_types, $media_types);
+    $media_type_options = ['unused' => 'unused'] +
+      array_combine($media_types, $media_types);
     $form['image_settings']['image_media_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Drupal image media type'),
@@ -340,10 +341,8 @@ class NprStoryConfigForm extends ConfigFormBase {
       $multimedia_field_options = ['unused' => 'unused'] +
         array_combine($multimedia_media_fields, $multimedia_media_fields);
       $multimedia_field_mappings = $config->get('multimedia_field_mappings');
-      foreach ($multimedia_field_mappings as $npr_multimedia_field =>
-               $multimedia_field_value) {
-        $form['multimedia_settings']['multimedia_field_mappings'][$npr_multimedia_field]
-          = [
+      foreach ($multimedia_field_mappings as $npr_multimedia_field => $multimedia_field_value) {
+        $form['multimedia_settings']['multimedia_field_mappings'][$npr_multimedia_field] = [
           '#type' => 'select',
           '#title' => $npr_multimedia_field,
           '#options' => $multimedia_field_options,
