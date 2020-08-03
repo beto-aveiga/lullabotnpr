@@ -1092,9 +1092,11 @@ class NprPullClient extends NprClient {
     $external_asset_id_field = $mappings['external_asset_id'];
     if ($external_asset_id_field == 'unused' || $mappings['external_asset_title'] == 'unused' || $mappings['oEmbed'] == 'unused') {
       $this->nprError('Please configure the external_asset_id, external_asset_title, and oEmbed settings.');
+      return;
     }
 
-    // Create the external asset media item(s), checking to see if the array is multidimensional.
+    // Create the external asset media item(s), checking to see if the array is
+    // multidimensional.
     $external_asset_ids = [];
     if (isset($story->externalAsset->url)) {
       $external_asset_ids[] = $this->createExternalAsset($story->externalAsset, $story, $mappings, $media_manager);
