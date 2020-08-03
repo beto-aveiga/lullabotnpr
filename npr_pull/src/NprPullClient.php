@@ -259,7 +259,7 @@ class NprPullClient extends NprClient {
       $correction_fields = [
         'correctionTitle',
         'correctionText',
-        'correctionDate'
+        'correctionDate',
       ];
 
       if (!in_array($key, ['image', 'audio'])) {
@@ -293,10 +293,10 @@ class NprPullClient extends NprClient {
           if (!empty($external_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
-            $external_replacements = $this->replaceExternalAssets($external_placeholders[0]);
-            $story->body = str_replace(array_keys($external_replacements), array_values($external_replacements), $story->body);
+            if ($external_replacements = $this->replaceExternalAssets($external_placeholders[0])) {
+              $story->body = str_replace(array_keys($external_replacements), array_values($external_replacements), $story->body);
+            }
           }
-
 
           $this->node->set($value, [
             'value' => $story->body,
