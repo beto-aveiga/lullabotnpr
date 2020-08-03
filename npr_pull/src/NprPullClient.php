@@ -608,6 +608,9 @@ class NprPullClient extends NprClient {
   protected function replaceExternalAssets(array $assets) {
     // Get the external asset field information.
     $external_asset_field = $this->externalAssetField;
+    if (empty($external_asset_field) || $external_asset_field == 'unused') {
+      return;
+    }
 
     // Get the assets referenced in the fields.
     if (!$this->node->{$external_asset_field}->isEmpty()) {
