@@ -21,18 +21,6 @@ class NprApiConfigForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $config = $this->config('npr_api.settings');
-
-    foreach (Element::children($form) as $variable) {
-      $config->set($variable, $form_state->getValue($form[$variable]['#parents']));
-    }
-    $config->save();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   protected function getEditableConfigNames() {
     return ['npr_api.settings'];
   }
@@ -58,14 +46,32 @@ class NprApiConfigForm extends ConfigFormBase {
       '#disabled' => TRUE,
     ];
 
-    $form['npr_api_staging_url'] = [
-      '#type' => 'textfield',
+    $form['npr_api_stage_url'] = [
+      '#type' => 'select',
       '#title' => $this->t('NPR API staging URL'),
       '#default_value' => $npr_api_config->get('npr_api_stage_url'),
-      '#disabled' => TRUE,
+      '#options' => [
+        'https://api-s1.npr.org' => 'https://api-s1.npr.org',
+        'https://api-s4.npr.org' => 'https://api-s4.npr.org',
+      ],
     ];
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+    $config = $this->config('npr_api.settings');
+
+    $config->set('npr_api_api_key', $values['npr_api_api_key']);
+    $config->set('npr_api_production_url', $values['npr_api_production_url']);
+    $config->set('npr_api_stage_url', $values['npr_api_stage_url']);
+    $config->save();
+
+    parent::submitForm($form, $form_state);
   }
 
 }

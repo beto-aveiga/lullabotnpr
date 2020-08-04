@@ -22,7 +22,6 @@ class NprClient implements ClientInterface {
 
   // HTTP status code = OK.
   const NPRAPI_STATUS_OK = 200;
-  const BASE_URI = 'http://api.npr.org/query/';
 
   // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
@@ -196,14 +195,24 @@ class NprClient implements ClientInterface {
   }
 
   /**
-   * Make a GET request without needing the BASE_URI.
+   * Make a GET request
    */
   public function getXmlStories($options) {
 
     $this->options = $options;
-    $key = $this->config->get('npr_api.settings')->get('npr_api_api_key');
+    $api_config = $this->config->get('npr_api.settings');
+    $key = $api_config->get('npr_api_api_key');
+    if ($server = $this->config->get('npr_pull.settings')->get('npr_pull_url')) {
+      if ($server == 'staging') {
+        $base_uri = $api_config->get('npr_api_stage_url');
+      }
+      else {
+        $base_uri = $api_config->get('npr_api_production_url');
+      }
+    }
+    $base_uri .= "/query/";
 
-    if (empty($key)) {
+    if (empty($key) || empty($base_uri)) {
       $this->nprError('The configured NPR API Key is not correct.');
       return;
     }
@@ -214,7 +223,7 @@ class NprClient implements ClientInterface {
     $options['sort'] = 'dateDesc';
 
     // TODO: Store these for the report function.
-    $this->response = $this->request('GET', self::BASE_URI, ['query' => $options]);
+    $this->response = $this->request('GET', $base_uri, ['query' => $options]);
     // Log any errors.
     if ($this->response->getStatusCode() != '200') {
       $this->logger->error($this->response->getReasonPhrase());
