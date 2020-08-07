@@ -284,8 +284,9 @@ class NprPullClient extends NprClient {
           if (!empty($multimedia_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
-            $multimedia_replacements = $this->replaceMultimedia($multimedia_placeholders[0]);
-            $story->body = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story->body);
+            if ($multimedia_replacements = $this->replaceMultimedia($multimedia_placeholders[0])) {
+              $story->body = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story->body);
+            }
           }
 
           // Find any external asset placeholders.
