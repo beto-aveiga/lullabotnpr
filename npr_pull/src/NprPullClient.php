@@ -538,12 +538,14 @@ class NprPullClient extends NprClient {
    *
    * @return array|null
    *   An array with the "token" as the key and the rendered multimedia item
-   *  as the value, or null.
-   *
+   *   as the value, or null.
    */
   protected function replaceMultimedia(array $multimedia) {
     // Get the multimedia field information.
     $multimedia_field = $this->multimediaField;
+    if (empty($multimedia_field) || $multimedia_field == 'unused') {
+      return;
+    }
 
     // Get the multimedia items referenced in the fields.
     $referenced_multimedia = $this->node->{$multimedia_field}->referencedEntities();
