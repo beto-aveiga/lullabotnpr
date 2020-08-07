@@ -249,6 +249,10 @@ class NprClient implements ClientInterface {
     $object = simplexml_load_string($xml);
     $this->addSimplexmlAttributes($object, $this);
 
+    // Get the story field mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+
     $this->stories = [];
     if (!empty($object->list->story)) {
       foreach ($object->list->story as $story) {
@@ -350,31 +354,37 @@ class NprClient implements ClientInterface {
                 break;
 
               case 'multimedia':
-                // Add a placeholder for each referenced multimedia to the body.
-                // But check to see if the object is multidimensional first.
-                if (isset($items->num)) {
-                  $body_content[$items->num] = "[npr_multimedia:" .
-                    $items->refId . "]";
-                }
-                else {
-                  foreach ($items as $item) {
-                    $body_content[$item->num] = "[npr_multimedia:" .
-                      $item->refId . "]";
+                $multimedia_field = $story_mappings['multimedia'];
+                if (!empty($multimedia_field) && $multimedia_field !== 'unused') {
+                  // Add laceholder for each referenced multimedia to the body.
+                  // But check to see if the object is multidimensional first.
+                  if (isset($items->num)) {
+                    $body_content[$items->num] = "[npr_multimedia:" .
+                      $items->refId . "]";
+                  }
+                  else {
+                    foreach ($items as $item) {
+                      $body_content[$item->num] = "[npr_multimedia:" .
+                        $item->refId . "]";
+                    }
                   }
                 }
                 break;
 
               case 'externalAsset':
-                // Add a placeholder for each referenced asset to the body.
-                // But check to see if the object is multidimensional first.
-                if (isset($items->num)) {
-                  $body_content[$items->num] = "[npr_external:" .
-                    $items->refId . "]";
-                }
-                else {
-                  foreach ($items as $item) {
-                    $body_content[$item->num] = "[npr_external:" .
-                      $item->refId . "]";
+                $external_asset_field = $story_mappings['externalAsset'];
+                if (!empty($external_asset_field) || $external_asset_field !== 'unused') {
+                  // Add a placeholder for each referenced asset to the body.
+                  // But check to see if the object is multidimensional first.
+                  if (isset($items->num)) {
+                    $body_content[$items->num] = "[npr_external:" .
+                      $items->refId . "]";
+                  }
+                  else {
+                    foreach ($items as $item) {
+                      $body_content[$item->num] = "[npr_external:" .
+                        $item->refId . "]";
+                    }
                   }
                 }
                 break;
