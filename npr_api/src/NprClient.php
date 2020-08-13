@@ -195,7 +195,7 @@ class NprClient implements ClientInterface {
   }
 
   /**
-   * Make a GET request
+   * Make a GET request.
    */
   public function getXmlStories($options) {
 

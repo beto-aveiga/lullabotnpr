@@ -80,8 +80,10 @@ class NprPullClient extends NprClient {
    *   Story should be published immediately.
    * @param bool $display_messages
    *   Messages should be displayed.
+   * @param bool $manual_import
+   *   Story should be marked as "Imported Manually".
    */
-  public function addOrUpdateNode($story, $published, $display_messages = FALSE) {
+  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE) {
 
     $this->displayMessages = $display_messages;
     if (!is_object($story)) {
@@ -310,9 +312,13 @@ class NprPullClient extends NprClient {
             'format' => $teaser_text_format,
           ]);
         }
-
         elseif ($key == 'link') {
           $this->node->set($value, ['uri' => $story->link['html']]);
+        }
+        elseif ($key == 'imported_manually') {
+          if ($manual_import) {
+            $this->node->set($value, TRUE);
+          }
         }
         elseif (in_array($key, array_keys($story_config->get('parent_vocabulary')))) {
           // Get the vocabulary for the current "parent" item (topic, tag, etc).
@@ -445,8 +451,7 @@ class NprPullClient extends NprClient {
    *
    * @return array|null
    *   An array with the "token" as the key and the media embed code
-   *  (<drupal-media>) as the value, or null.
-   *
+   *   (<drupal-media>) as the value, or null.
    */
   protected function replaceImages(array $images) {
     // Get the image field information.
@@ -578,7 +583,6 @@ class NprPullClient extends NprClient {
       }
 
     }
-
 
     $multimedia_embed = [];
     if (!empty($multimedia_refs)) {
@@ -1202,7 +1206,7 @@ class NprPullClient extends NprClient {
           $media_external->set($value, $external_asset->type);
         }
         else {
-          // remove the external asset prefix from the key
+          // Remove the external asset prefix from the key
           $key = str_replace('external_asset_', '', $key);
           $media_external->set($value, $external_asset->{$key}->value);
         }
@@ -1315,6 +1319,53 @@ class NprPullClient extends NprClient {
       if (!in_array($update_story->id, $stories_updated)) {
         $this->getQueue()->createItem($update_story);
         $stories_updated[] = $update_story->id;
+      }
+    }
+
+    // Get the story field mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+    $imported_manually = $story_mappings['imported_manually'];
+
+    // Add "manually imported" stories to the array of story IDs.
+    if (!empty($imported_manually) && $imported_manually !== 'unused') {
+      $node_manager = $this->entityTypeManager->getStorage('node');
+
+      // Get a list of node IDS of storys where "manually imported" is checked.
+      $nids = $node_manager->getQuery()
+        ->condition('type', $story_config->get('story_node_type'))
+        ->condition($imported_manually, 1)
+        ->execute();
+      $start_ts = strtotime($start);
+      foreach ($nids as $nid) {
+        $guid_field = $story_mappings['id'];
+        $story = $node_manager->load($nid);
+        // Get a timestamp of the configured "Days back" value.
+        $story_id = $story->{$guid_field}->value;
+        // Determine if the manually-imported story was already checked.
+        if (!in_array($story_id, $stories_updated)) {
+
+          // Get a timestamp of the story.
+          $story_date_field = $story_mappings['storyDate'];
+          if (!empty($story_date_field) && $story_date_field !== 'unused') {
+            if ($story_date = $story->{$story_date_field}->value) {
+              $story_date = substr($story_date, 0, 10);
+              $story_date_ts = strtotime($story_date);
+            }
+          }
+
+          // If the story is within the "Days back" range add it to the queue.
+          if (!empty($story_date_ts) && $story_date_ts >= $start_ts) {
+            $params = [
+              'id' => $story_id,
+              'fields' => 'all',
+            ];
+            if ($story = $this->getStories($params)) {
+              $story = reset($story);
+              $this->getQueue()->createItem($story);
+            }
+          }
+        }
       }
     }
 

@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - field.field.node.npr_story.field_external_assets
+    - field.field.node.npr_story.field_imported_manually
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -44,7 +45,7 @@ mode: default
 content:
   created:
     type: datetime_timestamp
-    weight: 32
+    weight: 33
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -58,6 +59,13 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  field_imported_manually:
+    weight: 31
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
   field_npr_additional_images:
     weight: 5
     settings:
@@ -317,7 +325,7 @@ content:
     region: content
   path:
     type: path
-    weight: 35
+    weight: 36
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -325,21 +333,21 @@ content:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 33
+    weight: 34
     region: content
     third_party_settings: {  }
   status:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 36
+    weight: 37
     region: content
     third_party_settings: {  }
   sticky:
     type: boolean_checkbox
     settings:
       display_label: true
-    weight: 34
+    weight: 35
     region: content
     third_party_settings: {  }
   title:
@@ -352,7 +360,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 31
+    weight: 32
     settings:
       match_operator: CONTAINS
       size: 60

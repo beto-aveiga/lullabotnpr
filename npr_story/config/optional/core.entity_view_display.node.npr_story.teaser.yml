@@ -4,6 +4,7 @@ dependencies:
   config:
     - core.entity_view_mode.node.teaser
     - field.field.node.npr_story.field_external_assets
+    - field.field.node.npr_story.field_imported_manually
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -48,6 +49,7 @@ content:
     region: content
 hidden:
   field_external_assets: true
+  field_imported_manually: true
   field_npr_additional_images: true
   field_npr_artist: true
   field_npr_audio: true

@@ -33,7 +33,6 @@ function npr_pull_cron(): void {
 
   // Determine difference beteween now and when the queue was last updated.
   $diff = $now->getTimestamp() - $nprPullClient->getLastUpdateTime()->getTimestamp();
-
   // Only update the queue if more time has passed than the desired interval.
   if ($diff > $queue_interval) {
     $nprPullClient->updateQueue();

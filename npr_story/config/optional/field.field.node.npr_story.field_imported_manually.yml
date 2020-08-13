@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_imported_manually
+    - node.type.npr_story
+id: node.npr_story.field_imported_manually
+field_name: field_imported_manually
+entity_type: node
+bundle: npr_story
+label: 'Imported Manually'
+description: 'This story was imported on the "Pull NPR Story" page (/admin/content/npr) and may not be part of the "subscribed" stories.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

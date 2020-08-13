@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - field.field.node.npr_story.field_external_assets
+    - field.field.node.npr_story.field_imported_manually
     - field.field.node.npr_story.field_npr_additional_images
     - field.field.node.npr_story.field_npr_artist
     - field.field.node.npr_story.field_npr_audio
@@ -183,6 +184,7 @@ content:
     third_party_settings: {  }
 hidden:
   field_external_assets: true
+  field_imported_manually: true
   field_npr_additional_images: true
   field_npr_audio_run_by_date: true
   field_npr_last_modified: true

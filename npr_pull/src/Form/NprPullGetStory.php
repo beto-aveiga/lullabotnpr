@@ -210,7 +210,8 @@ class NprPullGetStory extends ConfigFormBase {
       // Add or update the story.
       $published = $values['publish_flag'];
       $display_messages = TRUE;
-      $this->client->addOrUpdateNode($story, $published, $display_messages);
+      $manual_import = TRUE;
+      $this->client->addOrUpdateNode($story, $published, $display_messages, $manual_import);
     }
     else {
       $this->messenger()->addError(
