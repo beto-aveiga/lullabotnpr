@@ -427,6 +427,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('image_crop_size', $values['image_crop_size']);
     $config->set('audio_media_type', $values['audio_media_type']);
     $config->set('audio_format', $values['audio_format']);
+    $config->set('external_asset_media_type', $values['external_asset_media_type']);
 
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
