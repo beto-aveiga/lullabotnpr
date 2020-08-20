@@ -428,7 +428,7 @@ class NprPullClient extends NprClient {
    * @return string
    *   The formatted date
    */
-  protected function formatDate($date, $field) {
+  public function formatDate($date, $field) {
     // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
     $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $date);
     $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
