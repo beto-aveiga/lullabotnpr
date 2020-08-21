@@ -809,6 +809,9 @@ class NprPullClient extends NprClient {
         }
         $this->fileSystem->prepareDirectory($directory_uri, FileSystemInterface::CREATE_DIRECTORY);
 
+        // Allow modules to alter the image URL.
+        $this->moduleHandler->alter('npr_image_url', $image_url);
+
         try {
           $file_data = $this->client->request('GET', $image_url);
         }

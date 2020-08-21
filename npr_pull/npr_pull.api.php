@@ -8,6 +8,18 @@
 use Drupal\Core\Entity\EntityInterface;
 
 /**
+ * Perform alterations on a media URL.
+ *
+ * @param string $image_url
+ *   The URL of the image.
+ */
+function hook_npr_image_url_alter(&$image_url) {
+  if (strpos($image_url, 'example.com') !== FALSE) {
+    $image_url = str_replace('examplenews.com', 'example.com', $image_url);
+  }
+}
+
+/**
  * Example of how to alter nodes before they are imported/updated.
  *
  * One way is to implement hook_entity_presave().
