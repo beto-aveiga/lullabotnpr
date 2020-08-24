@@ -1,4 +1,4 @@
 services:
   npr_push.client:
     class: Drupal\npr_push\NprPushClient
-    arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@file_system']
+    arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system']
