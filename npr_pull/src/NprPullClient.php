@@ -554,34 +554,32 @@ class NprPullClient extends NprClient {
     }
 
     // Get the multimedia items referenced in the fields.
-    $referenced_multimedia = $this->node->{$multimedia_field}->referencedEntities();
+    if (!$this->node->{$multimedia_field}->isEmpty()) {
+      $referenced_multimedia = $this->node->{$multimedia_field}->referencedEntities();
+    }
+    else {
+      return;
+    }
 
     // Get mappings.
     $story_config = $this->config->get('npr_story.settings');
     $mappings = $story_config->get('multimedia_field_mappings');
     $multimedia_id_field = $mappings['multimedia_id'];
-    $url_field = $mappings['remote_multimedia'];
 
     $multimedia_refs = [];
     foreach ($referenced_multimedia as $multimedia_item) {
+      $uuid = $multimedia_item->uuid();
       // Retrieve the npr_id for each item.
       if (!empty($multimedia_id_field) && $multimedia_id_field != 'unused') {
         $npr_id = $multimedia_item->get($multimedia_id_field)->value;
       }
 
-      if (!empty($url_field) && $url_field != 'unused') {
-        $rendered_multimedia =
-          $multimedia_item->get($url_field)->view('default');
-        $rendered_multimedia = trim(render($rendered_multimedia)->__toString());
-      }
-
-      if (isset($npr_id) && isset($rendered_multimedia)) {
-        // Add rendered multimedia to an array with the NPR ID as the key.
+      if (isset($npr_id)) {
+        // Add multimedia to an array with the NPR ID as the key.
         $multimedia_refs[$npr_id] = [
-          'item' => $rendered_multimedia,
+          'uuid' => $uuid,
         ];
       }
-
     }
 
     $multimedia_embed = [];
@@ -594,7 +592,7 @@ class NprPullClient extends NprClient {
         if (isset($multimedia_refs[$ref_id])) {
           // Build the embedded media tag, using the original "token" as the
           // array key.
-          $multimedia_embed[$media_item] = $multimedia_refs[$ref_id]['item'];
+          $multimedia_embed[$media_item] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $multimedia_refs[$ref_id]['uuid'] . '"></drupal-media>';
         }
       }
     }
