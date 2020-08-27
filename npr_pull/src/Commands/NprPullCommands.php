@@ -43,14 +43,19 @@ class NprPullCommands extends DrushCommands {
    * @command npr_pull:getStory
    * @aliases npr-gs
    */
-  public function getStoryById($story_id, array $options = ['published' => TRUE, 'display_messages' => TRUE]) {
+  public function getStoryById($story_id, array $options = [
+    'published' => TRUE,
+    'display_messages' => FALSE,
+    'manual_import' => FALSE,
+    'force' => FALSE,
+  ]) {
 
     $params['id'] = $story_id;
     $stories = $this->client->getStories($params);
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $this->client->addOrUpdateNode($story, $options['published'], $options['display_messages']);
+      $this->client->addOrUpdateNode($story, $options['published'], $options['display_messages'], $options['manual_import'], $options['force']);
     }
   }
 

@@ -82,8 +82,10 @@ class NprPullClient extends NprClient {
    *   Messages should be displayed.
    * @param bool $manual_import
    *   Story should be marked as "Imported Manually".
+   * @param bool $force
+   *   Force an update the story.
    */
-  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE) {
+  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE) {
 
     $this->displayMessages = $display_messages;
     if (!is_object($story)) {
@@ -100,12 +102,12 @@ class NprPullClient extends NprClient {
 
     // Verify that the required fields are configured.
     $id_field = $story_mappings['id'];
-    if ($id_field == 'unused') {
+    if (empty($id_field) || $id_field == 'unused') {
       $this->nprError('Please configure the story id field.');
       return NULL;
     }
     $node_last_modified = $story_mappings['lastModifiedDate'];
-    if ($node_last_modified == 'unused') {
+    if (empty($node_last_modified) || $node_last_modified == 'unused') {
       $this->nprError('Please configure the story last modified date field.');
       return;
     }
@@ -115,17 +117,17 @@ class NprPullClient extends NprClient {
       return;
     }
     $teaser_text_format = $story_config->get('teaser_text_format');
-    if ($story_mappings['teaser'] !== 'unused' && empty($teaser_text_format)) {
+    $teaser = $story_mappings['teaser'];
+    if (empty($teaser) || $teaser == 'unused' || empty($teaser_text_format)) {
       $this->nprError('Please configure the story teaser text format.');
       return;
     }
     $correction_text_format = $story_config->get('correction_text_format');
     $correctionText = $story_mappings['correctionText'];
-    if (!empty($correctionText) && $correctionText !== 'unused' && empty($correction_text_format)) {
+    if (empty($correctionText) || $correctionText == 'unused' || empty($correction_text_format)) {
       $this->nprError('Please configure the story correction text format.');
       return;
     }
-
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
     $this->node = $node_manager->loadByProperties([$id_field => $story->id]);
@@ -152,7 +154,7 @@ class NprPullClient extends NprClient {
       $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
       $npr_story_last_modified = strtotime($story_last_modified);
 
-      if ($drupal_story_last_modified >= $npr_story_last_modified) {
+      if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
         $this->nprStatus(
           $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
             '@id' => $story->id,
@@ -1077,7 +1079,6 @@ class NprPullClient extends NprClient {
     }
     return $multimedia_ids;
   }
-
 
   /**
    * Creates a media external asset item based on the configured field values.
