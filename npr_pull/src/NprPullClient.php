@@ -827,7 +827,7 @@ class NprPullClient extends NprClient {
         }
 
         // Save the image.
-        $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_REPLACE);
+        $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
 
         // Attached the image file to the media item.
         $media_image->set($image_field, [
