@@ -101,8 +101,8 @@ class NprPushClient extends NprClient {
     }
 
     // Story date and publication date.
-    $storyDate = story_mappings['storyDate'];
-    $pubDate = story_mappings['pubDate'];
+    $storyDate = $story_mappings['storyDate'];
+    $pubDate = $story_mappings['pubDate'];
     if ($story_date = $node->get($storyDate)->value) {
       $story_date_ts = strtotime($story_date);
       $formatted_story_date = format_date($story_date_ts, 'custom', "D, d M Y G:i:s O ");
