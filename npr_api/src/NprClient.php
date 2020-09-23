@@ -312,6 +312,10 @@ class NprClient implements ClientInterface {
         }
         $body = '';
         if (!empty($parsed->layout->storytext) && !empty($parsed->textWithHtml->paragraphs)) {
+
+          // Allow modules to alter the NPR story object.
+          $this->moduleHandler->alter('npr_story_object', $parsed);
+
           // Get the paragraphs and put them into an array for reference later.
           $paragraphs = [];
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {
