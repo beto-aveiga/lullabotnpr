@@ -2,6 +2,7 @@
 
 namespace Drupal\npr_push\Plugin\Filter;
 
+use Drupal\Core\Url;
 use Drupal\filter\FilterProcessResult;
 use Drupal\filter\Plugin\FilterBase;
 
@@ -20,8 +21,7 @@ class RelToAbs extends FilterBase {
    * {@inheritdoc}
    */
   public function process($text, $langcode) {
-
-    $base_url = \Drupal::url('<front>', [], [
+    $base_url = Url::fromRoute('<front>', [], [
       'absolute' => TRUE,
       'language' => \Drupal::getContainer()
         ->get('language_manager')
