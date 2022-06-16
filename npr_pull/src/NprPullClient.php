@@ -859,6 +859,14 @@ class NprPullClient extends NprClient {
           return;
         }
 
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        if (!empty($extension)) {
+          if (strtolower($extension) == 'jfif') {
+            // Replace .jfif extension with .jpg.
+            $filename = substr($filename, 0, -4) . 'jpg';
+          }
+        }
+
         // Save the image.
         $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
 
