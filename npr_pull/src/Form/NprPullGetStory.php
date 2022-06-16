@@ -136,6 +136,13 @@ class NprPullGetStory extends ConfigFormBase {
       '#description' => $this->t('If checked stories will automatically be published. If not, stories will still be retrieved and saved in your database - but not published.'),
     ];
 
+    $form['force_flag'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Force update?'),
+      '#default_value' => '',
+      '#description' => $this->t('If checked stories will be updated even if it appears unnecessary.'),
+    ];
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Get story'),
@@ -211,7 +218,8 @@ class NprPullGetStory extends ConfigFormBase {
       $published = $values['publish_flag'];
       $display_messages = TRUE;
       $manual_import = TRUE;
-      $this->client->addOrUpdateNode($story, $published, $display_messages, $manual_import);
+      $force = $values['force_flag'];
+      $this->client->addOrUpdateNode($story, $published, $display_messages, $manual_import, $force);
     }
     else {
       $this->messenger()->addError(
