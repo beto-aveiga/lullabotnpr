@@ -3,6 +3,7 @@
 namespace Drupal\npr_api\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\npr_api\NprCdsClient;
 use Drupal\npr_api\NprClient;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -19,13 +20,22 @@ class ApiTestController extends ControllerBase {
   protected $client;
 
   /**
+   * The NPR CDS Client.
+   *
+   * @var \Drupal\npr_api\NprCdsClient
+   */
+  protected $cds_client;
+
+  /**
    * Constructs the ApiTestController.
    *
    * @param \Drupal\npr_api\NprClient $npr_client
    *   The NPR API service.
    */
-  public function __construct(NprClient $npr_client) {
+  public function __construct(NprClient $npr_client, NprCdsClient $npr_cds_client) {
     $this->client = $npr_client;
+    $this->cds_client = $npr_cds_client;
+    $this->cds_client->setUrl('staging');
   }
 
   /**
@@ -33,7 +43,8 @@ class ApiTestController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('npr_api.client')
+      $container->get('npr_api.client'),
+      $container->get('npr_api.cds_client')
     );
   }
 
@@ -49,12 +60,19 @@ class ApiTestController extends ControllerBase {
     $this->client->getXmlStories($params);
     $this->client->parse();
     $result = $this->client->report();
-
-    return [
+    $ra[] = [
       '#theme' => 'item_list',
-      '#title' => 'Test Result',
+      '#title' => $this->t('Test Result'),
       '#items' => $result,
     ];
+    $result = $this->cds_client->report();
+    $ra[] = [
+      '#theme' => 'item_list',
+      '#title' => $this->t('CDS Test Result'),
+      '#items' => $result
+    ];
+
+    return $ra;
   }
 
 }

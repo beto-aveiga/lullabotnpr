@@ -56,6 +56,24 @@ class NprApiConfigForm extends ConfigFormBase {
       ],
     ];
 
+    $form['npr_api_cds_api_key'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('NPR CDS API Key'),
+      '#default_value' => $npr_api_config->get('npr_api_cds_api_key'),
+      '#description' => $this->t('To get an API Key, visit <a href="https://npr.github.io/content-distribution-service/getting-started/authorization.html" target="_blank">https://npr.github.io/content-distribution-service/getting-started/authorization.html</a>'),
+    ];
+
+    $form['npr_api_url'] = [
+      '#type' => 'select',
+      '#title' => $this->t('NPR Pull URL'),
+      '#default_value' => $npr_api_config->get('npr_api_url'),
+      '#options' => [
+        'development' => 'Development',
+        'staging' => 'Staging',
+        'production' => 'Production',
+      ],
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -69,6 +87,8 @@ class NprApiConfigForm extends ConfigFormBase {
     $config->set('npr_api_api_key', $values['npr_api_api_key']);
     $config->set('npr_api_production_url', $values['npr_api_production_url']);
     $config->set('npr_api_stage_url', $values['npr_api_stage_url']);
+    $config->set('npr_api_cds_api_key', $values['npr_api_cds_api_key']);
+    $config->set('npr_api_url', $values['npr_api_url']);
     $config->save();
 
     parent::submitForm($form, $form_state);
