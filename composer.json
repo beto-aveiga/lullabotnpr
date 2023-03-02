@@ -1,0 +1,6 @@
+{
+    "name": "drupal/npr",
+    "description": "API integration with NPR.",
+    "type": "drupal-module",
+    "homepage": "https://www.drupal.org/project/npr"
+}
