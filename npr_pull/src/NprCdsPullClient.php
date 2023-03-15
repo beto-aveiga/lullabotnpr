@@ -142,7 +142,6 @@ class NprCdsPullClient implements NprPullClientInterface {
               '@id' => $story['id'],
             ]
           ));
-        $operation = "skipped";
         return;
       }
 
@@ -278,39 +277,6 @@ class NprCdsPullClient implements NprPullClientInterface {
             }
           }
 
-          // If there is a transcript, replace the body text with that.
-          if (!empty($story['transcript']) && $tr_links = $story['transcript']['link']) {
-            // Get the transcript link.
-            foreach ($tr_links as $link) {
-              if ($link->type == 'api') {
-                $trans_link = $link->value;
-              }
-            }
-            // Get the transcript data from the API
-            if (!empty($trans_link)) {
-              try {
-                $response = $this->client->request('GET', $trans_link);;
-
-                // Convert the response to an array.
-                $response_xml = simplexml_load_string($response->getBody()->getContents(), "SimpleXMLElement", LIBXML_NOCDATA);
-                $response_json = json_encode($response_xml);
-                $response_array = json_decode($response_json, TRUE);
-
-                // Assemble the response HTML.
-                $tr_body = ($story->teaser->value) ?: '';
-                $tr_body .= '<p class="npr-transcript-label">Transcript</p>';
-                foreach ($response_array['paragraph'] as $paragraph) {
-                  $tr_body .= _filter_autop($paragraph);
-                }
-
-                $story->body = $tr_body;
-              }
-              catch (RequestException $e) {
-                $this->nprError('The transcript was not found.');
-              }
-            }
-          }
-
           $this->node->set($value, [
             'value' => $story['body'],
             'format' => $text_format,
@@ -367,18 +333,22 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
         }
         elseif (in_array($key, $correction_fields) && !empty($story['corrections'])) {
+          $correction = $story['corrections'][0]['embed'];
           if ($key == 'correctionText') {
             $this->node->set($value, [
-              'value' => $story['corrections']['embed']['text'],
+              'value' => $correction['text'],
               'format' => $correction_text_format,
             ]);
           }
           elseif ($key == 'correctionDate') {
-            $date_value = $this->formatDate($story['corrections']['embed']['dateTime'], $value);
+            $date_value = $this->formatDate($correction['dateTime'], $value);
             $this->node->set($value, $date_value);
           }
-          else {
-            $this->node->set($value, $story['corrections']['embed'][$key]);
+          elseif ($key == 'correctionTitle') {
+            $this->node->set($value, $correction['title']);
+          }
+          elseif (!empty($correction[$key])) {
+            $this->node->set($value, $correction[$key]);
           }
         }
         elseif ($key == 'slug') {

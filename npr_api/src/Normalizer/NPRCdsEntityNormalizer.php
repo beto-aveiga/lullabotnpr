@@ -24,13 +24,8 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
    */
   public function denormalize($data, $type, $format = null, array $context = []) {
     $body_content = [];
-    foreach ($data as $key => $element) {
-      switch ($key) {
-        case 'layout':
-          $data[$key] = $this->parseAssets($element, $data['assets']);
-      }
-    }
     foreach ($data['layout'] as $index => $element) {
+      $element = $element['embed'];
       $type = $this->getType($element);
       switch ($type) {
         case '/v1/profiles/text':
