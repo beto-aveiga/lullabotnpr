@@ -17,11 +17,11 @@ use Symfony\Component\Serializer\SerializerInterface;
  */
 class NprCdsClient implements NprClientInterface {
 
-  const NPR_API_CDS_PROD_HOST = 'https://content.api.npr.org/';
+  const NPR_API_CDS_PROD_HOST = 'https://content.api.npr.org';
 
-  const NPR_API_CDS_STAGE_HOST = 'https://stage-content.api.npr.org/';
+  const NPR_API_CDS_STAGE_HOST = 'https://stage-content.api.npr.org';
 
-  const NPR_API_CDS_DEV_HOST = 'https://dev-content.api.npr.org/';
+  const NPR_API_CDS_DEV_HOST = 'https://dev-content.api.npr.org';
 
   /**
    * The HTTP client.
@@ -89,6 +89,10 @@ class NprCdsClient implements NprClientInterface {
    * {@inheritDoc}
    */
   public function request($method, $uri, array $options = []) {
+    $options = $this->default_options + $options;
+    if (!str_starts_with($uri, 'http')) {
+      $uri = $this->base_url . ($uri[0] == '/' ? $uri : '/' . $uri);
+    }
     try {
       return $this->client->request($method, $uri, $options);
     } catch (ClientException $e) {
@@ -128,12 +132,12 @@ class NprCdsClient implements NprClientInterface {
    * {@inheritDoc}
    */
   public function getStories(array $params) {
-    $url = $this->base_url . 'v1/documents';
+    $url = 'v1/documents';
     if (isset($params['id'])) {
       $url .= '/' . $params['id'];
       unset($params['id']);
     }
-    $options = $this->default_options + [
+    $options = [
         'query' => $params,
     ];
     $response = $this->request('GET', $url, $options);
@@ -141,14 +145,19 @@ class NprCdsClient implements NprClientInterface {
       return [];
     }
     $data = json_decode($response->getBody()->getContents(), TRUE);
-    return $data['resources'];
+    $normalizer = new NPRCdsEntityNormalizer();
+    $entities = [];
+    foreach ($data['resources'] as $resource) {
+      $entities[] = $normalizer->denormalize($resource, NPRMLEntity::class);
+    }
+    return $entities;
   }
 
   /**
    * {@inheritDoc}
    */
   public function report() {
-    $url = $this->base_url . 'v1/documents';
+    $url = 'v1/documents';
     $params = [
       'sort' => 'publishDateTime:desc',
       'offset' => 0,
@@ -156,7 +165,7 @@ class NprCdsClient implements NprClientInterface {
       'transclude' => 'bylines,layout,transcript,items',
       'collectionIds' => '1126',
     ];
-    $options = $this->default_options + [
+    $options = [
       'query' => $params,
     ];
     $entities = $this->getStories($params);

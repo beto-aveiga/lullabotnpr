@@ -32,11 +32,20 @@ class NprCdsPullClient implements NprPullClientInterface {
 
   protected $logger;
 
+  protected $fileSystem;
+
+  protected $moduleHandler;
+
+  protected $messenger;
+
   public function __construct(NprCdsClient $client) {
     $this->client = $client;
     $this->entityTypeManager = \Drupal::service('entity_type.manager');
     $this->config = \Drupal::service('config.factory');
     $this->logger = \Drupal::service('logger.channel.npr_api');
+    $this->fileSystem = \Drupal::service('file_system');
+    $this->moduleHandler = \Drupal::service('module_handler');
+    $this->messenger = \Drupal::service('messenger');
   }
 
   public static function create(ContainerInterface $container) {
@@ -57,7 +66,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    */
   public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE) {
     $this->displayMessages = $display_messages;
-    if (!is_object($story)) {
+    if (!is_array($story) && !empty($story)) {
       $this->nprError('The story could not be added or updated.');
       return;
     }
@@ -99,7 +108,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
-    $this->node = $node_manager->loadByProperties([$id_field => $story->id]);
+    $this->node = $node_manager->loadByProperties([$id_field => $story['id']]);
     // Check to see if a story node already exists in Drupal.
     if (!empty($this->node)) {
       // Record the operation being performed for a later status message.
@@ -118,7 +127,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
 
       // Convert the NPR item's last modified date to the form used in Drupal.
-      $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $story->lastModifiedDate->value);
+      $dt_npr = new DrupalDateTime($story['editorialLastModifiedDateTime']);
       $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
       $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
       $npr_story_last_modified = strtotime($story_last_modified);
@@ -134,7 +143,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
 
       // Otherwise, update the title, status, and author.
-      $this->node->set('title', $story->title);
+      $this->node->set('title', $story['title']);
       $this->node->set('uid', $pull_author);
       $this->node->set('status', $published);
     }
@@ -143,7 +152,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       $operation = "created";
       $this->node = $node_manager->create([
         'type' => $story_config->get('story_node_type'),
-        'title' => $story->title,
+        'title' => $story['title'],
         'language' => 'en',
         'uid' => $pull_author,
         'status' => $published,
@@ -239,41 +248,41 @@ class NprCdsPullClient implements NprPullClientInterface {
 
         // ID doesn't have a "value" property.
         if ($key == 'id') {
-          $this->node->set($value, $story->id);
+          $this->node->set($value, $story['id']);
         }
         elseif ($key == 'body') {
           // Find any image placeholders.
-          preg_match_all('(\[npr_image:\d*])', $story->body, $image_placeholders);
+          preg_match_all('(\[npr_image:\d*])', $story['body'], $image_placeholders);
 
           if (!empty($image_placeholders[0])) {
             // Get the associated <drupal-media> tags and replace the
             // placeholders in the body text.
             $image_replacements = $this->replaceImages($image_placeholders[0]);
-            $story->body = str_replace(array_keys($image_replacements), array_values($image_replacements), $story->body);
+            $story['body'] = str_replace(array_keys($image_replacements), array_values($image_replacements), $story['body']);
           }
 
           // Find any multimedia placeholders.
-          preg_match_all('(\[npr_multimedia:\d*])', $story->body, $multimedia_placeholders);
+          preg_match_all('(\[npr_multimedia:\d*])', $story['body'], $multimedia_placeholders);
           if (!empty($multimedia_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
             if ($multimedia_replacements = $this->replaceMultimedia($multimedia_placeholders[0])) {
-              $story->body = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story->body);
+              $story['body'] = str_replace(array_keys($multimedia_replacements), array_values($multimedia_replacements), $story['body']);
             }
           }
 
           // Find any external asset placeholders.
-          preg_match_all('(\[npr_external:\d*])', $story->body, $external_placeholders);
+          preg_match_all('(\[npr_external:\d*])', $story['body'], $external_placeholders);
           if (!empty($external_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
             if ($external_replacements = $this->replaceExternalAssets($external_placeholders[0])) {
-              $story->body = str_replace(array_keys($external_replacements), array_values($external_replacements), $story->body);
+              $story['body'] = str_replace(array_keys($external_replacements), array_values($external_replacements), $story['body']);
             }
           }
 
           // If there is a transcript, replace the body text with that.
-          if (!empty($story->transcript) && $tr_links = $story->transcript->link) {
+          if (!empty($story['transcript']) && $tr_links = $story['transcript']['link']) {
             // Get the transcript link.
             foreach ($tr_links as $link) {
               if ($link->type == 'api') {
@@ -306,18 +315,18 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
 
           $this->node->set($value, [
-            'value' => $story->body,
+            'value' => $story['body'],
             'format' => $text_format,
           ]);
         }
         elseif ($key == 'teaser') {
           $this->node->set($value, [
-            'value' => $story->teaser->value,
+            'value' => $story['teaser'],
             'format' => $teaser_text_format,
           ]);
         }
         elseif ($key == 'link') {
-          $this->node->set($value, ['uri' => $story->link['html']]);
+          $this->node->set($value, ['uri' => $story['webPages'][0]['href']]);
         }
         elseif ($key == 'imported_manually') {
           if ($manual_import) {
@@ -372,39 +381,38 @@ class NprCdsPullClient implements NprPullClientInterface {
             $this->node->set($value, $story->correction->{$key}->value);
           }
         }
-        elseif ($key == 'byline' && !empty($story->byline)) {
-          // Make byline an array if it is not.
-          if (!is_array($story->byline)) {
-            $story->byline = [$story->byline];
-          }
-          foreach ($story->byline as $author) {
-            // Not all of the authors in the byline have a link.
-            if (isset($author->link->value)) {
-              $uri = $author->link->value;
+        elseif ($key == 'byline' && !empty($story['bylines'])) {
+          foreach ($story['bylines'] as $byline) {
+            $response = $this->client->request('GET', $byline['bylineDocuments'][0]['href']);
+            if ($response->getStatusCode() != 200) {
+              continue;
             }
-            elseif (isset($author->link[0]->value)) {
-              $uri = $author->link[0]->value;
+            $byline = json_decode($response->getBody()->getContents(), TRUE);
+            $byline = $byline['resources'][0];
+            // Not all of the authors in the byline have a link.
+            if (isset($byline['webPages'][0]['href'])) {
+              $uri = $byline['webPages'][0]['href'];
             }
             else {
               $uri = 'route:<nolink>';
             }
-            $byline[] = [
+            $fieldValue[] = [
               // It looks like we always want the first link ("html")
               // rather than the second one ("api").
               'uri' => $uri,
-              'title' => $author->name->value,
+              'title' => $byline['title'],
             ];
-            $this->node->set($value, $byline);
+            $this->node->set($value, $fieldValue);
             $this->node->save();
           }
         }
-        elseif (!empty($story->{$key}->value) && in_array($key, $date_fields)) {
-          $date_value = $this->formatDate($story->{$key}->value, $value);
+        elseif (!empty($story[$key]) && in_array($key, $date_fields)) {
+          $date_value = $this->formatDate($story[$key], $value);
           $this->node->set($value, $date_value);
         }
         // All of the other fields have a "value" property.
-        elseif (!empty($story->{$key}->value)) {
-          $this->node->set($value, $story->{$key}->value);
+        elseif (!empty($story[$key]) && !is_array($story[$key])) {
+          $this->node->set($value, $story[$key]);
         }
       }
     }
@@ -467,7 +475,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   protected function addOrUpdateMediaMultimedia($story) {
 
     // Skip if there is no multimedia.
-    if (empty($story->multimedia)) {
+    if (empty($story['multimedia'])) {
       return;
     }
 
@@ -601,23 +609,23 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
 
     // If there are no images, we're done.
-    if (empty($story->image)) {
+    if (empty($story['images'])) {
       return;
     }
     else {
-      foreach ($story->image as $image) {
+      foreach ($story['images'] as $image) {
 
         // Truncate and clean up the title field.
-        $image_title = htmlentities($image->title->value);
+        $image_title = htmlentities($image['title']);
         $image_title = html_entity_decode($image_title, ENT_QUOTES | ENT_XML1, 'UTF-8');
         $image_title = substr($image_title, 0, 255);
 
         // Check to see if a media image already exists in Drupal.
-        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image->id])) {
+        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image['id']])) {
           if (count($media_image) > 1) {
             $this->nprError(
               $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
-                '@id' => $image->id,
+                '@id' => $image['id'],
                 '@title' => $image_title,
               ]));
             return;
@@ -646,29 +654,15 @@ class NprCdsPullClient implements NprPullClientInterface {
             'langcode' => Language::LANGCODE_NOT_SPECIFIED,
           ]);
         }
-
-        // Create a image file. First check the main image.
-        if (!empty($image->type) && $image->type == $crop_selected) {
-          $image_url = $image->src;
-        }
-        // Next check the images in the "crop" array.
-        elseif (!empty($image->crop)) {
-          if (!is_array($image->crop)) {
-            $image->crop = [$image->crop];
+        $image_url = "";
+        foreach ($image['enclosures'] as $enclosure) {
+          // Create a image file. First check the main image.
+          if (in_array($crop_selected, $enclosure['rels'])) {
+            $image_url = $enclosure['href'];
+          } // Next check the images in the "crop" array.
+          if (in_array('primary', $enclosure['rels']) && empty($image_url)) {
+            $image_url = $enclosure['href'];
           }
-          if (!empty($image->crop)) {
-            foreach ($image->crop as $crop) {
-              if (!empty($crop->type) && $crop->type == $crop_selected) {
-                $image_url = $crop->src;
-                continue;
-              }
-            }
-          }
-        }
-        // If the preferred image size doesn't exist anywhere, but there is an
-        // image, use the default image as a last resort.
-        if (empty($image_url) && !empty($image->src)) {
-          $image_url = $image->src;
         }
         if (empty($image_url)) {
           $this->nprError(
@@ -726,7 +720,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Attached the image file to the media item.
         $media_image->set($image_field, [
           'target_id' => $file->id(),
-          'alt' => Unicode::truncate($image->caption->value, 512, FALSE, TRUE),
+          'alt' => Unicode::truncate($image['caption'], 512, FALSE, TRUE),
         ]);
 
         // Map all of the remaining fields except image_title and image_field,
@@ -735,16 +729,17 @@ class NprCdsPullClient implements NprPullClientInterface {
           if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
             // ID doesn't have a "value" property.
             if ($key == 'image_id') {
-              $media_image->set($value, $image->id);
+              $media_image->set($value, $image['id']);
             }
             elseif ($key == 'type') {
-              $media_image->set($value, $image->type);
+              //TODO: Figure out what value should go here.
+              $media_image->set($value, empty($crop_selected) ? 'primary' : $crop_selected);
             }
             elseif ($key == 'provider_url') {
-              $media_image->set($value, $image->provider->url);
+              $media_image->set($value, $image['provider']);
             }
-            else {
-              $media_image->set($value, $image->{$key}->value);
+            elseif (!empty($image[$key])) {
+              $media_image->set($value, $image[$key]);
             }
           }
         }
@@ -767,7 +762,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   protected function addOrUpdateMediaExternalAsset($story) {
 
     // Skip if there is no external asset.
-    if (empty($story->externalAsset)) {
+    if (empty($story['externalAsset'])) {
       return;
     }
 
@@ -851,7 +846,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   protected function addOrUpdateMediaAudio($story) {
 
     // Skip if there is no audio.
-    if (empty($story->audio)) {
+    if (empty($story['audio'])) {
       return;
     }
 
@@ -1202,5 +1197,31 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
 
     return $external_embed;
+  }
+
+  /**
+   * Convert dates from NPR's format to Drupal's.
+   *
+   * @param string $date
+   *   A date from the API.
+   * @param string $field
+   *   The name of the date field.
+   *
+   * @return string
+   *   The formatted date
+   */
+  public function formatDate($date, $field) {
+    // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
+    $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $date);
+    $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+
+    if (in_array($field, ['created', 'changed'])) {
+      $date_value = $dt_npr->getTimestamp();
+    }
+    else {
+      $date_value = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+    }
+
+    return $date_value;
   }
 }

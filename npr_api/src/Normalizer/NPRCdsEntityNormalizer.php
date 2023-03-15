@@ -23,35 +23,20 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
    * {@inheritDoc}
    */
   public function denormalize($data, $type, $format = null, array $context = []) {
-    $entity = new NPRMLEntity();
+    $body_content = [];
     foreach ($data as $key => $element) {
       switch ($key) {
-        case 'image':
-        case 'audio':
-        case 'multimedia':
         case 'layout':
+        case 'images':
         case 'bylines':
-          $entity->{$key} = $this->parseAssets($element, $data['assets']);
-          break;
-        case 'webPages':
-          $entity->{$key} = $this->parseElements($element);
-          $entity->link['html'] = $element[0]['href'];
-          break;
-        case 'id':
-          $entity->id = $element;
-          break;
-        default:
-          $entity->{$key} = $this->parseElement($element);
-          break;
+          $data[$key] = $this->parseAssets($element, $data['assets']);
       }
     }
-
-    $body_content = [];
-    foreach ($entity->layout as $index => $element) {
+    foreach ($data['layout'] as $index => $element) {
       $type = $this->getType($element);
       switch ($type) {
         case '/v1/profiles/text':
-          $body_content[$index] = _filter_autop($element->text);
+          $body_content[$index] = _filter_autop($element['text']);
           break;
         /*case 'staticHtml':
                 // Add the static html assets in the body.
@@ -124,15 +109,15 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
           break;
       }
     }
-    $entity->body = implode(NULL, $body_content);
+    $data['body'] = implode(NULL, $body_content);
 
-    return $entity;
+    return $data;
   }
 
   protected function getType($element) {
-    foreach ($element->profiles as $profile) {
-      if ($profile->rels->{0} == 'type') {
-        return $profile->href;
+    foreach ($element['profiles'] as $profile) {
+      if ($profile['rels'][0] == 'type') {
+        return $profile['href'];
       }
     }
     return NULL;
@@ -143,7 +128,7 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
     foreach ($data as $asset) {
       $parts = explode('/', $asset['href']);
       $id = $parts[2];
-      $elements[] = $this->parseElement($assets[$id]);
+      $elements[] = $assets[$id];
     }
     return $elements;
   }
