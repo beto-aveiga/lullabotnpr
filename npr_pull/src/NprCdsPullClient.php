@@ -38,6 +38,10 @@ class NprCdsPullClient implements NprPullClientInterface {
 
   protected $messenger;
 
+  protected $node;
+
+  protected $audioField;
+
   public function __construct(NprCdsClient $client) {
     $this->client = $client;
     $this->entityTypeManager = \Drupal::service('entity_type.manager');
@@ -116,7 +120,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       if (count($this->node) > 1) {
         $this->nprError(
           $this->t('More than one story with the Drupal ID @id exists. Please delete the duplicate stories.', [
-            '@id' => $story->id,
+            '@id' => $story['id'],
           ])
         );
         return;
@@ -230,13 +234,6 @@ class NprCdsPullClient implements NprPullClientInterface {
       if ($value == 'unused' || empty($value)) {
         continue;
       }
-
-      $date_fields = [
-        'storyDate',
-        'pubDate',
-        'lastModifiedDate',
-        'audioRunByDate',
-      ];
 
       $correction_fields = [
         'correctionTitle',
@@ -393,39 +390,21 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         elseif ($key == 'byline' && !empty($story['bylines'])) {
           foreach ($story['bylines'] as $byline) {
-            $response = $this->client->request('GET', $byline['bylineDocuments'][0]['href']);
-            if ($response->getStatusCode() != 200) {
-              continue;
-            }
-            $byline = json_decode($response->getBody()->getContents(), TRUE);
-            $byline = $byline['resources'][0];
-            // Not all of the authors in the byline have a link.
-            if (isset($byline['webPages'][0]['href'])) {
-              $uri = $byline['webPages'][0]['href'];
-            }
-            else {
-              $uri = 'route:<nolink>';
-            }
-            $fieldValue[] = [
-              // It looks like we always want the first link ("html")
-              // rather than the second one ("api").
-              'uri' => $uri,
-              'title' => $byline['title'],
-            ];
-            $this->node->set($value, $fieldValue);
+            $this->node->set($value, $byline['embed']['name']);
             $this->node->save();
           }
         }
-        elseif ($key == 'pubDate' && !empty($story['publishDateTime'])) {
-          $date_value = $this->formatDate($story['publishDateTime'], $value);
+        elseif ($key == 'pubDate' && !empty($story['editorialLastModifiedDateTime'])) {
+          $date_value = $this->formatDate($story['editorialLastModifiedDateTime'], $value);
           $this->node->set($value, $date_value);
         }
         elseif ($key == 'lastModifiedDate' && !empty($story['editorialLastModifiedDateTime'])) {
           $date_value = $this->formatDate($story['editorialLastModifiedDateTime'], $value);
           $this->node->set($value, $date_value);
         }
-        elseif ($key == 'storyDate') {
-          // TODO: Figure out what to do here.
+        elseif ($key == 'storyDate' && !empty($story['publishDateTime'])) {
+          $date_value = $this->formatDate($story['publishDateTime'], $value);
+          $this->node->set($value, $date_value);
         }
         elseif ($key == 'audioRunByDate') {
           // TODO: Figure out what to do here.
@@ -678,6 +657,9 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         $image_enclosure = [];
         foreach ($image['embed']['enclosures'] as $enclosure) {
+          if (in_array('primary', $enclosure['rels'])) {
+            $image_enclosure = $enclosure;
+          }
           if (isset($image['rels']) && in_array('primary', $image['rels']) && in_array('primary', $enclosure['rels'])) {
             $image_enclosure = $enclosure;
             break;
@@ -877,6 +859,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $story_config = $this->config->get('npr_story.settings');
     $audio_media_type = $story_config->get('audio_media_type');
     $audio_format = $story_config->get('audio_format');
+    $audio_alt_format = $story_config->get('alternate_audio_format');
     if (empty($audio_media_type) || empty($audio_format)) {
       $this->nprError('Please configure the NPR story audio type and format.');
       return;
@@ -895,49 +878,43 @@ class NprCdsPullClient implements NprPullClientInterface {
     $remote_audio_field = $mappings['remote_audio'];
 
     // Create the audio media item(s).
-    foreach ($story->audio as $audio) {
+    foreach ($story['audio'] as $audio) {
 
-      // If the audio format is not available, use the alternate audio format.
-      if ($audio_format == 'mp3' && empty($audio->format->mp3['m3u']->value)) {
-        $audio_format = $story_config->get('alternate_audio_format');
-      }
-
-      // MP3 files looks a little bit different.
-      if ($audio_format == 'mp3' && !empty($audio->format->mp3['m3u']->value)) {
-        $m3u_uri = $audio->format->mp3['m3u']->value;
-        // Get the mp3 file from the m3u file.
-        $full_audio_uri = file_get_contents($m3u_uri);
-        // Strip of any parameters.
-        $audio_uri = strtok($full_audio_uri, '?');
+      $audio_file = [];
+      foreach ($audio['embed']['enclosures'] as $enclosure) {
+        $audio_uri = strtok($enclosure['href'], '?');
         $file_info = pathinfo($audio_uri);
-        if ($file_info['extension'] !== 'mp3') {
-          $this->nprError(
-            $this->t('The audio for the story @title does not contain a valid mp3 file.', [
-              '@title' => $story->title,
-            ]));
-          return;
+        if ($file_info['extension'] == $audio_format) {
+          $audio_file = $enclosure;
+          break;
+        }
+        // If the audio format is not available, use the alternate audio format.
+        if ($file_info['extension'] == $audio_alt_format) {
+          $audio_file = $enclosure;
         }
       }
-      elseif (!empty($audio->format->{$audio_format}->value)) {
-        $audio_uri = $audio->format->{$audio_format}->value;
-      }
-      else {
+
+      if (empty($audio_file)) {
+        $this->nprError(
+          $this->t('An audio file of the correct type could not be found for the story @title.', [
+            '@title' => $story['title'],
+          ]));
         return;
       }
 
       // Check to see if a story node already exists in Drupal.
-      if ($media_audio = $media_manager->loadByProperties([$audio_id_field => $audio->id])) {
+      if ($media_audio = $media_manager->loadByProperties([$audio_id_field => $audio['embed']['id']])) {
         if (count($media_audio) > 1) {
           $this->nprError(
             $this->t('More than one audio media item with the ID @id ("@title") exist. Please delete the duplicate audio media.', [
-              '@id' => $audio->id,
-              '@title' => $story->title,
+              '@id' => $audio['embed']['id'],
+              '@title' => $story['title'],
             ]));
           return;
         }
         $media_audio = reset($media_audio);
         // Replace the audio field.
-        $media_audio->set($remote_audio_field, ['uri' => $audio_uri]);
+        $media_audio->set($remote_audio_field, ['uri' => $audio_file['href']]);
         $media_audio->set('uid', $this->config->get('npr_pull.settings')->get('npr_pull_author'));
         // Clear the reference from the story node.
         $this->node->set($this->audioField, NULL);
@@ -947,11 +924,11 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Otherwise, create a new media audio entity. Use the title of the
         // story for the title of the audio.
         $media_audio = Media::create([
-          $mappings['audio_title'] => $story->title,
+          $mappings['audio_title'] => $story['title'],
           'bundle' => $audio_media_type,
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'langcode' => Language::LANGCODE_NOT_SPECIFIED,
-          $remote_audio_field => ['uri' => $audio_uri],
+          $remote_audio_field => ['uri' => $audio_file['href']],
         ]);
       }
       // Map all of the remaining fields except title and remote_audio.
@@ -959,10 +936,10 @@ class NprCdsPullClient implements NprPullClientInterface {
         if (!empty($value) && $value !== 'unused' && !in_array($key, ['audio_title', 'remote_audio'])) {
           // ID doesn't have a "value" property.
           if ($key == 'audio_id') {
-            $media_audio->set($value, $audio->id);
+            $media_audio->set($value, $audio['embed']['id']);
           }
-          else {
-            $media_audio->set($value, $audio->{$key}->value);
+          elseif (!empty($audio['embed'][$key])) {
+            $media_audio->set($value, $audio['embed'][$key]);
           }
         }
       }

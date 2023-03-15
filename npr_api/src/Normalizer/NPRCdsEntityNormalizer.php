@@ -27,7 +27,6 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
     foreach ($data as $key => $element) {
       switch ($key) {
         case 'layout':
-        case 'bylines':
           $data[$key] = $this->parseAssets($element, $data['assets']);
       }
     }
@@ -36,6 +35,13 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
       switch ($type) {
         case '/v1/profiles/text':
           $body_content[$index] = _filter_autop($element['text']);
+          break;
+        case '/v1/profiles/image':
+          // Add a placeholder for each referenced image to the body.
+          $body_content[$index] = "[npr_image:" . $element['id'] . "]";
+          break;
+        case '/v1/profiles/promo-card':
+          // TODO: This content exists but I am not sure what to do with it.
           break;
         /*case 'staticHtml':
                 // Add the static html assets in the body.
@@ -53,22 +59,9 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
                     }
                   }
                 }
-                break;
+                break;*/
 
-              case 'image':
-                // Add a placeholder for each referenced image to the body.
-                // But check to see if the object is multidimensional first.
-                if (isset($items->num)) {
-                  $body_content[$items->num] = "[npr_image:" . $items->refId . "]";
-                }
-                else {
-                  foreach ($items as $item) {
-                    $body_content[$item->num] = "[npr_image:" . $item->refId . "]";
-                  }
-                }
-                break;
-
-              case 'multimedia':
+              /*case 'multimedia':
                 $multimedia_field = $story_mappings['multimedia'];
                 if (!empty($multimedia_field) && $multimedia_field !== 'unused') {
                   // Add laceholder for each referenced multimedia to the body.
