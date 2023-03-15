@@ -18,7 +18,7 @@ use Drupal\Component\Utility\Unicode;
 /**
  * Performs CRUD operations on Drupal nodes using data from the NPR API.
  */
-class NprPullClient extends NprClient {
+class NprPullClient extends NprClient implements NprPullClientInterface {
 
   use StringTranslationTrait;
 

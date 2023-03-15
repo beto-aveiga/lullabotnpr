@@ -4,24 +4,24 @@ namespace Drupal\npr_api;
 
 use Drupal\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use GuzzleHttp\Client;
+use Drupal\npr_api\Normalizer\NPRCdsEntityNormalizer;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * Retrieves and parses NPR Content
  *
  * Documentation: https://npr.github.io/content-distribution-service/
  */
-class NprCdsClient implements ClientInterface {
+class NprCdsClient implements NprClientInterface {
 
-  const NPR_API_CDS_PROD_HOST = 'https://content.api.npr.org/v1/';
+  const NPR_API_CDS_PROD_HOST = 'https://content.api.npr.org/';
 
-  const NPR_API_CDS_STAGE_HOST = 'https://stage-content.api.npr.org/v1/';
+  const NPR_API_CDS_STAGE_HOST = 'https://stage-content.api.npr.org/';
 
-  const NPR_API_CDS_DEV_HOST = 'https://dev-content.api.npr.org/v1/';
+  const NPR_API_CDS_DEV_HOST = 'https://dev-content.api.npr.org/';
 
   /**
    * The HTTP client.
@@ -39,6 +39,8 @@ class NprCdsClient implements ClientInterface {
 
   protected $config;
 
+  protected $serializer;
+
   /**
    * Base url for API.
    *
@@ -49,7 +51,7 @@ class NprCdsClient implements ClientInterface {
   /**
    * @param \GuzzleHttp\ClientInterface $client
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory) {
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, SerializerInterface $serializer) {
     $this->client = $client;
     $this->config = $config_factory->get('npr_api.settings');
     $token = $this->config->get('npr_api_cds_api_key');
@@ -59,12 +61,14 @@ class NprCdsClient implements ClientInterface {
       ],
     ];
     $this->setUrl($this->config->get('npr_api_url'));
+    $this->serializer = $serializer;
   }
 
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('http_client'),
       $container->get('config.factory'),
+      $container->get('json.serializer')
     );
   }
 
@@ -120,20 +124,42 @@ class NprCdsClient implements ClientInterface {
     return $this->client->getConfig($option);
   }
 
-  public function getStories() {
-
+  /**
+   * {@inheritDoc}
+   */
+  public function getStories(array $params) {
+    $url = $this->base_url . 'v1/documents';
+    if (isset($params['id'])) {
+      $url .= '/' . $params['id'];
+      unset($params['id']);
+    }
+    $options = $this->default_options + [
+        'query' => $params,
+    ];
+    $response = $this->request('GET', $url, $options);
+    if ($response->getStatusCode() != 200) {
+      return [];
+    }
+    $data = json_decode($response->getBody()->getContents(), TRUE);
+    return $data['resources'];
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function report() {
-    $url = $this->base_url . 'documents';
-    $options = $this->default_options + [
-      'query' => [
-        'sort' => 'publishDateTime:desc',
-        'offset' => 0,
-        'limit' => 10,
-        'collectionIds' => '1126',
-      ],
+    $url = $this->base_url . 'v1/documents';
+    $params = [
+      'sort' => 'publishDateTime:desc',
+      'offset' => 0,
+      'limit' => 10,
+      'transclude' => 'bylines,layout,transcript,items',
+      'collectionIds' => '1126',
     ];
+    $options = $this->default_options + [
+      'query' => $params,
+    ];
+    $entities = $this->getStories($params);
     $params = 'Request params were:';
     foreach ($options['query'] as $k => $v) {
       $params .= ' [' . $k . '=>' . $v . ']';

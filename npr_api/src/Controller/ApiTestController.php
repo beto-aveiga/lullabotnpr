@@ -57,8 +57,7 @@ class ApiTestController extends ControllerBase {
 
     // Make a request.
     $params = ['id' => 1126];
-    $this->client->getXmlStories($params);
-    $this->client->parse();
+    $this->client->getStories($params);
     $result = $this->client->report();
     $ra[] = [
       '#theme' => 'item_list',

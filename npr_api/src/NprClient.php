@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Retrieves and parses NPRML.
  */
-class NprClient implements ClientInterface {
+class NprClient implements NprClientInterface {
 
   // HTTP status code = OK.
   const NPRAPI_STATUS_OK = 200;

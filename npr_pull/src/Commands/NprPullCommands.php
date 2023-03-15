@@ -51,11 +51,12 @@ class NprPullCommands extends DrushCommands {
   ]) {
 
     $params['id'] = $story_id;
-    $stories = $this->client->getStories($params);
+    $cds = \Drupal::service('npr_pull.cds_client');
+    $stories = $cds->getStories($params);
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $this->client->addOrUpdateNode($story, $options['published'], $options['display_messages'], $options['manual_import'], $options['force']);
+      $cds->addOrUpdateNode($story, $options['published'], $options['display_messages'], $options['manual_import'], $options['force']);
     }
   }
 

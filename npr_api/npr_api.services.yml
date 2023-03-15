@@ -4,7 +4,11 @@ services:
     arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system']
   npr_api.cds_client:
     class: Drupal\npr_api\NprCdsClient
-    arguments: ['@http_client', '@config.factory']
+    arguments: ['@http_client', '@config.factory', '@serializer']
   logger.channel.npr_api:
     parent: logger.channel_base
     arguments: ['npr_api']
+  serializer.normalizer.nprcds_entity:
+    class: Drupal\npr_api\Normalizer\NPRCdsEntityNormalizer
+    tags:
+      - { name: normalizer }
