@@ -137,7 +137,7 @@ class NprCdsClient implements NprClientInterface {
       $url .= '/' . $params['id'];
       unset($params['id']);
     }
-    $params['transclude'] = 'images,collections';
+    $params['transclude'] = 'images,collections,corrections';
     $options = [
         'query' => $params,
     ];

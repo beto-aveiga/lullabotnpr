@@ -369,19 +369,19 @@ class NprCdsPullClient implements NprPullClientInterface {
             }
           }
         }
-        elseif (in_array($key, $correction_fields) && !empty($story->correction)) {
+        elseif (in_array($key, $correction_fields) && !empty($story['corrections'])) {
           if ($key == 'correctionText') {
             $this->node->set($value, [
-              'value' => $story->correction->{$key}->value,
+              'value' => $story['corrections']['embed']['text'],
               'format' => $correction_text_format,
             ]);
           }
           elseif ($key == 'correctionDate') {
-            $date_value = $this->formatDate($story->correction->{$key}->value, $value);
+            $date_value = $this->formatDate($story['corrections']['embed']['dateTime'], $value);
             $this->node->set($value, $date_value);
           }
           else {
-            $this->node->set($value, $story->correction->{$key}->value);
+            $this->node->set($value, $story['corrections']['embed'][$key]);
           }
         }
         elseif ($key == 'slug') {
