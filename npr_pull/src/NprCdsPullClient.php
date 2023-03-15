@@ -135,7 +135,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
         $this->nprStatus(
           $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
-              '@id' => $story->id,
+              '@id' => $story['id'],
             ]
           ));
         $operation = "skipped";
@@ -416,9 +416,19 @@ class NprCdsPullClient implements NprPullClientInterface {
             $this->node->save();
           }
         }
-        elseif (!empty($story[$key]) && in_array($key, $date_fields)) {
-          $date_value = $this->formatDate($story[$key], $value);
+        elseif ($key == 'pubDate' && !empty($story['publishDateTime'])) {
+          $date_value = $this->formatDate($story['publishDateTime'], $value);
           $this->node->set($value, $date_value);
+        }
+        elseif ($key == 'lastModifiedDate' && !empty($story['editorialLastModifiedDateTime'])) {
+          $date_value = $this->formatDate($story['editorialLastModifiedDateTime'], $value);
+          $this->node->set($value, $date_value);
+        }
+        elseif ($key == 'storyDate') {
+          // TODO: Figure out what to do here.
+        }
+        elseif ($key == 'audioRunByDate') {
+          // TODO: Figure out what to do here.
         }
         // All of the other fields have a "value" property.
         elseif (!empty($story[$key]) && !is_array($story[$key])) {
@@ -1224,8 +1234,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    *   The formatted date
    */
   public function formatDate($date, $field) {
-    // Dates come from NPR like this: "Mon, 13 Apr 2020 05:01:00 -0400".
-    $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $date);
+    $dt_npr = new DrupalDateTime($date);
     $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
 
     if (in_array($field, ['created', 'changed'])) {
