@@ -27,7 +27,6 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
     foreach ($data as $key => $element) {
       switch ($key) {
         case 'layout':
-        case 'images':
         case 'bylines':
           $data[$key] = $this->parseAssets($element, $data['assets']);
       }
@@ -116,7 +115,7 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
 
   protected function getType($element) {
     foreach ($element['profiles'] as $profile) {
-      if ($profile['rels'][0] == 'type') {
+      if (isset($profile['rels']) && $profile['rels'][0] == 'type') {
         return $profile['href'];
       }
     }

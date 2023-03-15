@@ -340,21 +340,24 @@ class NprCdsPullClient implements NprPullClientInterface {
           $parent_item_vocabulary_prefix = $story_config->get('parent_vocabulary_prefix.' . $key . '_prefix');
           // Get the story field for the current "parent" item.
           $parent_item_field = $story_config->get('story_field_mappings.' . $key);
-          if (empty($story->parent)) {
+          if (empty($story['collections'])) {
             continue;
           }
-          foreach ($story->parent as $item) {
-            if ($item->type == $key && $parent_item_field != 'unused') {
+          if ($key == 'primaryTopic') {
+            $key = 'theme';
+          }
+          foreach ($story['collections'] as $item) {
+            if (in_array($key, $item['rels']) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
               if ($parent_item_vocabulary_prefix != '') {
                 $saved_term = $parent_item_vocabulary_prefix . $item->title->value;
               }
               else {
-                $saved_term = $item->title->value;
+                $saved_term = $item['embed']['title'];
               }
               if (!empty($saved_term)) {
                 // Get the existing referenced item or create one.
-                $tid = $this->getTermId($saved_term, $item->id, $parent_item_vocabulary);
+                $tid = $this->getTermId($saved_term, $item['embed']['id'], $parent_item_vocabulary);
                 $ref_terms = $this->node->get($parent_item_field)->getValue();
                 // Get a list of all items already referenced in the field.
                 $referenced_ids = array_column($ref_terms, 'target_id');
@@ -379,6 +382,13 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
           else {
             $this->node->set($value, $story->correction->{$key}->value);
+          }
+        }
+        elseif ($key == 'slug') {
+          foreach ($story['collections'] as $item) {
+            if (in_array('slug', $item['rels'])) {
+              $this->node->set($value,$item['embed']['title']);
+            }
           }
         }
         elseif ($key == 'byline' && !empty($story['bylines'])) {
@@ -616,20 +626,21 @@ class NprCdsPullClient implements NprPullClientInterface {
       foreach ($story['images'] as $image) {
 
         // Truncate and clean up the title field.
-        $image_title = htmlentities($image['title']);
+        $image_title = htmlentities($image['embed']['title']);
         $image_title = html_entity_decode($image_title, ENT_QUOTES | ENT_XML1, 'UTF-8');
         $image_title = substr($image_title, 0, 255);
 
         // Check to see if a media image already exists in Drupal.
-        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image['id']])) {
+        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image['embed']['id']])) {
           if (count($media_image) > 1) {
             $this->nprError(
               $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
-                '@id' => $image['id'],
+                '@id' => $image['embed']['id'],
                 '@title' => $image_title,
               ]));
             return;
           }
+          /** @var \Drupal\media\Entity\Media $media_image */
           $media_image = reset($media_image);
           // If the media item exists, delete all of the referenced image files.
           $image_references = $media_image->{$image_field};
@@ -639,6 +650,7 @@ class NprCdsPullClient implements NprPullClientInterface {
               $referenced_file->delete();
             }
           }
+
           // Remove the references to the images on the media item.
           $media_image->{$image_field} = NULL;
           // Remove the references to the media image on the story node.
@@ -654,21 +666,23 @@ class NprCdsPullClient implements NprPullClientInterface {
             'langcode' => Language::LANGCODE_NOT_SPECIFIED,
           ]);
         }
-        $image_url = "";
-        foreach ($image['enclosures'] as $enclosure) {
-          // Create a image file. First check the main image.
-          if (in_array($crop_selected, $enclosure['rels'])) {
-            $image_url = $enclosure['href'];
-          } // Next check the images in the "crop" array.
-          if (in_array('primary', $enclosure['rels']) && empty($image_url)) {
-            $image_url = $enclosure['href'];
+        $image_enclosure = [];
+        foreach ($image['embed']['enclosures'] as $enclosure) {
+          if (isset($image['rels']) && in_array('primary', $image['rels']) && in_array('primary', $enclosure['rels'])) {
+            $image_enclosure = $enclosure;
+            break;
+          }
+          if (in_array('image-' . $crop_selected, $enclosure['rels'])) {
+            $image_enclosure = $enclosure;
+            break;
           }
         }
+        $image_url = $image_enclosure['href'];
         if (empty($image_url)) {
           $this->nprError(
             $this->t('There is no image of type @crop available for story @title.', [
               '@crop' => $crop_selected,
-              '@title' => $story->title,
+              '@title' => $story['title'],
             ]));
           return;
         }
@@ -699,8 +713,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           if ($e->hasResponse()) {
             $this->nprError($this->t('There is no image at @image_url for story @title (source URL: @story_url).', [
               '@image_url' => $image_url,
-              '@title' => $story->title,
-              '@story_url' => $story->link['html'],
+              '@title' => $story['title'],
+              '@story_url' => $story['webPages'][0]['href'],
             ]));
           }
           return;
@@ -720,7 +734,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Attached the image file to the media item.
         $media_image->set($image_field, [
           'target_id' => $file->id(),
-          'alt' => Unicode::truncate($image['caption'], 512, FALSE, TRUE),
+          'alt' => Unicode::truncate($image['embed']['caption'], 512, FALSE, TRUE),
         ]);
 
         // Map all of the remaining fields except image_title and image_field,
@@ -729,17 +743,16 @@ class NprCdsPullClient implements NprPullClientInterface {
           if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
             // ID doesn't have a "value" property.
             if ($key == 'image_id') {
-              $media_image->set($value, $image['id']);
+              $media_image->set($value, $image['embed']['id']);
             }
             elseif ($key == 'type') {
-              //TODO: Figure out what value should go here.
-              $media_image->set($value, empty($crop_selected) ? 'primary' : $crop_selected);
+              $media_image->set($value, isset($image['rels']) && in_array('primary', $image['rels']) ? 'primary' : $crop_selected);
             }
             elseif ($key == 'provider_url') {
-              $media_image->set($value, $image['provider']);
+              $media_image->set($value, empty($image['embed']['providerLink']) ? NULL : $image['embed']['providerLink']);
             }
-            elseif (!empty($image[$key])) {
-              $media_image->set($value, $image[$key]);
+            else {
+              $media_image->set($value, empty($image['embed'][$key]) ? NULL : $image['embed'][$key]);
             }
           }
         }
