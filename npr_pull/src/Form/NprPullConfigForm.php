@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -35,7 +36,7 @@ class NprPullConfigForm extends ConfigFormBase {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_pull\NprPullClientInterface
    */
   protected $client;
 
@@ -46,13 +47,13 @@ class NprPullConfigForm extends ConfigFormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date Formatter service.
-   * @param \Drupal\npr_pull\NprPullClient $client
+   * @param \Drupal\npr_pull\NprPullClientFactory $client
    *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, NprPullClient $client) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, NprPullClientFactory $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->dateFormatter = $date_formatter;
-    $this->client = $client;
+    $this->client = $client->build();
   }
 
   /**
@@ -99,6 +100,15 @@ class NprPullConfigForm extends ConfigFormBase {
       '#options' => [
         'staging' => 'Staging',
         'production' => 'Production',
+      ],
+    ];
+    $form['npr_pull_config']['npr_pull_service'] = [
+      '#type' => 'select',
+      '#title' => $this->t('NPR Pull Service'),
+      '#default_value' => $config->get('npr_pull_service'),
+      '#options' => [
+        'xml' => 'XML',
+        'cds' => 'CDS',
       ],
     ];
 
@@ -270,6 +280,7 @@ class NprPullConfigForm extends ConfigFormBase {
     $config = $this->config('npr_pull.settings');
 
     $config->set('npr_pull_url', $values['npr_pull_url']);
+    $config->set('npr_pull_service', $values['npr_pull_service']);
     $config->set('npr_pull_author', $values['npr_pull_author']);
     $config->set('queue_interval', $values['queue_interval']);
     $config->set('queue_enable', $values['queue_enable']);

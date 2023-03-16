@@ -5,6 +5,7 @@ namespace Drupal\npr_api\Plugin\QueueWorker;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientFactory;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,7 +36,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   /**
    * NPR API pull client.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_pull\NprPullClientInterface
    */
   private $nprPullClient;
 
@@ -46,11 +47,11 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
     $plugin_id,
     $plugin_definition,
     LoggerInterface $logger,
-    NprPullClient $npr_pull_client
+    NprPullClientFactory $npr_pull_client
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->logger = $logger;
-    $this->nprPullClient = $npr_pull_client;
+    $this->nprPullClient = $npr_pull_client->build();
   }
 
   /**

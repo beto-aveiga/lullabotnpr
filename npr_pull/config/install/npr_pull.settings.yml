@@ -1,5 +1,6 @@
 npr_pull_author: 0
 npr_pull_url: 'production'
+npr_pull_service: 'xml'
 npr_pull_cron_publish_flag: 1
 queue_enable: 0
 queue_interval: 21600

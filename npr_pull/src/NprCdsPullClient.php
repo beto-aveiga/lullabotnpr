@@ -416,8 +416,29 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getSubscriptionTerms() {
-    // TODO: Implement getSubscriptionTerms() method.
+  public function getSubscriptionIds() {
+    $pull_config = $this->config->get('npr_pull.settings');
+    $subscribe_method = $pull_config->get('subscribe_method');
+    if ($subscribe_method == 'taxonomy') {
+      if ($subscribed_terms = $this->getSubscriptionTerms()) {
+        // Get the NPR ids for all of the terms that have been subscribed to.
+        foreach ($subscribed_terms as $subscribed_term) {
+          if ($npr_id = $subscribed_term->get('field_npr_news_id')->value) {
+            $npr_ids[$npr_id] = $npr_id;
+          }
+        }
+      }
+    }
+    // If the terms have been selected using the predetermined checkboxes, get
+    // those as a list of topic IDs.
+    elseif ($subscribe_method == 'checkbox') {
+      $npr_ids = $pull_config->get('topic_ids');
+    }
+    // If there are no topic IDs, just get "News".
+    if (empty($npr_ids)) {
+      $npr_ids = [1001 => 1001];
+    }
+    return $npr_ids;
   }
 
   /**
@@ -426,6 +447,34 @@ class NprCdsPullClient implements NprPullClientInterface {
   public function updateQueue(): bool {
     // TODO: Implement updateQueue() method.
     return FALSE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getSubscriptionTerms() {
+    $pull_config = $this->config->get('npr_pull.settings');
+    $topic_vocabularies = $pull_config->get('topic_vocabularies');
+    if (empty(array_filter($topic_vocabularies))) {
+      return [];
+    }
+    $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
+    $all_subscribed_terms = [];
+    // For each vocabularly used for subscription, check for taxonomy terms
+    // with the "subscribe" box checked.
+    foreach (array_keys($topic_vocabularies) as $vocabulary) {
+      $subscribed_terms = $taxonomy_manager->loadByProperties([
+        'field_npr_subscribe' => 1,
+        'vid' => $vocabulary,
+      ]);
+      foreach ($subscribed_terms as $term) {
+        // Only include subscribed terms that have a NPR ID.
+        if (!empty($term->get('field_npr_news_id')->value)) {
+          $all_subscribed_terms[] = $term;
+        }
+      }
+    }
+    return $all_subscribed_terms;
   }
 
   /**

@@ -2,7 +2,7 @@
 
 namespace Drupal\npr_pull\Commands;
 
-use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientFactory;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -13,18 +13,18 @@ class NprPullCommands extends DrushCommands {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_pull\NprPullClientInterface
    */
   protected $client;
 
   /**
    * Constructs a new DrushCommands object.
    *
-   * @param \Drupal\npr_pull\NprPullClient $client
+   * @param \Drupal\npr_pull\NprPullClientInterface $client
    *   The NPR client.
    */
-  public function __construct(NprPullClient $client) {
-    $this->client = $client;
+  public function __construct(NprPullClientFactory $client) {
+    $this->client = $client->build();
   }
 
   /**
@@ -51,12 +51,11 @@ class NprPullCommands extends DrushCommands {
   ]) {
 
     $params['id'] = $story_id;
-    $cds = \Drupal::service('npr_pull.cds_client');
-    $stories = $cds->getStories($params);
+    $stories = $this->client->getStories($params);
 
     // Create the stories in Drupal.
     foreach ($stories as $story) {
-      $cds->addOrUpdateNode($story, $options['published'], $options['display_messages'], $options['manual_import'], $options['force']);
+      $this->client->addOrUpdateNode($story, $options['published'], $options['display_messages'], $options['manual_import'], $options['force']);
     }
   }
 

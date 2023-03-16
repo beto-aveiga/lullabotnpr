@@ -1,5 +1,8 @@
 services:
   npr_pull.client:
+    class: Drupal\npr_pull\NprPullClientFactory
+    arguments: ['@config.factory']
+  npr_pull.xml_client:
     class: Drupal\npr_pull\NprPullClient
     arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system']
   npr_pull.cds_client:

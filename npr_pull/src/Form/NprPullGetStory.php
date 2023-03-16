@@ -8,6 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -32,7 +33,7 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_pull\NprPullClientInterface
    */
   protected $client;
 
@@ -43,13 +44,13 @@ class NprPullGetStory extends ConfigFormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
-   * @param \Drupal\npr_pull\NprPullClient $client
+   * @param \Drupal\npr_pull\NprPullClientFactory $client
    *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClient $client) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClientFactory $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
-    $this->client = $client;
+    $this->client = $client->build();
   }
 
   /**
@@ -84,8 +85,9 @@ class NprPullGetStory extends ConfigFormBase {
 
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
     $username = 'Anonymous';
+    /** @var \Drupal\user\Entity\User $user */
     if ($user = $this->entityTypeManager->getStorage('user')->load($author_id)) {
-      $username = $user->getUsername();
+      $username = $user->getAccountName();
     }
 
     $form['retrieval_method'] = [
