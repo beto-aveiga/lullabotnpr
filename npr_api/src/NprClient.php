@@ -194,16 +194,95 @@ class NprClient implements NprClientInterface {
    * @param array $params
    *   An array of query-type parameters.
    *
-   * @return object|null
-   *   A parsed object of NPRML stories.
+   * @return array|null
+   *   An array of parsed object of NPRML stories.
    */
-  public function getStories(array $params) {
+  public function getStories(array $params): array|null {
     $this->getXmlStories($params);
     $this->parse();
     if (!empty($this->stories)) {
       return $this->stories;
     }
     return NULL;
+  }
+
+  /**
+   * Get story by organization.
+   *
+   * @param int $id
+   *   The organization id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array|object
+   *   The api response.
+   */
+  public function getStoriesByOrgId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'start_date' => '',
+    'end_date' => '',
+  ]): array|object {
+    $params = [
+      'orgId' => $id,
+      'fields' => 'all',
+      'dateType' => 'story',
+    ];
+    if (!empty($options['start_date'])) {
+      $params['startDate'] = $options['start_date'];
+    }
+    if (!empty($options['end_date'])) {
+      $params['endDate'] = $options['end_date'];
+    }
+
+    $params['startNum'] = $options['start_num'];
+    $params['numResults'] = $options['num_results'];
+
+    return $this->getStories($params);
+  }
+
+  /**
+   * Get story by topic.
+   *
+   * @param int $id
+   *   The topic id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array|object
+   *   The api response.
+   */
+  public function getStoriesByTopicId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'sort' => 'dateDesc',
+    'start_date' => '',
+    'end_date' => '',
+  ]): array|object {
+    if ($options['num_results'] > 50) {
+      throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
+    }
+
+    $params = [
+      'numResults' => $options['num_results'],
+      'id' => $id,
+      'sort' => $options['sort'],
+      'fields' => 'all',
+    ];
+
+    if ($options['start_num'] > 0) {
+      $params['startNum'] = $options['start_num'];
+    }
+
+    // Add start and end dates, if included.
+    if (!empty($options['start_date'])) {
+      $params['startDate'] = $options['start_date'];
+    }
+    if (!empty($options['end_date'])) {
+      $params['endDate'] = $options['end_date'];
+    }
+
+    return $this->getStories($params);
   }
 
   /**

@@ -87,43 +87,19 @@ class NprPullCommands extends DrushCommands {
     'start_date' => '',
     'end_date' => '',
   ]) {
+    $topicId = $options['topic_id'];
+    unset($options['topic_id']);
 
-    if ($options['num_results'] > 50) {
-      throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
-    }
-
-    $params = [
-      'numResults' => $options['num_results'],
-      'id' => $options['topic_id'],
-      'sort' => $options['sort'],
-      'fields' => 'all',
-    ];
-
-    if ($options['start_num'] > 0) {
-      $params['startNum'] = $options['start_num'];
-    }
-
-    // Add start and end dates, if included.
     $start_date = $options['start_date'];
-    if (!empty($start_date)) {
-      if ($this->validateDate($start_date)) {
-        $params['startDate'] = $options['start_date'];
-      }
-      else {
-        throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
-      }
+    if (!empty($start_date) && !$this->validateDate($start_date)) {
+      throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
     }
     $end_date = $options['end_date'];
-    if (!empty($end_date)) {
-      if ($this->validateDate($end_date)) {
-        $params['endDate'] = $options['end_date'];
-      }
-      else {
-        throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
-      }
+    if (!empty($end_date) && !$this->validateDate($end_date)) {
+      throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
     }
 
-    if ($stories = $this->client->getStories($params)) {
+    if ($stories = $this->client->getStoriesByTopicId($topicId, $options)) {
       $this->processStories($stories);
     };
     $this->output()->writeln(dt('Process the stories with `drush queue-run npr_api.queue.story` or run cron.'));
@@ -160,45 +136,31 @@ class NprPullCommands extends DrushCommands {
       $this->logger()->info(dt('An organization ID is required.'));
       throw new \Exception(dt('An organization ID is required.'));
     }
-    $params = [
-      'orgId' => $org_id,
-      'fields' => 'all',
-      'dateType' => 'story',
-    ];
 
     // Add start and end dates, if included.
     $start_date = $options['start_date'];
-    if (!empty($start_date)) {
-      if ($this->validateDate($start_date)) {
-        $params['startDate'] = $options['start_date'];
-      }
-      else {
-        throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
-      }
+    if (!empty($start_date) && !$this->validateDate($start_date)) {
+      throw new \Exception(dt('The start date needs to be in the format YYYY-MM-DD.'));
     }
     $end_date = $options['end_date'];
-    if (!empty($end_date)) {
-      if ($this->validateDate($end_date)) {
-        $params['endDate'] = $options['end_date'];
-      }
-      else {
-        throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
-      }
+    if (!empty($end_date) && !$this->validateDate($end_date)) {
+      throw new \Exception(dt('The end date needs to be in the format YYYY-MM-DD.'));
     }
 
     // The maximum number of stories per NRP API request is 50.
     if ($options['num_results'] <= 50) {
-      $params['numResults'] = $options['num_results'];
-      $stories = $this->client->getStories($params);
+      $stories = $this->client->getStories($options);
       $this->processStories($stories);
     }
-    elseif ($options['num_results'] > 50) {
-      for ($i = $options['start_num']; $i < ($options['num_results'] + $options['start_num']); $i += 50) {
-        $params['numResults'] = 50;
-        $params['startNum'] = $i;
+    else {
+      $numResults = $options['num_results'];
+      $startNum = $options['start_num'];
+      for ($i = $startNum; $i < ($numResults + $startNum); $i += 50) {
+        $options['num_results'] = 50;
+        $options['start_num'] = $i;
         // Clear the stories.
         $this->client->stories = [];
-        $stories = $this->client->getStories($params);
+        $stories = $this->client->getStoriesByOrgId($org_id, $options);
         $this->processStories($stories);
       }
     }

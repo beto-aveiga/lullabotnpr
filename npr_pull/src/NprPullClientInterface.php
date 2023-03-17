@@ -69,4 +69,30 @@ interface NprPullClientInterface {
    *   A parsed object of NPRML stories.
    */
   public function getStories(array $params);
+
+  /**
+   * Get story by organization.
+   *
+   * @param int $id
+   *   The organization id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array
+   *   The api response.
+   */
+  public function getStoriesByOrgId(int $id, array $options = []): array;
+
+  /**
+   * Get story by topic.
+   *
+   * @param int $id
+   *   The topic id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array
+   *   The api response.
+   */
+  public function getStoriesByTopicId(int $id, array $options = []): array;
 }

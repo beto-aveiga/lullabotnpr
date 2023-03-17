@@ -137,7 +137,6 @@ class NprCdsClient implements NprClientInterface {
       $url .= '/' . $params['id'];
       unset($params['id']);
     }
-    unset($params['fields']);
     $params['transclude'] = 'images,collections,corrections,bylines,audio,layout,corrections';
     $options = [
         'query' => $params,
@@ -170,7 +169,6 @@ class NprCdsClient implements NprClientInterface {
     $options = [
       'query' => $params,
     ];
-    $entities = $this->getStories($params);
     $params = 'Request params were:';
     foreach ($options['query'] as $k => $v) {
       $params .= ' [' . $k . '=>' . $v . ']';

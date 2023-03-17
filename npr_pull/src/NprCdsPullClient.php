@@ -62,7 +62,68 @@ class NprCdsPullClient implements NprPullClientInterface {
    * {@inheritDoc}
    */
   public function getStories(array $params) {
+    unset($params['fields']);
     return $this->client->getStories($params);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getStoriesByOrgId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'start_date' => '',
+    'end_date' => '',
+  ]): array {
+    $params = [
+      'ownerHrefs=' => 'https://organization.api.npr.org/v4/services/' . $id,
+    ];
+    if (!empty($options['start_date'])) {
+      $params['publishDateTime'] = $options['start_date'];
+      if (!empty($options['end_date'])) {
+        $params['publishDateTime'] .= '...' . $options['end_date'];
+      }
+    }
+
+    $params['offset'] = $options['start_num'];
+    $params['limit'] = $options['num_results'];
+
+    return $this->getStories($params);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getStoriesByTopicId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'sort' => 'dateDesc',
+    'start_date' => '',
+    'end_date' => '',
+  ]): array {
+    if ($options['num_results'] > 50) {
+      throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
+    }
+
+    $params = [
+      'limit' => $options['num_results'],
+      'collectionIds' => $id,
+      'sort' => 'publishDateTime:' . $options['sort'] == 'dateDesc' ? 'desc' : 'asc',
+    ];
+
+    if ($options['start_num'] > 0) {
+      $params['offset'] = $options['start_num'];
+    }
+
+    // Add start and end dates, if included.
+    if (!empty($options['start_date'])) {
+      $params['publishDateTime'] = $options['start_date'];
+      if (!empty($options['end_date'])) {
+        $params['publishDateTime'] .= '...' . $options['end_date'];
+      }
+    }
+
+    return $this->getStories($params);
   }
 
   /**
