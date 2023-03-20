@@ -3,8 +3,15 @@
 namespace Drupal\npr_pull;
 
 use DateTime;
+use Drupal\Core\Queue\QueueInterface;
 
 interface NprPullClientInterface {
+
+  /**
+   * State key for the last update DateTime.
+   */
+  const LAST_UPDATE_KEY = 'npr_pull.last_update';
+
   /**
    * Gets the date and time of the last API content type sync.
    *
@@ -95,4 +102,20 @@ interface NprPullClientInterface {
    *   The api response.
    */
   public function getStoriesByTopicId(int $id, array $options = []): array;
+
+  /**
+   * Gets the queue for the API content type.
+   *
+   * @return \Drupal\Core\Queue\QueueInterface
+   *   API content type update queue.
+   */
+  public function getQueue(): QueueInterface;
+
+  /**
+   * Sets the date and time of the last API content type sync.
+   *
+   * @param \DateTime $time
+   *   Date and time to set.
+   */
+  public function setLastUpdateTime(DateTime $time): void;
 }

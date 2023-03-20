@@ -23,11 +23,6 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
   use StringTranslationTrait;
 
   /**
-   * State key for the last update DateTime.
-   */
-  const LAST_UPDATE_KEY = 'npr_pull.last_update';
-
-  /**
    * The story node.
    *
    * @var \Drupal\node\NodeInterface

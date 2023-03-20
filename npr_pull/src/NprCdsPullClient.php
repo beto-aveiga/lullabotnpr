@@ -9,6 +9,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
@@ -42,6 +43,10 @@ class NprCdsPullClient implements NprPullClientInterface {
 
   protected $audioField;
 
+  protected $queueFactory;
+
+  protected $state;
+
   public function __construct(NprCdsClient $client) {
     $this->client = $client;
     $this->entityTypeManager = \Drupal::service('entity_type.manager');
@@ -50,6 +55,8 @@ class NprCdsPullClient implements NprPullClientInterface {
     $this->fileSystem = \Drupal::service('file_system');
     $this->moduleHandler = \Drupal::service('module_handler');
     $this->messenger = \Drupal::service('messenger');
+    $this->queueFactory = \Drupal::service('queue');
+    $this->state = \Drupal::service('state');
   }
 
   public static function create(ContainerInterface $container) {
@@ -69,12 +76,13 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getStoriesByOrgId(int $id, array $options = [
-    'num_results' => 1,
-    'start_num' => 0,
-    'start_date' => '',
-    'end_date' => '',
-  ]): array {
+  public function getStoriesByOrgId(int $id, array $options = []): array {
+    $options += [
+      'num_results' => 1,
+      'start_num' => 0,
+      'start_date' => '',
+      'end_date' => '',
+    ];
     $params = [
       'ownerHrefs=' => 'https://organization.api.npr.org/v4/services/' . $id,
     ];
@@ -94,13 +102,14 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getStoriesByTopicId(int $id, array $options = [
-    'num_results' => 1,
-    'start_num' => 0,
-    'sort' => 'dateDesc',
-    'start_date' => '',
-    'end_date' => '',
-  ]): array {
+  public function getStoriesByTopicId(int $id, array $options = []): array {
+    $options += [
+      'num_results' => 1,
+      'start_num' => 0,
+      'sort' => 'dateDesc',
+      'start_date' => '',
+      'end_date' => '',
+    ];
     if ($options['num_results'] > 50) {
       throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
     }
@@ -108,7 +117,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $params = [
       'limit' => $options['num_results'],
       'collectionIds' => $id,
-      'sort' => 'publishDateTime:' . $options['sort'] == 'dateDesc' ? 'desc' : 'asc',
+      'sort' => 'publishDateTime:' . ($options['sort'] == 'dateDesc' ? 'desc' : 'asc'),
     ];
 
     if ($options['start_num'] > 0) {
@@ -463,15 +472,38 @@ class NprCdsPullClient implements NprPullClientInterface {
    * {@inheritDoc}
    */
   public function extractId($url) {
-    // TODO: Implement extractId() method.
+    // Handle URL formats such as /yyyy/mm/dd/id and /blogs/name/yyyy/mm/dd/id.
+    preg_match('/https\:\/\/[^\s\/]*npr\.org\/((([^\/]*\/){3,5})([0-9]{8,12}))\/.*/', $url, $matches);
+    if (!empty($matches[4])) {
+      return $matches[4];
+    }
+    else {
+      // Handle URL format /templates/story/story.php?storyId=id.
+      preg_match('/https\:\/\/[^\s\/]*npr\.org\/([^&\s\<]*storyId\=([0-9]+)).*/', $url, $matches);
+      if (!empty($matches[2])) {
+        return $matches[2];
+      }
+    }
   }
 
   /**
    * {@inheritDoc}
    */
   public function getLastUpdateTime(): DateTime {
-    // TODO: Implement getLastUpdateTime() method.
-    return new DateTime();
+    return $this->state->get(
+      self::LAST_UPDATE_KEY,
+      new DateTime('@1')
+    );
+  }
+
+  /**
+   * Sets the date and time of the last API content type sync.
+   *
+   * @param \DateTime $time
+   *   Date and time to set.
+   */
+  public function setLastUpdateTime(DateTime $time): void {
+    $this->state->set(self::LAST_UPDATE_KEY, $time);
   }
 
   /**
@@ -506,8 +538,98 @@ class NprCdsPullClient implements NprPullClientInterface {
    * {@inheritDoc}
    */
   public function updateQueue(): bool {
-    // TODO: Implement updateQueue() method.
-    return FALSE;
+    $dt_start = new DateTime();
+
+    $pull_config = $this->config->get('npr_pull.settings');
+    $num_results = $pull_config->get('num_results');
+    $start_date = $pull_config->get('start_date');
+
+    if (empty($start_date)) {
+      $this->nprError('Please configure the "Days back" setting on the "Pull Settings" tab.');
+      return FALSE;
+    }
+
+    $start_timestamp = time() - ($start_date * 86400);
+    $start = date("Y-m-d", $start_timestamp);
+    $end = date("Y-m-d");
+
+    // Get a list of IDs subscribed to.
+    $npr_ids = $this->getSubscriptionIds();
+
+    // Make separate API calls for each topic. If there are many, many topics
+    // selected, we may not get data for all of them.
+    $update_stories = [];
+    foreach ($npr_ids as $npr_id) {
+      $params = [
+        'num_results' => $num_results,
+        'start_date' => $start,
+        'end_date' => $end,
+      ];
+      $stories = $this->getStoriesByTopicId($npr_id, $params);
+      foreach ($stories as $story) {
+        $update_stories[] = $story;
+      }
+    }
+
+    $stories_updated = [];
+    foreach ($update_stories as $update_story) {
+      // Only add a story to the queue once.
+      if (!in_array($update_story['id'], $stories_updated)) {
+        $this->getQueue()->createItem($update_story);
+        $stories_updated[] = $update_story['id'];
+      }
+    }
+
+    // Get the story field mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+    $imported_manually = $story_mappings['imported_manually'];
+
+    // Add "manually imported" stories to the array of story IDs.
+    if (!empty($imported_manually) && $imported_manually !== 'unused') {
+      $node_manager = $this->entityTypeManager->getStorage('node');
+
+      // Get a list of node IDS of storys where "manually imported" is checked.
+      $nids = $node_manager->getQuery()
+        ->condition('type', $story_config->get('story_node_type'))
+        ->condition($imported_manually, 1)
+        ->execute();
+      $start_ts = strtotime($start);
+      foreach ($nids as $nid) {
+        $guid_field = $story_mappings['id'];
+        $story = $node_manager->load($nid);
+        // Get a timestamp of the configured "Days back" value.
+        $story_id = $story->{$guid_field}->value;
+        // Determine if the manually-imported story was already checked.
+        if (!in_array($story_id, $stories_updated)) {
+
+          // Get a timestamp of the story.
+          $story_date_field = $story_mappings['storyDate'];
+          if (!empty($story_date_field) && $story_date_field !== 'unused') {
+            if ($story_date = $story['$story_date_field']) {
+              $story_date = substr($story_date, 0, 10);
+              $story_date_ts = strtotime($story_date);
+            }
+          }
+
+          // If the story is within the "Days back" range add it to the queue.
+          if (!empty($story_date_ts) && $story_date_ts >= $start_ts) {
+            $params = [
+              'id' => $story_id,
+              'fields' => 'all',
+            ];
+            if ($story = $this->getStories($params)) {
+              $story = reset($story);
+              $this->getQueue()->createItem($story);
+            }
+          }
+        }
+      }
+    }
+
+    $this->setLastUpdateTime($dt_start);
+
+    return TRUE;
   }
 
   /**
@@ -1302,5 +1424,12 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
 
     return $date_value;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getQueue(): QueueInterface {
+    return $this->queueFactory->get('npr_api.queue.story');
   }
 }
