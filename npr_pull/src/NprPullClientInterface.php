@@ -85,10 +85,10 @@ interface NprPullClientInterface {
    * @param array $options
    *   Additional query parameters.
    *
-   * @return array
+   * @return array|object
    *   The api response.
    */
-  public function getStoriesByOrgId(int $id, array $options = []): array;
+  public function getStoriesByOrgId(int $id, array $options = []): array|object;
 
   /**
    * Get story by topic.
@@ -98,10 +98,10 @@ interface NprPullClientInterface {
    * @param array $options
    *   Additional query parameters.
    *
-   * @return array
+   * @return array|object
    *   The api response.
    */
-  public function getStoriesByTopicId(int $id, array $options = []): array;
+  public function getStoriesByTopicId(int $id, array $options = []): array|object;
 
   /**
    * Gets the queue for the API content type.

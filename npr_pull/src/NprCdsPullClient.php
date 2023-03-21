@@ -76,7 +76,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getStoriesByOrgId(int $id, array $options = []): array {
+  public function getStoriesByOrgId(int $id, array $options = []): array|object {
     $options += [
       'num_results' => 1,
       'start_num' => 0,
@@ -102,7 +102,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getStoriesByTopicId(int $id, array $options = []): array {
+  public function getStoriesByTopicId(int $id, array $options = []): array|object {
     $options += [
       'num_results' => 1,
       'start_num' => 0,
