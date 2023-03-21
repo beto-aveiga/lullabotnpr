@@ -606,7 +606,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           // Get a timestamp of the story.
           $story_date_field = $story_mappings['storyDate'];
           if (!empty($story_date_field) && $story_date_field !== 'unused') {
-            if ($story_date = $story['$story_date_field']) {
+            if ($story_date = $story->{$story_date_field}->value) {
               $story_date = substr($story_date, 0, 10);
               $story_date_ts = strtotime($story_date);
             }
