@@ -834,7 +834,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       foreach ($story['images'] as $image) {
 
         // Truncate and clean up the title field.
-        $image_title = htmlentities($image['embed']['title']);
+        $image_title = htmlentities($image['embed']['title'] ?? '');
         $image_title = html_entity_decode($image_title, ENT_QUOTES | ENT_XML1, 'UTF-8');
         $image_title = substr($image_title, 0, 255);
 
@@ -945,7 +945,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Attached the image file to the media item.
         $media_image->set($image_field, [
           'target_id' => $file->id(),
-          'alt' => Unicode::truncate($image['embed']['caption'], 512, FALSE, TRUE),
+          'alt' => Unicode::truncate($image['embed']['caption'] ?? '', 512, FALSE, TRUE),
         ]);
 
         // Map all of the remaining fields except image_title and image_field,
