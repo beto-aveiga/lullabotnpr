@@ -60,7 +60,8 @@ class NprCdsClient implements NprClientInterface {
         'Authorization' => 'Bearer ' . $token,
       ],
     ];
-    $this->setUrl($this->config->get('npr_api_url'));
+    $url_selection = $this->config->get('npr_api_url') ?? '';
+    $this->setUrl($url_selection);
     $this->serializer = $serializer;
   }
 
