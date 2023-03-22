@@ -376,11 +376,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           if (empty($story['collections'])) {
             continue;
           }
-          if ($key == 'primaryTopic') {
-            $key = 'theme';
-          }
           foreach ($story['collections'] as $item) {
-            if (in_array($key, $item['rels']) && $parent_item_field != 'unused') {
+            if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels']) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
               if ($parent_item_vocabulary_prefix != '') {
                 $saved_term = $parent_item_vocabulary_prefix . $item->title->value;
@@ -398,6 +395,9 @@ class NprCdsPullClient implements NprPullClientInterface {
                 if ($tid > 0 && !in_array($tid, $referenced_ids)) {
                   $this->node->{$parent_item_field}[] = ['target_id' => $tid];
                 }
+              }
+              if ($key == 'primaryTopic') {
+                break;
               }
             }
           }
