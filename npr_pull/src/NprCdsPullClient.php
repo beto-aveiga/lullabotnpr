@@ -430,8 +430,25 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         elseif ($key == 'byline' && !empty($story['bylines'])) {
           foreach ($story['bylines'] as $byline) {
-            $this->node->set($value, $byline['embed']['name']);
-            $this->node->save();
+            $uri = 'route:<nolink>';
+            $title = $byline['embed']['name'];
+
+            if (!empty($byline['bylineDocuments'][0]['href'])) {
+              $response = $this->client->request('GET', $byline['bylineDocuments'][0]['href']);
+              if ($response->getStatusCode() == 200) {
+                $byline = json_decode($response->getBody()->getContents());
+                $byline = $byline['resources'][0];
+                if (!empty($byline['webPages'][0]['href'])) {
+                  $uri = $byline['webPages'][0]['href'];
+                }
+              }
+            }
+
+            $fieldValue[] = [
+              'title' => $title,
+              'uri' => $uri,
+            ];
+            $this->node->set($value, $fieldValue);
           }
         }
         elseif ($key == 'pubDate' && !empty($story['editorialLastModifiedDateTime'])) {
