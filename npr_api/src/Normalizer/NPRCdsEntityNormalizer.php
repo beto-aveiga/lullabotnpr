@@ -96,7 +96,7 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
           break;
       }
     }
-    $data['body'] = implode(NULL, $body_content);
+    $data['body'] = implode('', $body_content);
 
     return $data;
   }

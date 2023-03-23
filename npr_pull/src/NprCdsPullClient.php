@@ -380,7 +380,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels']) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
               if ($parent_item_vocabulary_prefix != '') {
-                $saved_term = $parent_item_vocabulary_prefix . $item->title->value;
+                $saved_term = $parent_item_vocabulary_prefix . $item['embed']['title'];
               }
               else {
                 $saved_term = $item['embed']['title'];
@@ -431,15 +431,18 @@ class NprCdsPullClient implements NprPullClientInterface {
         elseif ($key == 'byline' && !empty($story['bylines'])) {
           foreach ($story['bylines'] as $byline) {
             $uri = 'route:<nolink>';
-            $title = $byline['embed']['name'];
+            $title = $byline['embed']['name'] ?? '';
 
-            if (!empty($byline['bylineDocuments'][0]['href'])) {
-              $response = $this->client->request('GET', $byline['bylineDocuments'][0]['href']);
+            if (!empty($byline['embed']['bylineDocuments'][0]['href'])) {
+              $response = $this->client->request('GET', $byline['embed']['bylineDocuments'][0]['href']);
               if ($response->getStatusCode() == 200) {
-                $byline = json_decode($response->getBody()->getContents());
+                $byline = json_decode($response->getBody()->getContents(), TRUE);
                 $byline = $byline['resources'][0];
                 if (!empty($byline['webPages'][0]['href'])) {
                   $uri = $byline['webPages'][0]['href'];
+                }
+                if (!empty($byline['title'])) {
+                  $title = $byline['title'];
                 }
               }
             }
