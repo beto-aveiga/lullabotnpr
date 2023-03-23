@@ -376,6 +376,9 @@ class NprCdsPullClient implements NprPullClientInterface {
           if (empty($story['collections'])) {
             continue;
           }
+          if ($key == 'artist') {
+            $key = 'music-artist';
+          }
           foreach ($story['collections'] as $item) {
             if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels']) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
