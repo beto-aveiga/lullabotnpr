@@ -38,23 +38,9 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
         case '/v1/profiles/promo-card':
           // TODO: This content exists but I am not sure what to do with it.
           break;
-        /*case 'staticHtml':
-                // Add the static html assets in the body.
-                if (isset($items->num)) {
-                  if ($parsed->htmlAsset->id == $items->refId) {
-                    $body_content[$items->num] = $parsed->htmlAsset->value;
-                  }
-                }
-                else {
-                  foreach ($items as $item) {
-                    foreach ($parsed->htmlAsset as $html_asset) {
-                      if ($html_asset->id == $item->refId) {
-                        $body_content[$item->num] = $html_asset->value;
-                      }
-                    }
-                  }
-                }
-                break;*/
+        case '/v1/profiles/html-block':
+          $body_content[$index] = $element['html'];
+          break;
 
               /*case 'multimedia':
                 $multimedia_field = $story_mappings['multimedia'];
