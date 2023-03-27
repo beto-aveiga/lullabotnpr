@@ -39,7 +39,8 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
           // TODO: This content exists but I am not sure what to do with it.
           break;
         case '/v1/profiles/html-block':
-          $body_content[$index] = $element['html'];
+          $data['html-block'][] = $element;
+          $body_content[$index] = '[npr_html:' . $element['id'] . ']';
           break;
 
               /*case 'multimedia':

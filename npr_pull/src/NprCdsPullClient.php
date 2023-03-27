@@ -29,6 +29,9 @@ class NprCdsPullClient implements NprPullClientInterface {
 
   protected $entityTypeManager;
 
+  /**
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
   protected $config;
 
   protected $logger;
@@ -232,6 +235,8 @@ class NprCdsPullClient implements NprPullClientInterface {
       ]);
     }
 
+    $html_blocks = $this->addorUpdateHtmlBlock($story);
+
     // Make the image fields available to other methods.
     $this->primaryImageField = $story_mappings['primary_image'];
     $primary_image_field = $this->primaryImageField;
@@ -345,6 +350,18 @@ class NprCdsPullClient implements NprPullClientInterface {
             if ($external_replacements = $this->replaceExternalAssets($external_placeholders[0])) {
               $story['body'] = str_replace(array_keys($external_replacements), array_values($external_replacements), $story['body']);
             }
+          }
+
+          // Find any html block placeholders.
+          $html_block_replacements = [];
+          /** @var \Drupal\media\Entity\Media $block */
+          foreach ($html_blocks as $block) {
+            $token = '[npr_html:' . $block->name->value . ']';
+            $uuid = $block->uuid();
+            $html_block_replacements[$token] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $uuid . '"></drupal-media>';
+          }
+          if (!empty($html_block_replacements)) {
+            $story['body'] = str_replace(array_keys($html_block_replacements), array_values($html_block_replacements), $story['body']);
           }
 
           $this->node->set($value, [
@@ -785,6 +802,48 @@ class NprCdsPullClient implements NprPullClientInterface {
       $multimedia_ids[] = $media_multimedia->id();
     }
     return $multimedia_ids;
+  }
+
+  protected function addorUpdateHtmlBlock($story) {
+    $blocks = [];
+    if (empty($story['html-block'])) {
+      return $blocks;
+    }
+
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $media_manager */
+    $media_manager = $this->entityTypeManager->getStorage('media');
+    $html_block_type = $this->config->get('npr_story.settings')->get('html_block_media_type');
+    $html_block_settings = $this->config->get('npr_story.settings')->get('html_block_field_mappings');
+    foreach ($story['html-block'] as $block) {
+      $id = $block['id'];
+      $html = $block['html'];
+      $html_block = $media_manager->loadByProperties(['name' => $id]);
+      if (count($html_block) > 1) {
+        $this->nprError(
+          $this->t('More than one html block items with the ID @id exists. Please delete the duplicate multimedia media.', [
+            '@id' => $id,
+          ]));
+        return;
+      }
+      if (!$html_block) {
+        $html_block = $media_manager->create([
+          $html_block_settings['html_block_id'] => $id,
+          'bundle' => $html_block_type,
+          'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+          'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+        ]);
+      } else {
+        $html_block = reset($html_block);
+      }
+      $html_block->{$html_block_settings['html_block_body']} = [
+        'value' => $html,
+        'format' => 'full_html'
+      ];
+      $html_block->save();
+      $blocks[] = $html_block;
+    }
+
+    return $blocks;
   }
 
   /**
@@ -1342,6 +1401,13 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
 
     return $multimedia_embed;
+  }
+
+  protected function replaceHtmlBlocks($blocks) {
+    $results = [];
+    foreach ($blocks as $block) {
+
+    }
   }
 
   /**

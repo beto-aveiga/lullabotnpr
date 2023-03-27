@@ -92,3 +92,7 @@ external_asset_field_mappings:
   externalId: field_external_id
   external_asset_caption: field_external_asset_caption
   external_asset_credit: field_external_asset_credit
+html_block_media_type: npr_html_block
+html_block_field_mappings:
+  html_block_id: name
+  html_block_body: field_media_npr_html_block

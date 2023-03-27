@@ -1,0 +1,14 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - npr_story
+id: npr_html_block
+label: 'NPR HTML Block'
+description: 'A place to store html blocks from NPR. Unsafe HTML may be contained within these blocks.'
+source: npr_html_block
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_media_npr_html_block
+field_map: {  }

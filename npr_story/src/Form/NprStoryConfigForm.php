@@ -410,6 +410,48 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
+    // External asset media type configuration.
+    $form['html_block_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('HTML Block Settings'),
+      '#open' => FALSE,
+    ];
+    $html_block_media_type = $config->get('html_block_media_type');
+    $form['html_block_settings']['html_block_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal html block media type'),
+      '#default_value' => $html_block_media_type,
+      '#description' => $this->t('Probably just use the Drupal "Remote video" media type.'),
+      '#options' => $media_type_options,
+    ];
+    $form['html_block_settings']['html_block_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('html_block field mappings'),
+      '#open' => TRUE,
+    ];
+    if (!empty($html_block_media_type)) {
+      $html_block_media_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('media', $html_block_media_type));
+      $html_block_field_options = ['unused' => 'unused'] +
+        array_combine($html_block_media_fields, $html_block_media_fields);
+      $html_block_field_mappings = $config->get('html_block_field_mappings');
+      foreach ($html_block_field_mappings as $npr_html_block_field => $html_block_field_value) {
+        $form['html_block_settings']['html_block_field_mappings'][$npr_html_block_field] = [
+          '#type' => 'select',
+          '#title' => $npr_html_block_field,
+          '#options' => $html_block_field_options,
+          '#default_value' => $html_block_field_value,
+        ];
+      }
+    }
+    else {
+      $form['html_block_settings']['html_block_field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save the Drupal html_block media type to choose field mappings.',
+      ];
+    }
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -428,6 +470,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('audio_media_type', $values['audio_media_type']);
     $config->set('audio_format', $values['audio_format']);
     $config->set('external_asset_media_type', $values['external_asset_media_type']);
+    $config->set('html_block_media_type', $values['html_block_media_type']);
 
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
@@ -457,6 +500,13 @@ class NprStoryConfigForm extends ConfigFormBase {
     foreach ($external_asset_fields as $field_name => $field_value) {
       if (isset($values[$field_name])) {
         $config->set('external_asset_field_mappings.' . $field_name, $values[$field_name]);
+      }
+    }
+
+    $html_block_fields = $config->get('html_block_field_mappings');
+    foreach ($html_block_fields as $field_name => $field_value) {
+      if (isset($values[$field_name])) {
+        $config->set('html_block_field_mappings.' . $field_name, $values[$field_name]);
       }
     }
 
