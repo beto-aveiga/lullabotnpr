@@ -12,7 +12,7 @@ function npr_story_uninstall() {
   \Drupal::configFactory()->reset('npr_story.settings');
 }
 
-function npr_update_1000() {
+function npr_story_update_1000() {
   $config_factory = \Drupal::configFactory();
   $settings = $config_factory->getEditable('npr_story.settings');
   $settings->set('html_block_media_type', 'npr_html_block')
