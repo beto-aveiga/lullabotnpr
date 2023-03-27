@@ -33,7 +33,7 @@ function npr_story_update_9101() {
     'core.entity_form_display.media.npr_html_block.default',
   ];
   foreach ($files as $file) {
-    $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/' . $file . '.yml');
+    $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/' . $file . '.yml');
     $config_factory->getEditable($file)->setData($data)->save(TRUE);
   }
 }
