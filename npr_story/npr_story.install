@@ -28,7 +28,7 @@ function npr_story_update_9101() {
   $files = [
     'media.type.npr_html_block',
     'field.storage.media.field_media_npr_html_block',
-    'field.storage.media.field_media_npr_html_block',
+    'field.field.media.npr_html_block.field_media_npr_html_block',
     'core.entity_view_display.media.npr_html_block.default',
     'core.entity_form_display.media.npr_html_block.default',
   ];
