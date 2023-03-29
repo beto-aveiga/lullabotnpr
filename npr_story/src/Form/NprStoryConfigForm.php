@@ -92,28 +92,28 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     // Text format configuration.
     foreach (filter_formats() as $format) {
-      $formats[$format->get('format')] = $format->get('name');
+      $body_formats[$format->get('format')] = $format->get('name');
     }
     $form['node_settings]']['body_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Body text format'),
       '#description' => $this->t('The body field is selected below'),
       '#default_value' => $config->get('body_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
     $form['node_settings]']['teaser_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Teaser text format'),
       '#description' => $this->t('The teaser field is selected below'),
       '#default_value' => $config->get('teaser_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
     $form['node_settings]']['correction_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Correction text format'),
       '#description' => $this->t('The correction field is selected below'),
       '#default_value' => $config->get('correction_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
 
     // Story node field mappings.
@@ -424,6 +424,13 @@ class NprStoryConfigForm extends ConfigFormBase {
       '#description' => $this->t('Probably just use the Drupal "Remote video" media type.'),
       '#options' => $media_type_options,
     ];
+    $form['html_block_settings']['html_block_text_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Body text format'),
+      '#description' => $this->t('The body field is selected below'),
+      '#default_value' => $config->get('html_block_text_format'),
+      '#options' => $body_formats,
+    ];
     $form['html_block_settings']['html_block_field_mappings'] = [
       '#type' => 'details',
       '#title' => $this->t('html_block field mappings'),
@@ -471,6 +478,7 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('audio_format', $values['audio_format']);
     $config->set('external_asset_media_type', $values['external_asset_media_type']);
     $config->set('html_block_media_type', $values['html_block_media_type']);
+    $config->set('html_block_text_format', $values['html_block_text_format']);
 
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
