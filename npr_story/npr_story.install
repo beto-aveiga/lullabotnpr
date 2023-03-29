@@ -30,12 +30,12 @@ function npr_story_update_9101() {
     'core.entity_view_display.media.npr_html_block.default',
     'core.entity_form_display.media.npr_html_block.default',
   ];
-  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.storage.media.field_media_npr_html_block.yml');
-  \Drupal\field\Entity\FieldStorageConfig::create($data);
-  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.field.media.npr_html_block.field_media_npr_html_block.yml');
-  \Drupal\field\Entity\FieldConfig::create($data);
   foreach ($files as $file) {
     $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/' . $file . '.yml');
     $config_factory->getEditable($file)->setData($data)->save(TRUE);
   }
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.storage.media.field_media_npr_html_block.yml');
+  \Drupal\field\Entity\FieldStorageConfig::create($data)->save();
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.field.media.npr_html_block.field_media_npr_html_block.yml');
+  \Drupal\field\Entity\FieldConfig::create($data)->save();
 }
