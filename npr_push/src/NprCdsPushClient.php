@@ -2,24 +2,55 @@
 
 namespace Drupal\npr_push;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\node\NodeInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\npr_api\NprClient;
+use Drupal\npr_api\NprCdsClient;
 use Drupal\npr_pull\NprPushClientInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Push data from Drupal nodes to the NPR API.
  */
-class NprPushClient extends NprClient implements NprPushClientInterface {
+class NprCdsPushClient implements NprPushClientInterface {
 
   use StringTranslationTrait;
 
   /**
-   * The story node.
+   * Npr Api Client.
    *
-   * @var \Drupal\node\NodeInterface
+   * @var \Drupal\npr_api\NprCdsClient
    */
-  protected $node;
+  protected $client;
+
+  /**
+   * Config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  public function __construct(ConfigFactoryInterface $configFactory, NprCdsClient $client, MessengerInterface $messenger, LoggerInterface $logger) {
+    $this->config = $configFactory;
+    $this->client = $client;
+    $this->messenger = $messenger;
+    $this->logger = $logger;
+  }
 
   /**
    * {@inheritDoc}

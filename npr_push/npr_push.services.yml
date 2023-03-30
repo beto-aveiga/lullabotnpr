@@ -1,4 +1,10 @@
 services:
   npr_push.client:
+    class: Drupal\npr_push\NprPushClientFactory
+    arguments: [ '@config.factory' ]
+  npr_push.xml_client:
     class: Drupal\npr_push\NprPushClient
-    arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system']
+    arguments: [ '@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system' ]
+  npr_push.cds_client:
+    class: Drupal\npr_push\NprCdsPushClient
+    arguments: [ '@config.factory', '@npr_api.cds_client', '@messenger', '@logger.channel.npr_api' ]

@@ -43,6 +43,15 @@ class NprPushConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('ingest_url'),
       '#description' => $this->t('The URL to use when pushing stories to NPR.'),
     ];
+    $form['npr_push_service'] = [
+      '#type' => 'select',
+      '#title' => $this->t('NPR Push Service'),
+      '#default_value' => $config->get('npr_push_service'),
+      '#options' => [
+        'xml' => 'XML',
+        'cds' => 'CDS',
+      ],
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -56,6 +65,7 @@ class NprPushConfigForm extends ConfigFormBase {
 
     $config->set('org_id', $values['org_id']);
     $config->set('ingest_url', $values['ingest_url']);
+    $config->set('npr_push_service', $values['npr_push_service']);
     $config->save();
 
     parent::submitForm($form, $form_state);
