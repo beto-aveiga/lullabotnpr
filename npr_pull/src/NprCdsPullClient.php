@@ -837,7 +837,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
       $html_block->{$html_block_settings['html_block_body']} = [
         'value' => $html,
-        'format' => $this->config->get('npr_pull.settings')->get('html_block_text_format'),
+        'format' => $this->config->get('npr_story.settings')->get('html_block_text_format'),
       ];
       $html_block->save();
       $blocks[] = $html_block;
