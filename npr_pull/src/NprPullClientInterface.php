@@ -119,6 +119,6 @@ interface NprPullClientInterface {
    * @param \DateTime $time
    *   Date and time to set.
    */
-  public function setLastUpdateTime(DateTime $time): void;
+  public function setLastUpdateTime(\DateTime $time): void;
 
 }
