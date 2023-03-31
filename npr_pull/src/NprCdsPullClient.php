@@ -2,21 +2,29 @@
 
 namespace Drupal\npr_pull;
 
-use DateTime;
-use Drupal\Component\DependencyInjection\ContainerInterface;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprCdsClient;
 use Drupal\taxonomy\Entity\Term;
+use Psr\Log\LoggerInterface;
 
+/**
+ * Pull client for the NPR CDS API.
+ */
 class NprCdsPullClient implements NprPullClientInterface {
   use StringTranslationTrait;
 
@@ -27,45 +35,118 @@ class NprCdsPullClient implements NprPullClientInterface {
    */
   protected $client;
 
+  /**
+   * Entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected $entityTypeManager;
 
   /**
+   * Config factory.
+   *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
+  /**
+   * Logger interface.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
   protected $logger;
 
+  /**
+   * File system.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
   protected $fileSystem;
 
+  /**
+   * Module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
   protected $moduleHandler;
 
+  /**
+   * Messenger.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
   protected $messenger;
 
+  /**
+   * Node that is imported.
+   *
+   * @var \Drupal\node\Entity\Node
+   */
   protected $node;
 
+  /**
+   * Field name of audio field.
+   *
+   * @var string
+   */
   protected $audioField;
 
+  /**
+   * Queue Factory.
+   *
+   * @var \Drupal\Core\Queue\QueueFactory
+   */
   protected $queueFactory;
 
+  /**
+   * State.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
   protected $state;
 
-  public function __construct(NprCdsClient $client) {
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\npr_api\NprCdsClient $client
+   *   NPR API client.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   Config factory.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   File system.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   Module handler.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger.
+   * @param \Drupal\Core\Queue\QueueFactory $queue
+   *   Queue factory.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   State.
+   */
+  public function __construct(
+    NprCdsClient $client,
+    EntityTypeManagerInterface $entityTypeManager,
+    ConfigFactoryInterface $configFactory,
+    LoggerInterface $logger,
+    FileSystemInterface $fileSystem,
+    ModuleHandlerInterface $moduleHandler,
+    MessengerInterface $messenger,
+    QueueFactory $queue,
+    StateInterface $state
+  ) {
     $this->client = $client;
-    $this->entityTypeManager = \Drupal::service('entity_type.manager');
-    $this->config = \Drupal::service('config.factory');
-    $this->logger = \Drupal::service('logger.channel.npr_api');
-    $this->fileSystem = \Drupal::service('file_system');
-    $this->moduleHandler = \Drupal::service('module_handler');
-    $this->messenger = \Drupal::service('messenger');
-    $this->queueFactory = \Drupal::service('queue');
-    $this->state = \Drupal::service('state');
-  }
-
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('npr_api.cds_client')
-    );
+    $this->entityTypeManager = $entityTypeManager;
+    $this->config = $configFactory;
+    $this->logger = $logger;
+    $this->fileSystem = $fileSystem;
+    $this->moduleHandler = $moduleHandler;
+    $this->messenger = $messenger;
+    $this->queueFactory = $queue;
+    $this->state = $state;
   }
 
   /**
@@ -212,9 +293,8 @@ class NprCdsPullClient implements NprPullClientInterface {
       if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
         $this->nprStatus(
           $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
-              '@id' => $story['id'],
-            ]
-          ));
+            '@id' => $story['id'],
+          ]));
         return;
       }
 
@@ -444,7 +524,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         elseif ($key == 'slug') {
           foreach ($story['collections'] as $item) {
             if (in_array('slug', $item['rels'])) {
-              $this->node->set($value,$item['embed']['title']);
+              $this->node->set($value, $item['embed']['title']);
             }
           }
         }
@@ -487,7 +567,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           $this->node->set($value, $date_value);
         }
         elseif ($key == 'audioRunByDate') {
-          // TODO: Figure out what to do here.
+          // @todo Figure out what to do here.
         }
         // All of the other fields have a "value" property.
         elseif (!empty($story[$key]) && !is_array($story[$key])) {
@@ -529,7 +609,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getLastUpdateTime(): DateTime {
+  public function getLastUpdateTime(): \DateTime {
     return $this->state->get(
       self::LAST_UPDATE_KEY,
       new DateTime('@1')
@@ -737,7 +817,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $remote_multimedia_field = $mappings['remote_multimedia'];
 
     // Create the multimedia media item(s).
-    foreach ($story->multimedia as $i => $multimedia) {
+    foreach ($story->multimedia as $multimedia) {
       if (!empty($multimedia->id)) {
         $uri = 'https://www.npr.org/embedded-video';
         $query = [
@@ -784,7 +864,10 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['multimedia_title', 'remote_multimedia'])) {
+        if (!empty($value) && $value !== 'unused' && !in_array($key, [
+          'multimedia_title',
+          'remote_multimedia',
+        ])) {
           // ID doesn't have a "value" property.
           if ($key == 'multimedia_id') {
             $media_multimedia->set($value, $multimedia->id);
@@ -804,6 +887,15 @@ class NprCdsPullClient implements NprPullClientInterface {
     return $multimedia_ids;
   }
 
+  /**
+   * Adds or updates the html block.
+   *
+   * @param array $story
+   *   The story being imported.
+   *
+   * @return array
+   *   An array of html block media entities.
+   */
   protected function addorUpdateHtmlBlock($story) {
     $blocks = [];
     if (empty($story['html-block'])) {
@@ -823,7 +915,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           $this->t('More than one html block items with the ID @id exists. Please delete the duplicate multimedia media.', [
             '@id' => $id,
           ]));
-        return;
+        return [];
       }
       if (!$html_block) {
         $html_block = $media_manager->create([
@@ -832,7 +924,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
           'langcode' => Language::LANGCODE_NOT_SPECIFIED,
         ]);
-      } else {
+      }
+      else {
         $html_block = reset($html_block);
       }
       $html_block->{$html_block_settings['html_block_body']} = [
@@ -860,17 +953,16 @@ class NprCdsPullClient implements NprPullClientInterface {
   }
 
   /**
-   * Creates a image media item based on the configured field values.
+   * Creates an image media item based on the configured field values.
    *
-   * @param object $story
-   *   A single NPRMLEntity.
+   * @param array $story
+   *   The story being imported.
    *
    * @return array|null
    *   An array of media image ids or null.
    */
   protected function addOrUpdateMediaImage($story) {
     $media_manager = $this->entityTypeManager->getStorage('media');
-    $taxonomy_manager = $this->entityTypeManager->getStorage('taxonomy_term');
 
     // Get required configuration.
     $story_config = $this->config->get('npr_story.settings');
@@ -1016,7 +1108,10 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Map all of the remaining fields except image_title and image_field,
         // which are used above.
         foreach ($mappings as $key => $value) {
-          if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
+          if (!empty($value) && $value !== 'unused' && !in_array($key, [
+            'image_title',
+            'image_field',
+          ])) {
             // ID doesn't have a "value" property.
             if ($key == 'image_id') {
               $media_image->set($value, $image['embed']['id']);
@@ -1066,19 +1161,109 @@ class NprCdsPullClient implements NprPullClientInterface {
       return;
     }
 
-    // Create the external asset media item(s), checking to see if the array is
-    // multidimensional.
+    // Create the external asset media item(s)
     $external_asset_ids = [];
-    if (isset($story->externalAsset->url)) {
-      $external_asset_ids[] = $this->createExternalAsset($story->externalAsset, $story, $mappings, $media_manager);
-    }
-    else {
-      foreach ($story->externalAsset as $external_asset) {
-        $external_asset_ids[] = $this->createExternalAsset($external_asset, $story, $mappings, $media_manager);
-      }
+    foreach ($story['externalAsset'] as $external_asset) {
+      $external_asset_ids[] = $this->createExternalAsset($external_asset, $story, $mappings, $media_manager);
     }
 
     return $external_asset_ids;
+  }
+
+  /**
+   * Create an External Asset.
+   *
+   * @param array $external_asset
+   *   An external asset as provided by the API.
+   * @param object $story
+   *   A single NPRMLEntity.
+   * @param array $mappings
+   *   The configured mappings for the NPRMLEntity.
+   * @param object $media_manager
+   *   The media entity manager.
+   *
+   * @return string|null
+   *   An external asset id or NULL.
+   */
+  function createExternalAsset($external_asset, $story, $mappings, $media_manager) {
+    // Skip if there is no URL.
+    if (!empty($external_asset['url'])) {
+      $external_asset_uri = $external_asset['url'];
+    }
+    else {
+      return;
+    }
+
+    // Get and check the configuration.
+    $story_config = $this->config->get('npr_story.settings');
+    $external_asset_media_type = $story_config->get('external_asset_media_type');
+
+    // Retrieve necessary mappings.
+    $external_asset_id_field = $mappings['external_asset_id'];
+    $oembed_field = $mappings['oEmbed'];
+
+    // Construct the asset title.
+    if (!empty($external_asset->type) && !empty($external_asset['externalId'])) {
+      $asset_title = $external_asset->type . ' (' . $external_asset['externalId'] . '): ' . $story['title'];
+      // This could get long, so truncate it.
+      if (strlen($asset_title) > 255) {
+        $asset_title = substr($asset_title, 0, 250) . '[...]';
+      }
+    }
+    else {
+      $asset_title = $story['title'];
+    }
+
+    // Check to see if an external asset entity already exists in Drupal.
+    if ($media_external = $media_manager->loadByProperties([$external_asset_id_field => $external_asset['id']])) {
+      if (count($media_external) > 1) {
+        $this->nprError(
+          $this->t('More than one external asset media item with the ID @id ("@title") exists. Please delete the duplicate external asset media.', [
+            '@id' => $external_asset['id'],
+            '@title' => $asset_title,
+          ]));
+        return;
+      }
+
+      $media_external = reset($media_external);
+      // Replace the external asset field.
+      $media_external->set($mappings['external_asset_title'], $asset_title);
+      $media_external->set($oembed_field, ['value' => $external_asset_uri]);
+      $media_external->set('uid', $this->config->get('npr_pull.settings')->get('npr_pull_author'));
+      // Clear the reference from the story node.
+      $this->node->set($this->externalAssetField, NULL);
+
+    }
+    else {
+
+      // Otherwise, create a new external asset media entity.
+      $media_external = Media::create([
+        $mappings['external_asset_title'] => $asset_title,
+        'bundle' => $external_asset_media_type,
+        'uid' => $this->config->get('npr_pull.settings')->get('npr_pull_author'),
+        'langcode' => Language::LANGCODE_NOT_SPECIFIED,
+        $oembed_field => ['value' => $external_asset_uri],
+      ]);
+    }
+    // Map all of the remaining fields except title and the external asset field.
+    foreach ($mappings as $key => $value) {
+      if (!empty($value) && $value !== 'unused' && !in_array($key, ['external_asset_title', 'oEmbed'])) {
+        // ID and Type don't have a "value" property.
+        if ($key == 'external_asset_id') {
+          $media_external->set($value, $external_asset['id']);
+        }
+        elseif ($key == 'external_asset_type') {
+          $media_external->set($value, $external_asset['type']);
+        }
+        else {
+          // Remove the external asset prefix from the key
+          $key = str_replace('external_asset_', '', $key);
+          $media_external->set($value, $external_asset[$key]);
+        }
+      }
+    }
+    $media_external->save();
+    return $media_external->id();
   }
 
   /**
@@ -1514,4 +1699,5 @@ class NprCdsPullClient implements NprPullClientInterface {
   public function getQueue(): QueueInterface {
     return $this->queueFactory->get('npr_api.queue.story');
   }
+
 }

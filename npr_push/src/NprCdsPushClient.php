@@ -45,6 +45,18 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   protected $logger;
 
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   Config factory.
+   * @param \Drupal\npr_api\NprCdsClient $client
+   *   NPR Client.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
+   */
   public function __construct(ConfigFactoryInterface $configFactory, NprCdsClient $client, MessengerInterface $messenger, LoggerInterface $logger) {
     $this->config = $configFactory;
     $this->client = $client;
@@ -57,7 +69,6 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $language = $node->language;
     $xml = new \DOMDocument();
     $xml->version = '1.0';
     $xml->encoding = 'UTF-8';

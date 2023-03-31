@@ -4,7 +4,6 @@ namespace Drupal\npr_api\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element;
 
 /**
  * Provides a base form for NPR API integration.
@@ -68,9 +67,9 @@ class NprApiConfigForm extends ConfigFormBase {
       '#title' => $this->t('NPR Pull URL'),
       '#default_value' => $npr_api_config->get('npr_api_url'),
       '#options' => [
-        'development' => 'Development',
-        'staging' => 'Staging',
-        'production' => 'Production',
+        'development' => $this->t('Development'),
+        'staging' => $this->t('Staging'),
+        'production' => $this->t('Production'),
       ],
     ];
 

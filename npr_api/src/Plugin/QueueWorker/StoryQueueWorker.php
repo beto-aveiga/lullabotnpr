@@ -4,7 +4,6 @@ namespace Drupal\npr_api\Plugin\QueueWorker;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
-use Drupal\npr_pull\NprPullClient;
 use Drupal\npr_pull\NprPullClientFactory;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -76,7 +75,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
    * {@inheritdoc}
    */
   public function processItem($item): void {
-    // TODO: Get this from config.
+    // @todo Get this from config.
     $published = TRUE;
     $this->nprPullClient->addOrUpdateNode($item, $published);
   }

@@ -8,7 +8,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\npr_pull\NprPullClient;
 use Drupal\npr_pull\NprPullClientFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -98,8 +97,8 @@ class NprPullConfigForm extends ConfigFormBase {
       '#title' => $this->t('NPR Pull URL'),
       '#default_value' => $config->get('npr_pull_url'),
       '#options' => [
-        'staging' => 'Staging',
-        'production' => 'Production',
+        'staging' => $this->t('Staging'),
+        'production' => $this->t('Production'),
       ],
     ];
     $form['npr_pull_config']['npr_pull_service'] = [
@@ -200,8 +199,8 @@ class NprPullConfigForm extends ConfigFormBase {
       '#description' => $this->t('Both methods produce a list of NPR tag and topic IDs to query. One method allows selecting terms for a list, while the other method is more flexible and uses data from a configurable taxonomy vocabulary.'),
       '#default_value' => $config->get('subscribe_method'),
       '#options' => [
-        'checkbox' => 'Checkbox',
-        'taxonomy' => 'Taxonomy',
+        'checkbox' => $this->t('Checkbox'),
+        'taxonomy' => $this->t('Taxonomy'),
       ],
       '#states' => [
         'visible' => [

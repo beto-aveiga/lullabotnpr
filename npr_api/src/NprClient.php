@@ -310,10 +310,10 @@ class NprClient implements NprClientInterface {
 
     // Add the API key to the parameters.
     $options['apiKey'] = $key;
-    // TODO: Which way should we be sorting?
+    // @todo Which way should we be sorting?
     $options['sort'] = 'dateDesc';
 
-    // TODO: Store these for the report function.
+    // @todo Store these for the report function.
     $this->response = $this->request('GET', $base_uri, ['query' => $options]);
     // Log any errors.
     if ($this->response->getStatusCode() != '200') {

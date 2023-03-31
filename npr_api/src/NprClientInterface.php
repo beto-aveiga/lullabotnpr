@@ -4,7 +4,11 @@ namespace Drupal\npr_api;
 
 use GuzzleHttp\ClientInterface;
 
+/**
+ * Interface for NPR api clients.
+ */
 interface NprClientInterface extends ClientInterface {
+
   /**
    * Gets stories narrowed by query-type parameters.
    *
@@ -23,6 +27,5 @@ interface NprClientInterface extends ClientInterface {
    *   Various messages (strings) .
    */
   public function report();
-
 
 }

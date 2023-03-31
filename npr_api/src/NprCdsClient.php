@@ -2,16 +2,14 @@
 
 namespace Drupal\npr_api;
 
-use Drupal\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\npr_api\Normalizer\NPRCdsEntityNormalizer;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 /**
- * Retrieves and parses NPR Content
+ * Retrieves and parses NPR Content.
  *
  * Documentation: https://npr.github.io/content-distribution-service/
  */
@@ -35,54 +33,61 @@ class NprCdsClient implements NprClientInterface {
    *
    * @var array
    */
-  protected array $default_options;
+  protected array $defaultOptions;
 
+  /**
+   * NRP API Settings config.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
   protected $config;
-
-  protected $serializer;
 
   /**
    * Base url for API.
    *
    * @var string
    */
-  protected string $base_url;
+  protected string $baseUrl;
 
   /**
+   * Constructor.
+   *
    * @param \GuzzleHttp\ClientInterface $client
+   *   Http client.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Config factory.
    */
-  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory, SerializerInterface $serializer) {
+  public function __construct(ClientInterface $client, ConfigFactoryInterface $config_factory) {
     $this->client = $client;
     $this->config = $config_factory->get('npr_api.settings');
     $token = $this->config->get('npr_api_cds_api_key');
-    $this->default_options = [
+    $this->defaultOptions = [
       'headers' => [
         'Authorization' => 'Bearer ' . $token,
       ],
     ];
     $url_selection = $this->config->get('npr_api_url') ?? '';
     $this->setUrl($url_selection);
-    $this->serializer = $serializer;
   }
 
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('http_client'),
-      $container->get('config.factory'),
-      $container->get('json.serializer')
-    );
-  }
-
+  /**
+   * Sets the default base url for the api calls.
+   *
+   * @param string $url
+   *   The url.
+   */
   public function setUrl(string $url) {
     switch ($url) {
       case 'staging':
-        $this->base_url = self::NPR_API_CDS_STAGE_HOST;
+        $this->baseUrl = self::NPR_API_CDS_STAGE_HOST;
         break;
+
       case 'development':
-        $this->base_url = self::NPR_API_CDS_DEV_HOST;
+        $this->baseUrl = self::NPR_API_CDS_DEV_HOST;
         break;
+
       default:
-        $this->base_url = self::NPR_API_CDS_PROD_HOST;
+        $this->baseUrl = self::NPR_API_CDS_PROD_HOST;
     }
   }
 
@@ -90,13 +95,14 @@ class NprCdsClient implements NprClientInterface {
    * {@inheritDoc}
    */
   public function request($method, $uri, array $options = []) {
-    $options = $this->default_options + $options;
+    $options = $this->defaultOptions + $options;
     if (!str_starts_with($uri, 'http')) {
-      $uri = $this->base_url . ($uri[0] == '/' ? $uri : '/' . $uri);
+      $uri = $this->baseUrl . ($uri[0] == '/' ? $uri : '/' . $uri);
     }
     try {
       return $this->client->request($method, $uri, $options);
-    } catch (ClientException $e) {
+    }
+    catch (ClientException $e) {
       return $e->getResponse();
     }
   }
@@ -125,7 +131,7 @@ class NprCdsClient implements NprClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function getConfig($option = null) {
+  public function getConfig($option = NULL) {
     return $this->client->getConfig($option);
   }
 
@@ -140,7 +146,7 @@ class NprCdsClient implements NprClientInterface {
     }
     $params['transclude'] = 'images,collections,corrections,bylines,audio,layout,corrections';
     $options = [
-        'query' => $params,
+      'query' => $params,
     ];
     $response = $this->request('GET', $url, $options);
     if ($response->getStatusCode() != 200) {
@@ -187,4 +193,5 @@ class NprCdsClient implements NprClientInterface {
     }
     return $report;
   }
+
 }

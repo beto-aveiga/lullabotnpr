@@ -2,9 +2,11 @@
 
 namespace Drupal\npr_pull;
 
-use DateTime;
 use Drupal\Core\Queue\QueueInterface;
 
+/**
+ * Interface for pull client of NPR API.
+ */
 interface NprPullClientInterface {
 
   /**
@@ -18,7 +20,7 @@ interface NprPullClientInterface {
    * @return \DateTime
    *   Date and time of last API content type sync.
    */
-  public function getLastUpdateTime(): DateTime;
+  public function getLastUpdateTime(): \DateTime;
 
   /**
    * Adds items to the API story queue based on a time constraint.
@@ -118,4 +120,5 @@ interface NprPullClientInterface {
    *   Date and time to set.
    */
   public function setLastUpdateTime(DateTime $time): void;
+
 }

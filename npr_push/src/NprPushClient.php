@@ -26,7 +26,6 @@ class NprPushClient extends NprClient implements NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $language = $node->language;
     $xml = new \DOMDocument();
     $xml->version = '1.0';
     $xml->encoding = 'UTF-8';

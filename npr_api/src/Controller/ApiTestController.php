@@ -24,18 +24,20 @@ class ApiTestController extends ControllerBase {
    *
    * @var \Drupal\npr_api\NprCdsClient
    */
-  protected $cds_client;
+  protected $cdsClient;
 
   /**
    * Constructs the ApiTestController.
    *
    * @param \Drupal\npr_api\NprClient $npr_client
    *   The NPR API service.
+   * @param \Drupal\npr_api\NprCdsClient $npr_cds_client
+   *   The NPR API CDS service.
    */
   public function __construct(NprClient $npr_client, NprCdsClient $npr_cds_client) {
     $this->client = $npr_client;
-    $this->cds_client = $npr_cds_client;
-    $this->cds_client->setUrl('staging');
+    $this->cdsClient = $npr_cds_client;
+    $this->cdsClient->setUrl('staging');
   }
 
   /**
@@ -64,11 +66,11 @@ class ApiTestController extends ControllerBase {
       '#title' => $this->t('Test Result'),
       '#items' => $result,
     ];
-    $result = $this->cds_client->report();
+    $result = $this->cdsClient->report();
     $ra[] = [
       '#theme' => 'item_list',
       '#title' => $this->t('CDS Test Result'),
-      '#items' => $result
+      '#items' => $result,
     ];
 
     return $ra;

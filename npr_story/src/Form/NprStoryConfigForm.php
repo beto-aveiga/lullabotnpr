@@ -137,15 +137,15 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#default_value' => $npr_story_fields[$field_name],
         ];
         // Make some fields required fields.
-        // TODO: Add form validation so required fields cannot be "unused".
+        // @todo Add form validation so required fields cannot be "unused".
         $form['story_field_mappings']['id']['#required'] = TRUE;
         $form['story_field_mappings']['audio']['#required'] = TRUE;
         $form['story_field_mappings']['audio']['#description'] = $this->t('This must be a media reference field to a media type with a source of "NPR Remote Audio".');
         $form['story_field_mappings']['primary_image']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add an entity (media) reference to the primary image from the story node, configure this field.');
         $form['story_field_mappings']['additional_images']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add entity (media) references to the additional media image(s) from the story node, configure this field.');
         $form['story_field_mappings']['multimedia']['#required'] = TRUE;
-        $form['story_field_mappings']['multimedia']['#description'] = $this->t
-        ('This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
+        $form['story_field_mappings']['multimedia']['#description'] = $this->t(
+          'This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
         $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
       }
@@ -358,8 +358,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       }
     }
     else {
-      $form['multimedia_settings']['multimedia_field_mappings']['mappings_required']
-        = [
+      $form['multimedia_settings']['multimedia_field_mappings']['mappings_required'] = [
         '#type' => 'item',
         '#markup' => 'Select and save the Drupal multimedia media type to choose field mappings.',
       ];
