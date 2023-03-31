@@ -612,7 +612,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   public function getLastUpdateTime(): \DateTime {
     return $this->state->get(
       self::LAST_UPDATE_KEY,
-      new DateTime('@1')
+      new \DateTime('@1')
     );
   }
 
@@ -622,7 +622,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @param \DateTime $time
    *   Date and time to set.
    */
-  public function setLastUpdateTime(DateTime $time): void {
+  public function setLastUpdateTime(\DateTime $time): void {
     $this->state->set(self::LAST_UPDATE_KEY, $time);
   }
 
