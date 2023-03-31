@@ -57,6 +57,8 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
             'type' => $type,
             'url' => 'https://www.youtube.com/watch?v=' . $element['videoId'],
             'externalId' => $element['videoId'],
+            'credit' => $element['headline'] ?? '',
+            'caption' => $element['subheadline'] ?? '',
           ];
           $body_content[$index] = '[npr_external:' . $element['id'] . ']';
           break;
@@ -76,24 +78,6 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
     else {
       foreach ($items as $item) {
         $body_content[$item->num] = "[npr_multimedia:" .
-          $item->refId . "]";
-      }
-    }
-  }
-  break;
-
-case 'externalAsset':
-  $external_asset_field = $story_mappings['externalAsset'];
-  if (!empty($external_asset_field) || $external_asset_field !== 'unused') {
-    // Add a placeholder for each referenced asset to the body.
-    // But check to see if the object is multidimensional first.
-    if (isset($items->num)) {
-      $body_content[$items->num] = "[npr_external:" .
-        $items->refId . "]";
-    }
-    else {
-      foreach ($items as $item) {
-        $body_content[$item->num] = "[npr_external:" .
           $item->refId . "]";
       }
     }
