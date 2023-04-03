@@ -1255,7 +1255,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         elseif ($key == 'external_asset_type') {
           $media_external->set($value, $external_asset['type']);
         }
-        else {
+        elseif (isset($external_asset[$key])) {
           // Remove the external asset prefix from the key
           $key = str_replace('external_asset_', '', $key);
           $media_external->set($value, $external_asset[$key]);

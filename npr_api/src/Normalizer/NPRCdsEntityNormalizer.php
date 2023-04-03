@@ -54,7 +54,7 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
         case '/v1/profiles/youtube-video':
           $data['externalAsset'][] = [
             'id' => $element['id'],
-            'type' => $type,
+            'type' => 'YouTube',
             'url' => 'https://www.youtube.com/watch?v=' . $element['videoId'],
             'externalId' => $element['videoId'],
             'credit' => $element['headline'] ?? '',
@@ -64,6 +64,16 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
           break;
 
         case '/v1/profiles/resource-container':
+          break;
+
+        case '/v1/profiles/tweet':
+          $data['externalAsset'][] = [
+            'id' => $element['id'],
+            'type' => 'Twitter',
+            'url' => 'https://www.twitter.com/x/status/' . $element['tweetId'],
+            'externalId' => $element['tweetId'],
+          ];
+          $body_content[$index] = '[npr_external:' . $element['id'] . ']';
           break;
 
 /*case 'multimedia':
