@@ -3,6 +3,7 @@
 namespace Drupal\npr_push;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\node\NodeInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -46,6 +47,13 @@ class NprCdsPushClient implements NprPushClientInterface {
   protected $logger;
 
   /**
+   * Entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -56,12 +64,15 @@ class NprCdsPushClient implements NprPushClientInterface {
    *   Messenger.
    * @param \Psr\Log\LoggerInterface $logger
    *   Logger.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager.
    */
-  public function __construct(ConfigFactoryInterface $configFactory, NprCdsClient $client, MessengerInterface $messenger, LoggerInterface $logger) {
+  public function __construct(ConfigFactoryInterface $configFactory, NprCdsClient $client, MessengerInterface $messenger, LoggerInterface $logger, EntityTypeManagerInterface $entityTypeManager) {
     $this->config = $configFactory;
     $this->client = $client;
     $this->messenger = $messenger;
     $this->logger = $logger;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -69,19 +80,37 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $xml = new \DOMDocument();
-    $xml->version = '1.0';
-    $xml->encoding = 'UTF-8';
+    $idPrefix = 'gpb';
+    $serviceId = 's448';
+    $serviceUrl = 'https://organization.api.npr.org/v4/services/' . $serviceId;
 
-    $nprml_element = $xml->createElement('nprml');
-    $nprml_version = $xml->createAttribute('version');
-    $nprml_version->value = '0.94';
-    $nprml_element->appendChild($nprml_version);
-
-    $nprml = $xml->appendChild($nprml_element);
-    $list = $nprml->appendChild($xml->createElement('list'));
-
-    $story = $xml->createElement('story');
+    $story = [
+      'id' => $idPrefix . '-',
+      'owners' => [
+        [
+          'href' => $serviceUrl,
+        ],
+      ],
+      'brandings' => [
+        [
+          'href' => $serviceUrl,
+        ],
+      ],
+      'profiles' => [
+        [
+          'href' => '/v1/profiles/story',
+          'rels' => [
+            'type',
+          ],
+        ],
+        [
+          'href' => '/v1/profiles/publishable',
+          'rels' => [
+            'interface',
+          ],
+        ],
+      ],
+    ];
 
     // Get the story field mappings.
     $story_config = $this->config->get('npr_story.settings');
@@ -94,17 +123,12 @@ class NprCdsPushClient implements NprPushClientInterface {
       return;
     }
     if ($id_value = $node->{$id_field}->value) {
-      $id_attribute = $xml->createAttribute('id');
-      $id_attribute->value = $id_value;
-      $story->appendChild($id_attribute);
+      $story['id'] = $id_value;
     }
 
     // Story title.
     if ($title = substr($node->getTitle(), 0, 100)) {
-      $title_cdata = $xml->createCDATASection($title);
-      $title_element = $xml->createElement('title');
-      $title_element->appendChild($title_cdata);
-      $story->appendChild($title_element);
+      $story['title'] = $title;
     }
 
     // Story body.
@@ -120,96 +144,52 @@ class NprCdsPushClient implements NprPushClientInterface {
       /** @var \Drupal\npr_push\Plugin\Filter\RelToAbs $rel_to_abs */
       $rel_to_abs = $filter_plugin_manager->createInstance('npr_rel_to_abs');
       $body = $rel_to_abs->process($body, 'en')->getProcessedText();
-      $body_cdata = $xml->createCDATASection($body);
-      $text = $xml->createElement('textWithHtml');
-      $text->appendChild($body_cdata);
-      $story->appendChild($text);
 
-      $teaser_cdata = $xml->createCDATASection(text_summary($body));
-      $teaser = $xml->createElement('teaser');
-      $teaser->appendChild($teaser_cdata);
-      $story->appendChild($teaser);
+      $textSummary = text_summary($body);
+      $story['teaser'] = $textSummary;
     }
 
     // Story date and publication date.
-    $story_date = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', "D, d M Y G:i:s O ");
-    $story->appendChild($xml->createElement('storyDate', $story_date));
-    $pubDate = $story_mappings['pubDate'];
-    if ($pub_date = $node->get($pubDate)->value) {
-      $pub_date_ts = strtotime($pub_date);
-      $formatted_pub_date = \Drupal::service('date.formatter')->format($pub_date_ts, 'custom', "D, d M Y G:i:s O ");
-      $story->appendChild($xml->createElement('pubDate', $formatted_pub_date));
-    }
+    $story_date = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', "c");
+    $story['editorialMajorUpdateDateTime'] = $story_date;
 
     // Story URL.
     $url = $node->toUrl()->setAbsolute()->toString();
-    $url_type = $xml->createAttribute('type');
-    $url_type->value = 'html';
-    $url_element = $xml->createElement('link', $url);
-    $url_element->appendChild($url_type);
-    $story->appendChild($url_element);
-
-    // The station's org ID.
-    $org_element = $xml->createElement('organization');
-    $org_id = $xml->createAttribute('orgId');
-    $org_id->value = $this->config->get('npr_push.settings')->get('org_id');
-    $org_element->appendChild($org_id);
-    $story->appendChild($org_element);
-
-    // Partner ID (the Drupal node ID)
-    $partner_id = $xml->createElement('partnerId', $node->id());
-    $story->appendChild($partner_id);
+    $story['webpages'] = [
+      'href' => $url,
+      'rels' => [
+        'canonical',
+      ],
+    ];
 
     // Primary topic.
+    $story['collections'] = [];
     $primary_topic_field = $story_mappings['primaryTopic'];
-    $primary_topic = $node->get($primary_topic_field)->referencedEntities();
-    if (!empty($primary_topic_field) && $primary_topic_field != 'unused' && is_array($primary_topic)) {
-      $primary_topic = reset($primary_topic);
-      $primary_topic_id_value = $primary_topic->field_npr_news_id->value;
-      $primary_topic_title_value = $primary_topic->getName();
-      if (!empty($primary_topic_id_value) && !empty($primary_topic_title_value)) {
-        // Create the outermost element, the parent.
-        $primary_topic_element = $xml->createElement('parent');
-        // Add the id to the parent.
-        $primary_topic_id = $xml->createAttribute('id');
-        $primary_topic_id->value = $primary_topic_id_value;
-        $primary_topic_element->appendChild($primary_topic_id);
-        // Add the type to the parent.
-        $primary_topic_type = $xml->createAttribute('type');
-        $primary_topic_type->value = 'primaryTopic';
-        $primary_topic_element->appendChild($primary_topic_type);
-        // Add the title element to the parent.
-        $primary_topic_title = $xml->createElement('title', $primary_topic_title_value);
-        $primary_topic_element->appendChild($primary_topic_title);
-        // Add the parent to the story.
-        $story->appendChild($primary_topic_element);
-      }
-    }
-
-    // Secondary topics.
+    $primary_topic = $primary_topic_field == 'unused' ? $node->get($primary_topic_field)->referencedEntities() : NULL;
+    $primary_topic = is_array($primary_topic) ? reset($primary_topic) : NULL;
+    $slug_field = $story_mappings['slug'];
+    $slug_value = $slug_field == 'unused' ? $node->{$slug_field}->value : NULL;
+    $slug_value = is_array($slug_value) ? reset($slug_value) : NULL;
     $secondary_topic_field = $story_mappings['topic'];
-    $secondary_topics = $node->get($secondary_topic_field)->referencedEntities();
-    if (!empty($secondary_topic_field) && $secondary_topic_field != 'unused' && is_array($secondary_topics)) {
-      foreach ($secondary_topics as $secondary_topic) {
-        $secondary_topic_id_value = $secondary_topic->field_npr_news_id->value;
-        $secondary_topic_title_value = $secondary_topic->getName();
-        if (!empty($secondary_topic_id_value) && !empty($secondary_topic_title_value)) {
-          // Create the outermost element, the parent.
-          $secondary_topic_element = $xml->createElement('parent');
-          // Add the id to the parent.
-          $secondary_topic_id = $xml->createAttribute('id');
-          $secondary_topic_id->value = $secondary_topic_id_value;
-          $secondary_topic_element->appendChild($secondary_topic_id);
-          // Add the type to the parent.
-          $secondary_topic_type = $xml->createAttribute('type');
-          $secondary_topic_type->value = 'topic';
-          $secondary_topic_element->appendChild($secondary_topic_type);
-          // Add the title element to the parent.
-          $secondary_topic_title = $xml->createElement('title', $secondary_topic_title_value);
-          $secondary_topic_element->appendChild($secondary_topic_title);
-          // Add the parent to the story.
-          $story->appendChild($secondary_topic_element);
+    $secondary_topics = $secondary_topic_field == 'unused' ? $node->get($secondary_topic_field)->referencedEntities() : NULL;
+    if (is_array($secondary_topics)) {
+      foreach ($secondary_topics as $topic) {
+        $topic_id = $topic->field_npr_news_id->value;
+        $collection = [
+          'href' => '/v1/documents/' . $topic_id,
+          'rels' => [
+            'topic',
+          ],
+        ];
+        if ($slug_value && $slug_value->getName() == $topic->getName()) {
+          $collection['rels'][] = 'slug';
         }
+        if ($primary_topic && $primary_topic->field_npr_news_id->value == $topic_id) {
+          array_unshift($story['collections'], $collection);
+          $primary_topic = NULL;
+          continue;
+        }
+        $story['collections'][] = $collection;
       }
     }
 
@@ -220,22 +200,31 @@ class NprCdsPushClient implements NprPushClientInterface {
         && $subtitle_field !== 'unused'
       ) {
         $subtitle = $node->{$subtitle_field}->value;
-        $element = $xml->createElement($subtitle_field, $subtitle);
-        $element = $xml->createAttribute('subtitle');
-        $element->value = $subtitle;
-        $story->appendChild($element);
+        $story['subtitle'] = $subtitle;
       }
     }
 
-    $textfields = ['subtitle', 'shortTitle', 'miniTeaser', 'slug'];
+    $textfields = ['subtitle', 'shortTitle', 'miniTeaser'];
     foreach ($textfields as $field) {
       if ($drupal_field = $story_mappings[$field]) {
         if (!empty($drupal_field) && $drupal_field !== 'unused') {
           if ($value = $node->{$drupal_field}->value) {
-            $element = $xml->createElement($field, $value);
-            $element = $xml->createAttribute($field);
-            $element->value = $value;
-            $story->appendChild($element);
+            switch ($field) {
+              case 'subtitle':
+                $story['subTitle'] = $value;
+                break;
+
+              case 'shortTitle':
+                $story['socialTitle'] = $value;
+                break;
+
+              case 'miniTeaser':
+                $story['shortTeaser'] = $value;
+                break;
+
+              default:
+                $story[$field] = $value;
+            }
           }
         }
       }
@@ -258,6 +247,7 @@ class NprCdsPushClient implements NprPushClientInterface {
         if (!empty($media_image->{$image_image_field}) &&
           $image_references = $media_image->{$image_image_field}
         ) {
+          $image_id = $idPrefix . '-media-' . $media_image->id();
           foreach ($image_references as $image_reference) {
             $file_id = $image_reference->get('target_id')->getValue();
             if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
@@ -265,23 +255,27 @@ class NprCdsPushClient implements NprPushClientInterface {
               $image_uri = $image_file->get('uri')->getString();
               $image_url = \file_create_url($image_uri);
 
-              // Create the primary image NPRML element.
-              $element = $xml->createElement('image');
-              $image_type = $xml->createAttribute('type');
-              $image_type->value = 'primary';
-              $element->appendChild($image_type);
-              $src = $xml->createAttribute('src');
-              $src->value = $image_url;
-              $element->appendChild($src);
-              $story->appendChild($element);
+              $story['images'][] = [
+                'href' => '#/assets/' . $image_id,
+                'rels' => [
+                  'primary'
+                ],
+              ];
+
+              $story['assets'][$image_id] = [
+                'id' => $image_id,
+                'enclosures' => [
+                  [
+                    'href' => $image_url,
+                  ]
+                ],
+              ];
             }
           }
         }
       }
     }
-
-    $list->appendChild($story);
-    return $xml->saveXML();
+    return $story;
   }
 
   /**
