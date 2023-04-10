@@ -20,4 +20,20 @@ interface NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node);
 
+  /**
+   * Create or update story on NPR.
+   *
+   * @param NodeInterface $node
+   *   The node containing the story to be sent to NPR.
+   */
+  public function createOrUpdateStory(NodeInterface $node);
+
+  /**
+   * Delete story from NPR.
+   *
+   * @param NodeInterface $node
+   *   The node of the story to be removed from NPR.
+   */
+  public function deleteStory(NodeInterface $node);
+
 }
