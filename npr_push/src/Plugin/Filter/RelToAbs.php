@@ -28,7 +28,7 @@ class RelToAbs extends FilterBase {
         ->getLanguage($langcode),
     ]);
 
-    $text = $this->absoluteUrl($text, $base_url);
+    $text = $this->absoluteUrl($text, $base_url->toString());
     return new FilterProcessResult($text);
 
   }
