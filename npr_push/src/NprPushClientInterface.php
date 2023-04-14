@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\npr_pull;
+namespace Drupal\npr_push;
 
 use Drupal\node\NodeInterface;
 
@@ -23,10 +23,10 @@ interface NprPushClientInterface {
   /**
    * Create or update story on NPR.
    *
-   * @param NodeInterface $node
+   * @param array $node
    *   The node containing the story to be sent to NPR.
    */
-  public function createOrUpdateStory(NodeInterface $node);
+  public function createOrUpdateStory(array $node);
 
   /**
    * Delete story from NPR.

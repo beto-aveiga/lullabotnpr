@@ -2,13 +2,28 @@
 
 namespace Drupal\npr_push\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteBuilderInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a configuration form for story nodes.
  */
 class NprPushConfigForm extends ConfigFormBase {
+  private $routeBuilder;
+  public function __construct(ConfigFactoryInterface $config_factory, RouteBuilderInterface $routeBuilder) {
+    parent::__construct($config_factory);
+    $this->routeBuilder = $routeBuilder;
+  }
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('router.builder')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -43,6 +58,16 @@ class NprPushConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('ingest_url'),
       '#description' => $this->t('The URL to use when pushing stories to NPR.'),
     ];
+    $form['cds_ingest_url'] = [
+      '#type' => 'select',
+      '#title' => $this->t('CDS Ingest URL'),
+      '#default_value' => $config->get('cds_ingest_url'),
+      '#description' => $this->t('The URL to use when pushing stories to NPR CDS API.'),
+      '#options' => [
+        'staging' => $this->t('Staging'),
+        'production' => $this->t('Production'),
+      ],
+    ];
     $form['npr_push_service'] = [
       '#type' => 'select',
       '#title' => $this->t('NPR Push Service'),
@@ -65,8 +90,10 @@ class NprPushConfigForm extends ConfigFormBase {
 
     $config->set('org_id', $values['org_id']);
     $config->set('ingest_url', $values['ingest_url']);
+    $config->set('cds_ingest_url', $values['cds_ingest_url']);
     $config->set('npr_push_service', $values['npr_push_service']);
     $config->save();
+    $this->routeBuilder->rebuild();
 
     parent::submitForm($form, $form_state);
   }

@@ -5,7 +5,6 @@ namespace Drupal\npr_push;
 use Drupal\node\NodeInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\npr_api\NprClient;
-use Drupal\npr_pull\NprPushClientInterface;
 
 /**
  * Push data from Drupal nodes to the NPR API.
@@ -239,6 +238,16 @@ class NprPushClient extends NprClient implements NprPushClientInterface {
 
     $list->appendChild($story);
     return $xml->saveXML();
+  }
+
+  public function createOrUpdateStory(array $node)
+  {
+    // TODO: Implement createOrUpdateStory() method.
+  }
+
+  public function deleteStory(NodeInterface $node)
+  {
+    // TODO: Implement deleteStory() method.
   }
 
   /**

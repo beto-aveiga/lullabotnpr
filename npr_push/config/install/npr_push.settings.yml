@@ -1,3 +1,4 @@
 org_id: ''
 ingest_url: 'http://api-s4.npr.org'
+cds_ingest_url: 'staging'
 npr_push_service: 'xml'
