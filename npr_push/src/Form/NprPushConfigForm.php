@@ -58,6 +58,12 @@ class NprPushConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('ingest_url'),
       '#description' => $this->t('The URL to use when pushing stories to NPR.'),
     ];
+    $form['cds_doc_id_prefix'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('CDS Document ID Prefix'),
+      '#default_value' => $config->get('cds_doc_id_prefix'),
+      '#description' => $this->t('Prefix for document IDs when pushing using CDS.'),
+    ];
     $form['cds_ingest_url'] = [
       '#type' => 'select',
       '#title' => $this->t('CDS Ingest URL'),
@@ -90,6 +96,7 @@ class NprPushConfigForm extends ConfigFormBase {
 
     $config->set('org_id', $values['org_id']);
     $config->set('ingest_url', $values['ingest_url']);
+    $config->set('cds_doc_id_prefix', $values['cds_doc_id_prefix']);
     $config->set('cds_ingest_url', $values['cds_ingest_url']);
     $config->set('npr_push_service', $values['npr_push_service']);
     $config->save();

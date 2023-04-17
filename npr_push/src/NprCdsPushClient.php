@@ -136,8 +136,8 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $idPrefix = 'gpb';
-    $serviceId = 's448';
+    $idPrefix = $this->pushConfig->get('org_id');
+    $serviceId = $this->pushConfig->get('cds_doc_id_prefix');
     $serviceUrl = 'https://organization.api.npr.org/v4/services/' . $serviceId;
 
     $story = [
