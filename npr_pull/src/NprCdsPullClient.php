@@ -1033,6 +1033,9 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         $image_enclosure = [];
         foreach ($image['embed']['enclosures'] as $enclosure) {
+          if (!is_array($enclosure['rels'])) {
+            continue;
+          }
           if (in_array('primary', $enclosure['rels'])) {
             $image_enclosure = $enclosure;
           }

@@ -136,8 +136,8 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $idPrefix = $this->pushConfig->get('org_id');
-    $serviceId = $this->pushConfig->get('cds_doc_id_prefix');
+    $idPrefix = $this->pushConfig->get('cds_doc_id_prefix');
+    $serviceId = $this->pushConfig->get('org_id');
     $serviceUrl = 'https://organization.api.npr.org/v4/services/' . $serviceId;
 
     $story = [
@@ -188,7 +188,7 @@ class NprCdsPushClient implements NprPushClientInterface {
       return;
     }
     if ($id_value = $node->{$id_field}->value) {
-      $story['id'] .= $id_value;
+      $story['id'] = $id_value;
     }
 
     // Story title.

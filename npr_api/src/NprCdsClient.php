@@ -92,6 +92,16 @@ class NprCdsClient implements NprClientInterface {
   }
 
   /**
+   * Get the url used by the API.
+   *
+   * @return string
+   *   The base url in use.
+   */
+  public function getUrl(): string {
+    return $this->baseUrl;
+  }
+
+  /**
    * {@inheritDoc}
    */
   public function request($method, $uri, array $options = []) {

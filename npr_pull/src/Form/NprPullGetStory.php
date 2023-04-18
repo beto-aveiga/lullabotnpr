@@ -185,8 +185,8 @@ class NprPullGetStory extends ConfigFormBase {
     // If the retrieval method is URL, validate the URL before submitting.
     else {
       $story_id = $values['story_id'];
-      if (!is_numeric($story_id)) {
-        $form_state->setErrorByName('id', $this->t('The NPR ID must be an integer.'));
+      if (!preg_match('/^([1-9]+[0-9]*(-[a-z0-9-]+)?|[a-z]+[a-z0-9]*-[a-z0-9-]+)$/', $story_id)) {
+        $form_state->setErrorByName('id', $this->t('The NPR ID is not formatted correctly.'));
       }
     }
   }
