@@ -92,7 +92,6 @@ class NprCdsPushClient implements NprPushClientInterface {
    */
   public function createOrUpdateStory(array $story) {
     // Get the story field mappings and send the data.
-    $org_id = $this->pushConfig->get('org_id');
     $options = [
       RequestOptions::JSON => $story,
     ];
@@ -246,16 +245,19 @@ class NprCdsPushClient implements NprPushClientInterface {
     // Primary topic.
     $story['collections'] = [];
     $primary_topic_field = $story_mappings['primaryTopic'];
-    $primary_topic = $primary_topic_field == 'unused' ? $node->get($primary_topic_field)->referencedEntities() : NULL;
+    $primary_topic = $primary_topic_field != 'unused' ? $node->get($primary_topic_field)->referencedEntities() : NULL;
     $primary_topic = is_array($primary_topic) ? reset($primary_topic) : NULL;
     $slug_field = $story_mappings['slug'];
-    $slug_value = $slug_field == 'unused' ? $node->{$slug_field}->value : NULL;
+    $slug_value = $slug_field != 'unused' ? $node->{$slug_field}->value ?? NULL : NULL;
     $slug_value = is_array($slug_value) ? reset($slug_value) : NULL;
     $secondary_topic_field = $story_mappings['topic'];
-    $secondary_topics = $secondary_topic_field == 'unused' ? $node->get($secondary_topic_field)->referencedEntities() : NULL;
+    $secondary_topics = $secondary_topic_field != 'unused' ? $node->get($secondary_topic_field)->referencedEntities() : NULL;
     if (is_array($secondary_topics)) {
       foreach ($secondary_topics as $topic) {
         $topic_id = $topic->field_npr_news_id->value;
+        if (empty($topic_id)) {
+          continue;
+        }
         $collection = [
           'href' => '/v1/documents/' . $topic_id,
           'rels' => [
@@ -332,7 +334,7 @@ class NprCdsPushClient implements NprPushClientInterface {
           $story['profiles'][] = [
             'href' => '/v1/profiles/has-images',
             'rels' => [
-              'interface'
+              'interface',
             ],
           ];
           foreach ($image_references as $image_reference) {
@@ -365,6 +367,7 @@ class NprCdsPushClient implements NprPushClientInterface {
                 'enclosures' => [
                   [
                     'href' => $image_url,
+                    'rels' => ['primary'],
                   ]
                 ],
               ];
