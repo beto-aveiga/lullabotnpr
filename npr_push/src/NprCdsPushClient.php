@@ -250,12 +250,23 @@ class NprCdsPushClient implements NprPushClientInterface {
     $slug_field = $story_mappings['slug'];
     $slug_value = $slug_field != 'unused' ? $node->{$slug_field}->value ?? NULL : NULL;
     $slug_value = is_array($slug_value) ? reset($slug_value) : NULL;
+    if ($primary_topic && $topic_id = $primary_topic->field_npr_news_id->value) {
+      $story['collections'][$topic_id] = [
+        'href' => '/v1/documents/' . $topic_id,
+        'rels' => [
+          'topic',
+        ],
+      ];
+      if ($slug_value && $primary_topic->getName() == $slug_value->getName()) {
+        $story['collections'][$topic_id]['rels'][] = 'slug';
+      }
+    }
     $secondary_topic_field = $story_mappings['topic'];
     $secondary_topics = $secondary_topic_field != 'unused' ? $node->get($secondary_topic_field)->referencedEntities() : NULL;
     if (is_array($secondary_topics)) {
       foreach ($secondary_topics as $topic) {
         $topic_id = $topic->field_npr_news_id->value;
-        if (empty($topic_id)) {
+        if (empty($topic_id) || isset($story['collections'][$topic_id])) {
           continue;
         }
         $collection = [
@@ -267,13 +278,11 @@ class NprCdsPushClient implements NprPushClientInterface {
         if ($slug_value && $slug_value->getName() == $topic->getName()) {
           $collection['rels'][] = 'slug';
         }
-        if ($primary_topic && $primary_topic->field_npr_news_id->value == $topic_id) {
-          array_unshift($story['collections'], $collection);
-          $primary_topic = NULL;
-          continue;
-        }
-        $story['collections'][] = $collection;
+        $story['collections'][$topic_id] = $collection;
       }
+    }
+    if (!empty($story['collections'])) {
+      $story['collections'] = array_values($story['collections']);
     }
 
     // Subtitle.
