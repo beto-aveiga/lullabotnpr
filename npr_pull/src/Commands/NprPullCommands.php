@@ -20,7 +20,7 @@ class NprPullCommands extends DrushCommands {
   /**
    * Constructs a new DrushCommands object.
    *
-   * @param \Drupal\npr_pull\NprPullClientInterface $client
+   * @param \Drupal\npr_pull\NprPullClientFactory $client
    *   The NPR client.
    */
   public function __construct(NprPullClientFactory $client) {

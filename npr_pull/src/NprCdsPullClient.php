@@ -872,7 +872,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           if ($key == 'multimedia_id') {
             $media_multimedia->set($value, $multimedia->id);
           }
-          // "duration" is used by audio in config, so the key name doesn't align
+          // "duration" is used by audio in config, the key name doesn't align
           elseif ($key == 'multimedia_duration') {
             $media_multimedia->set($value, $multimedia->duration->value);
           }
@@ -896,7 +896,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @return array
    *   An array of html block media entities.
    */
-  protected function addorUpdateHtmlBlock($story) {
+  protected function addorUpdateHtmlBlock(array $story) {
     $blocks = [];
     if (empty($story['html-block'])) {
       return $blocks;
@@ -961,7 +961,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @return array|null
    *   An array of media image ids or null.
    */
-  protected function addOrUpdateMediaImage($story) {
+  protected function addOrUpdateMediaImage(array $story) {
     $media_manager = $this->entityTypeManager->getStorage('media');
 
     // Get required configuration.
@@ -1188,7 +1188,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @return string|null
    *   An external asset id or NULL.
    */
-  function createExternalAsset($external_asset, $story, $mappings, $media_manager) {
+  protected function createExternalAsset(array $external_asset, $story, array $mappings, $media_manager) {
     // Skip if there is no URL.
     if (!empty($external_asset['url'])) {
       $external_asset_uri = $external_asset['url'];
@@ -1248,9 +1248,10 @@ class NprCdsPullClient implements NprPullClientInterface {
         $oembed_field => ['value' => $external_asset_uri],
       ]);
     }
-    // Map all of the remaining fields except title and the external asset field.
+    // Map all the remaining fields except title and the external asset field.
     foreach ($mappings as $key => $value) {
-      if (!empty($value) && $value !== 'unused' && !in_array($key, ['external_asset_title', 'oEmbed'])) {
+      if (!empty($value) && $value !== 'unused'
+        && !in_array($key, ['external_asset_title', 'oEmbed'])) {
         // ID and Type don't have a "value" property.
         if ($key == 'external_asset_id') {
           $media_external->set($value, $external_asset['id']);
@@ -1259,7 +1260,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           $media_external->set($value, $external_asset['type']);
         }
         elseif (isset($external_asset[$key])) {
-          // Remove the external asset prefix from the key
+          // Remove the external asset prefix from the key.
           $key = str_replace('external_asset_', '', $key);
           $media_external->set($value, $external_asset[$key]);
         }
@@ -1405,7 +1406,8 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['audio_title', 'remote_audio'])) {
+        if (!empty($value) && $value !== 'unused'
+          && !in_array($key, ['audio_title', 'remote_audio'])) {
           // ID doesn't have a "value" property.
           if ($key == 'audio_id') {
             $media_audio->set($value, $audio['embed']['id']);

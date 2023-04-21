@@ -98,14 +98,16 @@ class NprCdsPushClient implements NprPushClientInterface {
 
     $response = $this->client->request('PUT', '/v1/documents/' . $story['id'], $options);
     if ($response->getStatusCode() == 200) {
-      $sent_message = new FormattableMarkup('Story sent to the NPR story API at
-      the URL @url with the following data: <pre>@xml</pre>', [
+      $sent_message = new FormattableMarkup(
+        'Story sent to the NPR story API at the URL @url with the following data: <pre>@xml</pre>',
+        [
           '@url' => '/v1/documents/' . $story['id'],
           '@xml' => print_r($options, TRUE),
         ]
       );
       $this->logger->info($sent_message);
-    } else {
+    }
+    else {
       $message = $response->getBody()->getContents();
       $this->nprError('Error sending story: ' . $message);
     }
@@ -356,7 +358,7 @@ class NprCdsPushClient implements NprPushClientInterface {
               $story['images'][] = [
                 'href' => '#/assets/' . $image_id,
                 'rels' => [
-                  'primary'
+                  'primary',
                 ],
               ];
 
@@ -377,7 +379,7 @@ class NprCdsPushClient implements NprPushClientInterface {
                   [
                     'href' => $image_url,
                     'rels' => ['primary'],
-                  ]
+                  ],
                 ],
               ];
             }

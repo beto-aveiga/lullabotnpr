@@ -16,7 +16,10 @@ class NprPullClientFactory {
   protected $config;
 
   /**
+   * Constructor.
+   *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   Configuration factory.
    */
   public function __construct(ConfigFactoryInterface $configFactory) {
     $this->config = $configFactory->get('npr_pull.settings');
@@ -32,4 +35,5 @@ class NprPullClientFactory {
     $service = $this->config->get('npr_pull_service') ?? 'xml';
     return \Drupal::service('npr_pull.' . $service . '_client');
   }
+
 }

@@ -12,12 +12,30 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Provides a configuration form for story nodes.
  */
 class NprPushConfigForm extends ConfigFormBase {
+
+  /**
+   * Route Builder.
+   *
+   * @var \Drupal\Core\Routing\RouteBuilderInterface
+   */
   private $routeBuilder;
+
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Configuration factory.
+   * @param \Drupal\Core\Routing\RouteBuilderInterface $routeBuilder
+   *   Route builder.
+   */
   public function __construct(ConfigFactoryInterface $config_factory, RouteBuilderInterface $routeBuilder) {
     parent::__construct($config_factory);
     $this->routeBuilder = $routeBuilder;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),

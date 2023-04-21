@@ -2,7 +2,6 @@
 
 namespace Drupal\npr_pull;
 
-use DateTime;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\File\FileSystemInterface;
@@ -307,10 +306,10 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
                 $trans_link = $link->value;
               }
             }
-            // Get the transcript data from the API
+            // Get the transcript data from the API.
             if (!empty($trans_link)) {
               try {
-                $response = $this->client->request('GET', $trans_link);;
+                $response = $this->client->request('GET', $trans_link);
 
                 // Convert the response to an array.
                 $response_xml = simplexml_load_string($response->getBody()->getContents(), "SimpleXMLElement", LIBXML_NOCDATA);
@@ -875,7 +874,8 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         // Map all of the remaining fields except image_title and image_field,
         // which are used above.
         foreach ($mappings as $key => $value) {
-          if (!empty($value) && $value !== 'unused' && !in_array($key, ['image_title', 'image_field'])) {
+          if (!empty($value) && $value !== 'unused'
+            && !in_array($key, ['image_title', 'image_field'])) {
             // ID doesn't have a "value" property.
             if ($key == 'image_id') {
               $media_image->set($value, $image->id);
@@ -997,7 +997,8 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
       }
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['audio_title', 'remote_audio'])) {
+        if (!empty($value) && $value !== 'unused'
+          && !in_array($key, ['audio_title', 'remote_audio'])) {
           // ID doesn't have a "value" property.
           if ($key == 'audio_id') {
             $media_audio->set($value, $audio->id);
@@ -1097,12 +1098,13 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
       }
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
-        if (!empty($value) && $value !== 'unused' && !in_array($key, ['multimedia_title', 'remote_multimedia'])) {
+        if (!empty($value) && $value !== 'unused'
+          && !in_array($key, ['multimedia_title', 'remote_multimedia'])) {
           // ID doesn't have a "value" property.
           if ($key == 'multimedia_id') {
             $media_multimedia->set($value, $multimedia->id);
           }
-          // "duration" is used by audio in config, so the key name doesn't align
+          // "duration" is used by audio in config, the key name doesn't align
           elseif ($key == 'multimedia_duration') {
             $media_multimedia->set($value, $multimedia->duration->value);
           }
@@ -1174,7 +1176,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    * @return string|null
    *   An external asset id or NULL.
    */
-  function createExternalAsset($external_asset, $story, $mappings, $media_manager) {
+  protected function createExternalAsset(array $external_asset, $story, array $mappings, $media_manager) {
     // Skip if there is no URL.
     if (!empty($external_asset->url->value)) {
       $external_asset_uri = $external_asset->url->value;
@@ -1234,9 +1236,10 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         $oembed_field => ['value' => $external_asset_uri],
       ]);
     }
-    // Map all of the remaining fields except title and the external asset field.
+    // Map all the remaining fields except title and the external asset field.
     foreach ($mappings as $key => $value) {
-      if (!empty($value) && $value !== 'unused' && !in_array($key, ['external_asset_title', 'oEmbed'])) {
+      if (!empty($value) && $value !== 'unused'
+        && !in_array($key, ['external_asset_title', 'oEmbed'])) {
         // ID and Type don't have a "value" property.
         if ($key == 'external_asset_id') {
           $media_external->set($value, $external_asset->id);
@@ -1245,7 +1248,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
           $media_external->set($value, $external_asset->type);
         }
         else {
-          // Remove the external asset prefix from the key
+          // Remove the external asset prefix from the key.
           $key = str_replace('external_asset_', '', $key);
           $media_external->set($value, $external_asset->{$key}->value);
         }
@@ -1254,7 +1257,6 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
     $media_external->save();
     return $media_external->id();
   }
-
 
   /**
    * Extracts an NPR ID from an NPR URL.
@@ -1289,7 +1291,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
   public function getLastUpdateTime(): DateTime {
     return $this->state->get(
       self::LAST_UPDATE_KEY,
-      new DateTime('@1')
+      new \DateTime('@1')
     );
   }
 
@@ -1317,7 +1319,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    *   TRUE if the queue update fully completes, FALSE if it does not.
    */
   public function updateQueue(): bool {
-    $dt_start = new DateTime();
+    $dt_start = new \DateTime();
 
     $pull_config = $this->config->get('npr_pull.settings');
     $num_results = $pull_config->get('num_results');

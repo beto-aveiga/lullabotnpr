@@ -31,7 +31,7 @@ interface NprPushClientInterface {
   /**
    * Delete story from NPR.
    *
-   * @param NodeInterface $node
+   * @param \Drupal\node\NodeInterface $node
    *   The node of the story to be removed from NPR.
    */
   public function deleteStory(NodeInterface $node);

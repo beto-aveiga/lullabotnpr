@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\npr_pull\NprPullClient;
 use Drupal\npr_pull\NprPullClientFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 

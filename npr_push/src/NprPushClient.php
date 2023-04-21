@@ -240,14 +240,20 @@ class NprPushClient extends NprClient implements NprPushClientInterface {
     return $xml->saveXML();
   }
 
-  public function createOrUpdateStory(array $node)
-  {
-    // TODO: Implement createOrUpdateStory() method.
+  /**
+   * {@inheritDoc}
+   */
+  public function createOrUpdateStory(array $node) {
+    // Function meant for new cds api interface.
+    // This class will be depreciated before this needs to be implemented.
   }
 
-  public function deleteStory(NodeInterface $node)
-  {
-    // TODO: Implement deleteStory() method.
+  /**
+   * {@inheritDoc}
+   */
+  public function deleteStory(NodeInterface $node) {
+    // Function meant for new cds api interface.
+    // This class will be depreciated before this needs to be implemented.
   }
 
   /**
