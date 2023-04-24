@@ -186,7 +186,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     $id_field = $story_mappings['id'];
     if ($id_field == 'unused') {
       $this->nprError('Please configure the story id field.');
-      return;
+      return [];
     }
     if ($id_value = $node->{$id_field}->value) {
       $story['id'] = $id_value;
@@ -201,7 +201,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     $body_field = $story_mappings['body'];
     if ($body_field == 'unused') {
       $this->nprError('Please configure the body field.');
-      return;
+      return [];
     }
     if ($body = $node->{$body_field}->value) {
       $body = check_markup($body, $node->{$body_field}->format);
