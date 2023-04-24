@@ -1288,7 +1288,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    * @return \DateTime
    *   Date and time of last API content type sync.
    */
-  public function getLastUpdateTime(): DateTime {
+  public function getLastUpdateTime(): \DateTime {
     return $this->state->get(
       self::LAST_UPDATE_KEY,
       new \DateTime('@1')
@@ -1301,7 +1301,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    * @param \DateTime $time
    *   Date and time to set.
    */
-  public function setLastUpdateTime(DateTime $time): void {
+  public function setLastUpdateTime(\DateTime $time): void {
     $this->state->set(self::LAST_UPDATE_KEY, $time);
   }
 
