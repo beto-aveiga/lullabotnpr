@@ -76,6 +76,13 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
           $body_content[$index] = '[npr_external:' . $element['id'] . ']';
           break;
 
+        case '/v1/profiles/player-video':
+        case '/v1/profiles/stream-player-video':
+          $data['multimedia'][$element['id']] = $element;
+          $body_content[$index] = '[npr_multimedia:' . $element['id'] . ']';
+          break;
+
+
 /*case 'multimedia':
   $multimedia_field = $story_mappings['multimedia'];
   if (!empty($multimedia_field) && $multimedia_field !== 'unused') {

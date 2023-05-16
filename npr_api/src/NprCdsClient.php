@@ -154,7 +154,7 @@ class NprCdsClient implements NprClientInterface {
       $url .= '/' . $params['id'];
       unset($params['id']);
     }
-    $params['transclude'] = 'images,collections,corrections,bylines,audio,layout,corrections';
+    $params['transclude'] = 'images,collections,corrections,bylines,audio,layout,corrections,videos';
     $options = [
       'query' => $params,
     ];
@@ -177,11 +177,7 @@ class NprCdsClient implements NprClientInterface {
   public function report() {
     $url = 'v1/documents';
     $params = [
-      'sort' => 'publishDateTime:desc',
-      'offset' => 0,
-      'limit' => 10,
-      'transclude' => 'bylines,layout,transcript,items',
-      'collectionIds' => '1126',
+      'profileIds' => 'has-videos',
     ];
     $options = [
       'query' => $params,

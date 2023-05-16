@@ -817,12 +817,12 @@ class NprCdsPullClient implements NprPullClientInterface {
     $remote_multimedia_field = $mappings['remote_multimedia'];
 
     // Create the multimedia media item(s).
-    foreach ($story->multimedia as $multimedia) {
-      if (!empty($multimedia->id)) {
+    foreach ($story['multimedia'] as $multimedia) {
+      if (!empty($multimedia['id'])) {
         $uri = 'https://www.npr.org/embedded-video';
         $query = [
-          'storyId' => $story->id,
-          'mediaId' => $multimedia->id,
+          'storyId' => $story['id'],
+          'mediaId' => $multimedia['id'],
         ];
         $options = [
           'query' => $query,
@@ -834,7 +834,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
 
       // Check to see if a story node already exists in Drupal.
-      if ($media_multimedia = $media_manager->loadByProperties([$multimedia_id_field => $multimedia->id])) {
+      if ($media_multimedia = $media_manager->loadByProperties([$multimedia_id_field => $multimedia['id']])) {
         if (count($media_multimedia) > 1) {
           $this->nprError(
             $this->t('More than one multimedia media item with the ID @id ("@title") exists. Please delete the duplicate multimedia media.', [
@@ -870,14 +870,14 @@ class NprCdsPullClient implements NprPullClientInterface {
         ])) {
           // ID doesn't have a "value" property.
           if ($key == 'multimedia_id') {
-            $media_multimedia->set($value, $multimedia->id);
+            $media_multimedia->set($value, $multimedia['id']);
           }
           // "duration" is used by audio in config, the key name doesn't align
-          elseif ($key == 'multimedia_duration') {
-            $media_multimedia->set($value, $multimedia->duration->value);
+          elseif ($key == 'multimedia_duration' && isset($multimedia['duration'])) {
+            $media_multimedia->set($value, $multimedia['duration']);
           }
-          else {
-            $media_multimedia->set($value, $multimedia->{$key}->value);
+          elseif (isset($multimedia[$key])) {
+            $media_multimedia->set($value, $multimedia[$key]);
           }
         }
       }
