@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\npr_api\Normalizer\NPRCdsEntityNormalizer;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Psr7\Query;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -156,7 +157,7 @@ class NprCdsClient implements NprClientInterface {
     }
     $params['transclude'] = 'images,collections,corrections,bylines,audio,layout,corrections,videos';
     $options = [
-      'query' => $params,
+      'query' => Query::build($params),
     ];
     $response = $this->request('GET', $url, $options);
     if ($response->getStatusCode() != 200) {

@@ -1355,6 +1355,10 @@ class NprCdsPullClient implements NprPullClientInterface {
 
       $audio_file = [];
       foreach ($audio['embed']['enclosures'] as $enclosure) {
+        // Skip passed premium audio.
+        if (isset($enclosure['rels']) && in_array('premium', $enclosure['rels'])) {
+          continue;
+        }
         $audio_uri = strtok($enclosure['href'], '?');
         $file_info = pathinfo($audio_uri);
         if ($file_info['extension'] == $audio_format) {
@@ -1372,7 +1376,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           $this->t('An audio file of the correct type could not be found for the story @title.', [
             '@title' => $story['title'],
           ]));
-        return;
+        continue;
       }
 
       // Check to see if a story node already exists in Drupal.
