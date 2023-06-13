@@ -178,7 +178,11 @@ class NprCdsClient implements NprClientInterface {
   public function report() {
     $url = 'v1/documents';
     $params = [
-      'profileIds' => 'has-videos',
+      'sort' => 'publishDateTime:desc',
+      'offset' => 0,
+      'limit' => 10,
+      'transclude' => 'bylines,layout,transcript,items',
+      'collectionIds' => '1126',
     ];
     $options = [
       'query' => $params,
