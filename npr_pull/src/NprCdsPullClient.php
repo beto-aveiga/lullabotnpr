@@ -147,6 +147,11 @@ class NprCdsPullClient implements NprPullClientInterface {
     $this->messenger = $messenger;
     $this->queueFactory = $queue;
     $this->state = $state;
+
+    $pull_url = $this->config->get('npr_pull.settings')->get('npr_pull_url');
+    if (!empty($pull_url)) {
+      $this->client->setUrl($pull_url);
+    }
   }
 
   /**
