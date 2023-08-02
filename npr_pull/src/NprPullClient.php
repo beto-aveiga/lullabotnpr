@@ -11,6 +11,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
+use Drupal\npr_api\NPRMLElement;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Component\Utility\Unicode;
 
@@ -1164,7 +1165,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
   /**
    * Create an External Asset.
    *
-   * @param array $external_asset
+   * @param \Drupal\npr_api\NPRMLElement $external_asset
    *   An external asset as provided by the API.
    * @param object $story
    *   A single NPRMLEntity.
@@ -1176,7 +1177,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    * @return string|null
    *   An external asset id or NULL.
    */
-  protected function createExternalAsset(array $external_asset, $story, array $mappings, $media_manager) {
+  protected function createExternalAsset(NPRMLElement $external_asset, $story, array $mappings, $media_manager) {
     // Skip if there is no URL.
     if (!empty($external_asset->url->value)) {
       $external_asset_uri = $external_asset->url->value;
