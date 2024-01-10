@@ -663,7 +663,7 @@ class NprCdsPullClient implements NprPullClientInterface {
    * {@inheritDoc}
    */
   public function updateQueue(): bool {
-    $dt_start = new DateTime();
+    $dt_start = new \DateTime();
 
     $pull_config = $this->config->get('npr_pull.settings');
     $num_results = $pull_config->get('num_results');
