@@ -482,7 +482,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             $key = 'music-artist';
           }
           foreach ($story['collections'] as $item) {
-            if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels']) && $parent_item_field != 'unused') {
+            if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels'] ?? []) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
               if ($parent_item_vocabulary_prefix != '') {
                 $saved_term = $parent_item_vocabulary_prefix . $item['embed']['title'];
@@ -528,7 +528,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         elseif ($key == 'slug') {
           foreach ($story['collections'] as $item) {
-            if (in_array('slug', $item['rels'])) {
+            if (in_array('slug', $item['rels'] ?? [])) {
               $this->node->set($value, $item['embed']['title']);
             }
           }
