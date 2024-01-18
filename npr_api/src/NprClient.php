@@ -491,7 +491,7 @@ class NprClient implements NprClientInterface {
           // Sort it back into the correct order.
           ksort($body_content);
           // Stitch it together.
-          $body = implode(NULL, $body_content);
+          $body = implode('', $body_content);
         }
         elseif (!empty($parsed->textWithHtml->paragraphs)) {
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {

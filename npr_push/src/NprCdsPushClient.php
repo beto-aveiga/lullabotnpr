@@ -112,6 +112,15 @@ class NprCdsPushClient implements NprPushClientInterface {
       $this->nprError('Error sending story: ' . $message);
     }
 
+    if ($this->config->get('npr_cds_push_verbose_logging')) {
+      $this->logger->warning('NPR Push error for #@npr_id: @data',
+        [
+          '@data' => json_encode($response),
+          '@npr_id' => $story['id'],
+        ]
+      );
+    }
+
     return $response;
   }
 

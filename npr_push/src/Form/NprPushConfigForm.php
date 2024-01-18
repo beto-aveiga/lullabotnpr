@@ -102,6 +102,12 @@ class NprPushConfigForm extends ConfigFormBase {
       ],
     ];
 
+    $form['npr_cds_push_verbose_logging'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Verbose logging'),
+      '#default_value' => $config->get('npr_cds_push_verbose_logging'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -117,6 +123,7 @@ class NprPushConfigForm extends ConfigFormBase {
     $config->set('cds_doc_id_prefix', $values['cds_doc_id_prefix']);
     $config->set('cds_ingest_url', $values['cds_ingest_url']);
     $config->set('npr_push_service', $values['npr_push_service']);
+    $config->set('npr_cds_push_verbose_logging', $values['npr_cds_push_verbose_logging']);
     $config->save();
     $this->routeBuilder->rebuild();
 

@@ -67,7 +67,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
       $plugin_id,
       $plugin_definition,
       $container->get('logger.channel.npr_api'),
-      $container->get('npr_pull.client')
+      $container->get('npr_pull.cds_client')
     );
   }
 

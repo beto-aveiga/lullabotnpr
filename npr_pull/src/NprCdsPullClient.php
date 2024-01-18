@@ -287,10 +287,10 @@ class NprCdsPullClient implements NprPullClientInterface {
       $this->node = reset($this->node);
 
       // Don't update stories that have not been updated.
-      $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
+      $drupal_story_last_modified = $this->node->getChangedTime();
 
       // Convert the NPR item's last modified date to the form used in Drupal.
-      $dt_npr = new DrupalDateTime($story['editorialLastModifiedDateTime']);
+      $dt_npr = new DrupalDateTime($story['editorialMajorUpdateDateTime']);
       $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
       $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
       $npr_story_last_modified = strtotime($story_last_modified);
@@ -839,7 +839,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
 
       // Check to see if a story node already exists in Drupal.
-      if ($media_multimedia = $media_manager->loadByProperties([$multimedia_id_field => $multimedia['id']])) {
+      if ($media_multimedia = $media_manager->loadByProperties([$multimedia_id_field => $multimedia['id'], 'bundle' => $multimedia_media_type])) {
         if (count($media_multimedia) > 1) {
           $this->nprError(
             $this->t('More than one multimedia media item with the ID @id ("@title") exists. Please delete the duplicate multimedia media.', [
@@ -1001,7 +1001,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         $image_title = substr($image_title, 0, 255);
 
         // Check to see if a media image already exists in Drupal.
-        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image['embed']['id']])) {
+        if ($media_image = $media_manager->loadByProperties([$image_id_field => $image['embed']['id'], 'bundle' => $image_media_type])) {
           if (count($media_image) > 1) {
             $this->nprError(
               $this->t('More than one image with the ID @id ("@title") exist. Please delete the duplicate images.', [
@@ -1223,7 +1223,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
 
     // Check to see if an external asset entity already exists in Drupal.
-    if ($media_external = $media_manager->loadByProperties([$external_asset_id_field => $external_asset['id']])) {
+    if ($media_external = $media_manager->loadByProperties([$external_asset_id_field => $external_asset['id'], 'bundle' => $external_asset_media_type])) {
       if (count($media_external) > 1) {
         $this->nprError(
           $this->t('More than one external asset media item with the ID @id ("@title") exists. Please delete the duplicate external asset media.', [
@@ -1385,7 +1385,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
 
       // Check to see if a story node already exists in Drupal.
-      if ($media_audio = $media_manager->loadByProperties([$audio_id_field => $audio['embed']['id']])) {
+      if ($media_audio = $media_manager->loadByProperties([$audio_id_field => $audio['embed']['id'], 'bundle' => $audio_media_type])) {
         if (count($media_audio) > 1) {
           $this->nprError(
             $this->t('More than one audio media item with the ID @id ("@title") exist. Please delete the duplicate audio media.', [

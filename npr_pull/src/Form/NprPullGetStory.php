@@ -7,8 +7,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\npr_pull\NprPullClientFactory;
+use Drupal\npr_pull\NprPullClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\npr_api\NprClientInterface;
 
 /**
  * Retrieves NPR stories and creates Drupal story nodes.
@@ -32,7 +33,7 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClientInterface
+   * @var \Drupal\npr_api\NprClientInterface
    */
   protected $client;
 
@@ -43,13 +44,13 @@ class NprPullGetStory extends ConfigFormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
-   * @param \Drupal\npr_pull\NprPullClientFactory $client
+   * @param \Drupal\npr_pull\NprPullClientInterface $client
    *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClientFactory $client) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClientInterface $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
-    $this->client = $client->build();
+    $this->client = $client;
   }
 
   /**
@@ -59,7 +60,7 @@ class NprPullGetStory extends ConfigFormBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('messenger'),
-      $container->get('npr_pull.client')
+      $container->get('npr_pull.cds_client')
     );
   }
 

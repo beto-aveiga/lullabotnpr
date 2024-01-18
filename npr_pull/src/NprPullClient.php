@@ -142,7 +142,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
       $this->node = reset($this->node);
 
       // Don't update stories that have not been updated.
-      $drupal_story_last_modified = strtotime($this->node->get($node_last_modified)->value);
+      $drupal_story_last_modified = strtotime($this->node->getChangedTime());
 
       // Convert the NPR item's last modified date to the form used in Drupal.
       $dt_npr = DrupalDateTime::createFromFormat("D, d M Y H:i:s O", $story->lastModifiedDate->value);
@@ -299,8 +299,10 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
             }
           }
 
-          // If there is a transcript, replace the body text with that.
-          if (!empty($story->transcript) && $tr_links = $story->transcript->link) {
+          // If there is a transcript or an empty body, replace the body text with that.
+          $attr_start = '<div class="fullattribution">Copyright 20';
+          $replace_body = empty($story->body) || substr($story->body, 0, strlen($attr_start)) == $attr_start;
+          if (!empty($story->transcript) && $replace_body && $tr_links = $story->transcript->link) {
             // Get the transcript link.
             foreach ($tr_links as $link) {
               if ($link->type == 'api') {
@@ -372,6 +374,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
               }
               if (!empty($saved_term)) {
                 // Get the existing referenced item or create one.
+                $parent_item_vocabulary = $parent_item_vocabulary == 'unused' ? 'news_tags' : $parent_item_vocabulary;
                 $tid = $this->getTermId($saved_term, $item->id, $parent_item_vocabulary);
                 $ref_terms = $this->node->get($parent_item_field)->getValue();
                 // Get a list of all items already referenced in the field.
@@ -422,7 +425,6 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
               'title' => $author->name->value,
             ];
             $this->node->set($value, $byline);
-            $this->node->save();
           }
         }
         elseif (!empty($story->{$key}->value) && in_array($key, $date_fields)) {
@@ -436,16 +438,14 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
       }
     }
     $this->node->save();
-    $nodes_affected[] = $this->node;
 
-    foreach ($nodes_affected as $node_affected) {
-      $link = Link::fromTextAndUrl($node_affected->label(),
-        $node_affected->toUrl())->toString();
-      $this->nprStatus($this->t('Story @link was @operation.', [
-        '@link' => $link,
-        '@operation' => $operation,
-      ]));
-    }
+    $link = Link::fromTextAndUrl($this->node->label(),
+      $this->node->toUrl())->toString();
+
+    $this->nprStatus($this->t('Story @link was @operation.', [
+      '@link' => $link,
+      '@operation' => $operation,
+    ]));
   }
 
   /**
@@ -863,6 +863,9 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
           }
         }
 
+        // Allow modules to alter the filename.
+        $this->moduleHandler->alter('npr_image_filename', $filename, $directory_uri);
+
         // Save the image.
         $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
 
@@ -1109,6 +1112,12 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
           elseif ($key == 'multimedia_duration') {
             $media_multimedia->set($value, $multimedia->duration->value);
           }
+          elseif ($key == 'multimedia_caption') {
+            $media_multimedia->set($value, $multimedia->caption->value);
+          }
+          elseif ($key == 'multimedia_credit') {
+            $media_multimedia->set($value, $multimedia->credit->value);
+          }
           else {
             $media_multimedia->set($value, $multimedia->{$key}->value);
           }
@@ -1349,18 +1358,15 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         'endDate' => $end,
         'fields' => 'all',
       ];
-      $this->getStories($params);
-      foreach ($this->stories as $story) {
-        $update_stories[] = $story;
-      }
-    }
 
-    $stories_updated = [];
-    foreach ($update_stories as $update_story) {
-      // Only add a story to the queue once.
-      if (!in_array($update_story->id, $stories_updated)) {
-        $this->getQueue()->createItem($update_story);
-        $stories_updated[] = $update_story->id;
+      if ($this->getStories($params)) {
+        foreach ($this->stories as $story) {
+          // Only add a story to the queue once.
+          if (!in_array($story->id, $update_stories)) {
+            $this->getQueue()->createItem($story);
+            $update_stories[] = $story->id;
+          }
+        }
       }
     }
 
@@ -1385,7 +1391,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         // Get a timestamp of the configured "Days back" value.
         $story_id = $story->{$guid_field}->value;
         // Determine if the manually-imported story was already checked.
-        if (!in_array($story_id, $stories_updated)) {
+        if (!in_array($story_id, $update_stories)) {
 
           // Get a timestamp of the story.
           $story_date_field = $story_mappings['storyDate'];
