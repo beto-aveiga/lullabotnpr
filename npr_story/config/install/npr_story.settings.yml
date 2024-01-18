@@ -81,6 +81,8 @@ multimedia_field_mappings:
   multimedia_title: name
   remote_multimedia: field_media_npr_multimedia
   multimedia_duration: field_npr_multimedia_duration
+  multimedia_caption: field_npr_multimedia_caption
+  multimedia_credit: field_npr_multimedia_credit
   width: field_npr_multimedia_width
   height: field_npr_multimedia_height
 external_asset_media_type: npr_external_asset

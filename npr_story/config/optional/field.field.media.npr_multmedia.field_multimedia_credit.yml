@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_multimedia_credit
+    - media.type.npr_multimedia
+id: media.npr_multimedia.field_multimedia_credit
+field_name: field_multimedia_credit
+entity_type: media
+bundle: npr_multimedia
+label: 'Multimedia Credit'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
