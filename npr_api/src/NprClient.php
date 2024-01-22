@@ -12,7 +12,9 @@ use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -156,28 +158,28 @@ class NprClient implements NprClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function request($method = 'GET', $url = '', array $options = []) {
+  public function request($method = 'GET', $url = '', array $options = []): ResponseInterface {
     return $this->client->request($method, $url, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function send(RequestInterface $request, array $options = []) {
+  public function send(RequestInterface $request, array $options = []): ResponseInterface {
     return $this->client->send($request, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function sendAsync(RequestInterface $request, array $options = []) {
+  public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface {
     return $this->client->sendAsync($request, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function requestAsync($method, $uri, array $options = []) {
+  public function requestAsync($method, $uri, array $options = []): PromiseInterface {
     return $this->client->requestAsync($method, $uri, $options);
   }
 
