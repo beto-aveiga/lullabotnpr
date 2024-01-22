@@ -2,5 +2,8 @@
     "name": "drupal/npr",
     "description": "API integration with NPR.",
     "type": "drupal-module",
-    "homepage": "https://www.drupal.org/project/npr"
+    "homepage": "https://www.drupal.org/project/npr",
+    "require": {
+        "chapter-three/apple-news-api": "^0.3.11"
+    }
 }
