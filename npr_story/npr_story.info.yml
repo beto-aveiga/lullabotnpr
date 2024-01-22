@@ -1,6 +1,6 @@
 name: 'NPR API Story'
 description: 'Configure a content type that can pull from and/or push to the NPR API'
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10
 package: NPR
 type: module
 configure: npr_story.config_form

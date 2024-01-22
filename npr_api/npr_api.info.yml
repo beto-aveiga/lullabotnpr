@@ -1,6 +1,6 @@
 name: 'NPR API'
 description: 'Utility module for accessing the NPR API'
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10
 package: NPR
 configure: npr_api.config_form
 type: module
