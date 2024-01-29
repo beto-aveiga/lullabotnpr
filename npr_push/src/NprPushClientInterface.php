@@ -15,7 +15,7 @@ interface NprPushClientInterface {
    * @param \Drupal\node\NodeInterface $node
    *   A Drupal storynode.
    *
-   * @return object|null
+   * @return array|object|null
    *   An NPRMLEntity story object.
    */
   public function createNprmlEntity(NodeInterface $node);
