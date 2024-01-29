@@ -97,6 +97,8 @@ class NprCdsPushClient implements NprPushClientInterface {
     ];
 
     $response = $this->client->request('PUT', '/v1/documents/' . $story['id'], $options);
+    $message = $response->getBody()->getContents();
+
     if ($response->getStatusCode() == 200) {
       $sent_message = new FormattableMarkup(
         'Story sent to the NPR story API at the URL @url with the following data: <pre>@xml</pre>',
@@ -108,14 +110,20 @@ class NprCdsPushClient implements NprPushClientInterface {
       $this->logger->info($sent_message);
     }
     else {
-      $message = $response->getBody()->getContents();
       $this->nprError('Error sending story: ' . $message);
     }
 
     if ($this->pushConfig->get('npr_cds_push_verbose_logging')) {
-      $this->logger->warning('NPR Push error for #@npr_id: @data',
+      $this->logger->info('NPR Push Request (what we sent) #@npr_id: @data',
         [
-          '@data' => json_encode($response),
+          '@data' => json_encode($story),
+          '@npr_id' => $story['id'],
+        ]
+      );
+
+      $this->logger->info('NPR Push Response (what we receive) #@npr_id: @data',
+        [
+          '@data' => json_encode($message),
           '@npr_id' => $story['id'],
         ]
       );
