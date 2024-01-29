@@ -103,7 +103,7 @@ class NprPushConfigForm extends ConfigFormBase {
     ];
 
     $filter_formats = filter_formats();
-    $filter_formats_as_options = ['' => $this->t('Same as body\'s story')];
+    $filter_formats_as_options = ['' => $this->t('Same as story\'s body format')];
     foreach ($filter_formats as $filter_format) {
       $filter_formats_as_options[$filter_format->id()] = $filter_format->label();
     }
