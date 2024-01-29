@@ -112,7 +112,7 @@ class NprCdsPushClient implements NprPushClientInterface {
       $this->nprError('Error sending story: ' . $message);
     }
 
-    if ($this->config->get('npr_cds_push_verbose_logging')) {
+    if ($this->pushConfig->get('npr_cds_push_verbose_logging')) {
       $this->logger->warning('NPR Push error for #@npr_id: @data',
         [
           '@data' => json_encode($response),
@@ -210,10 +210,12 @@ class NprCdsPushClient implements NprPushClientInterface {
     $body_field = $story_mappings['body'];
     if ($body_field == 'unused') {
       $this->nprError('Please configure the body field.');
-      return [];
+      return NULL;
     }
     if ($body = $node->{$body_field}->value) {
-      $body = check_markup($body, $node->{$body_field}->format);
+      $push_format = $this->pushConfig->get('npr_cds_push_body_format') ?:
+        $node->{$body_field}->format;
+      $body = check_markup($body, $push_format);
       /** @var \Drupal\filter\FilterPluginManager $filter_plugin_manager */
       $filter_plugin_manager = \Drupal::service('plugin.manager.filter');
       /** @var \Drupal\npr_push\Plugin\Filter\RelToAbs $rel_to_abs */

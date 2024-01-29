@@ -102,6 +102,19 @@ class NprPushConfigForm extends ConfigFormBase {
       ],
     ];
 
+    $filter_formats = filter_formats();
+    $filter_formats_as_options = ['' => $this->t('Same as body\'s story')];
+    foreach ($filter_formats as $filter_format) {
+      $filter_formats_as_options[$filter_format->id()] = $filter_format->label();
+    }
+
+    $form['npr_cds_push_body_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Body format when pushing'),
+      '#default_value' => $config->get('npr_cds_push_body_format'),
+      '#options' => $filter_formats_as_options,
+    ];
+
     $form['npr_cds_push_verbose_logging'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Verbose logging'),
@@ -124,6 +137,8 @@ class NprPushConfigForm extends ConfigFormBase {
     $config->set('cds_ingest_url', $values['cds_ingest_url']);
     $config->set('npr_push_service', $values['npr_push_service']);
     $config->set('npr_cds_push_verbose_logging', $values['npr_cds_push_verbose_logging']);
+    $config->set('npr_cds_push_body_format', $values['npr_cds_push_body_format']);
+
     $config->save();
     $this->routeBuilder->rebuild();
 
