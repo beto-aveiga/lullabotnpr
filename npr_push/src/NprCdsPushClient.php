@@ -98,6 +98,8 @@ class NprCdsPushClient implements NprPushClientInterface {
 
     $response = $this->client->request('PUT', '/v1/documents/' . $story['id'], $options);
     $message = $response->getBody()->getContents();
+    // To return a response as it was originally.
+    $response->getBody()->rewind();
 
     if ($response->getStatusCode() == 200) {
       $sent_message = new FormattableMarkup(
