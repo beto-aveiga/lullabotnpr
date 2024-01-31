@@ -46,11 +46,13 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
     $plugin_id,
     $plugin_definition,
     LoggerInterface $logger,
-    NprPullClientFactory $npr_pull_client
+    mixed $npr_pull_client
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->logger = $logger;
-    $this->nprPullClient = $npr_pull_client->build();
+    $this->nprPullClient =
+      method_exists($npr_pull_client, 'build') ?
+        $npr_pull_client->build() : $npr_pull_client;
   }
 
   /**
