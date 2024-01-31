@@ -35,7 +35,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   /**
    * NPR API pull client.
    *
-   * @var \Drupal\npr_pull\NprPullClientInterface
+   * @var mixed
    */
   private $nprPullClient;
 
