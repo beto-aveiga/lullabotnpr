@@ -8,6 +8,8 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Retrieves and parses NPR Content.
@@ -105,7 +107,7 @@ class NprCdsClient implements NprClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function request($method, $uri, array $options = []) {
+  public function request($method, $uri, array $options = []): ResponseInterface {
     $options = $this->defaultOptions + $options;
     if (!str_starts_with($uri, 'http')) {
       $uri = $this->baseUrl . ($uri[0] == '/' ? $uri : '/' . $uri);
@@ -121,21 +123,21 @@ class NprCdsClient implements NprClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function requestAsync($method, $uri, array $options = []) {
+  public function requestAsync($method, $uri, array $options = []): PromiseInterface {
     return $this->client->requestAsync($method, $uri, $options);
   }
 
   /**
    * {@inheritDoc}
    */
-  public function send(RequestInterface $request, array $options = []) {
+  public function send(RequestInterface $request, array $options = []): ResponseInterface {
     return $this->client->send($request, $options);
   }
 
   /**
    * {@inheritDoc}
    */
-  public function sendAsync(RequestInterface $request, array $options = []) {
+  public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface {
     return $this->client->sendAsync($request, $options);
   }
 
