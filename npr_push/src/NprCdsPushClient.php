@@ -248,6 +248,10 @@ class NprCdsPushClient implements NprPushClientInterface {
         ],
       ];
 
+      // TODO: do this with mappings instead of a fixed field.
+      // Date format example: 2009-07-31T10:45:00-04:00
+      $story['publishDateTime'] = $node->field_release_date->value;
+
       $textSummary = text_summary($body);
       $story['teaser'] = $textSummary;
     }
