@@ -286,6 +286,20 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
       $this->node = reset($this->node);
 
+      if ($this->node->field_news_type->entity->label() == "GPB News") {
+
+        $link = Link::fromTextAndUrl($this->node->label(),
+        $this->node->toUrl())->toString();
+        $operation = "skipped";
+
+        $this->nprStatus($this->t('Story @link was @operation because it belongs to "GPB News".', [
+          '@link' => $link,
+          '@operation' => $operation,
+        ]));
+
+        return;
+      }
+
       // Don't update stories that have not been updated.
       $drupal_story_last_modified = $this->node->getChangedTime();
 
