@@ -304,17 +304,22 @@ class NprCdsPullClient implements NprPullClientInterface {
       $drupal_story_last_modified = $this->node->getChangedTime();
 
       // Convert the NPR item's last modified date to the form used in Drupal.
-      $dt_npr = new DrupalDateTime($story['editorialMajorUpdateDateTime']);
-      $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
-      $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
-      $npr_story_last_modified = strtotime($story_last_modified);
+      $dt_npr =
+        isset($story['editorialMajorUpdateDateTime']) ?
+          new DrupalDateTime($story['editorialMajorUpdateDateTime']): NULL;
 
-      if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
-        $this->nprStatus(
-          $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
-            '@id' => $story['id'],
-          ]));
-        return;
+      if ($dt_npr) {
+        $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+        $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+        $npr_story_last_modified = strtotime($story_last_modified);
+
+        if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
+          $this->nprStatus(
+            $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
+              '@id' => $story['id'],
+            ]));
+          return;
+        }
       }
 
       // Otherwise, update the title, status, and author.

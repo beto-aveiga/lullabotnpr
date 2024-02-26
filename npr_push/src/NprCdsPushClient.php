@@ -216,6 +216,16 @@ class NprCdsPushClient implements NprPushClientInterface {
       $story['title'] = $title;
     }
 
+
+    $story['editorialLastModifiedDateTime'] = $node->get('changed')->value ?? NULL;
+
+    if ($story['editorialLastModifiedDateTime']) {
+      // Get the DateFormatter service.
+      $dateFormatter = \Drupal::service('date.formatter');
+      $iso8601Timestamp = $dateFormatter->format($story['editorialLastModifiedDateTime'], 'custom', 'Y-m-d\TH:i:s\Z');
+      $story['editorialLastModifiedDateTime'] = $iso8601Timestamp;
+    }
+
     // Story body.
     $body_field = $story_mappings['body'];
     if ($body_field == 'unused') {
