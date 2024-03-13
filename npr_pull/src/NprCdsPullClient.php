@@ -735,6 +735,7 @@ class NprCdsPullClient implements NprPullClientInterface {
 
       // Get a list of node IDS of storys where "manually imported" is checked.
       $nids = $node_manager->getQuery()
+        ->accessCheck(FALSE)
         ->condition('type', $story_config->get('story_node_type'))
         ->condition($imported_manually, 1)
         ->execute();
