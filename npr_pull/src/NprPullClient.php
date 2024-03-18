@@ -867,7 +867,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         $this->moduleHandler->alter('npr_image_filename', $filename, $directory_uri);
 
         // Save the image.
-        $file = file_save_data($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
+        $file = \Drupal::service('file.repository')->writeData($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
 
         // Attached the image file to the media item.
         $media_image->set($image_field, [
