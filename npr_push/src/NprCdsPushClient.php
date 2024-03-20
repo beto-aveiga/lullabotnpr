@@ -221,8 +221,9 @@ class NprCdsPushClient implements NprPushClientInterface {
 
     if ($story['editorialLastModifiedDateTime']) {
       // Get the DateFormatter service.
+      /** @var \Drupal\Core\Datetime\DateFormatter */
       $dateFormatter = \Drupal::service('date.formatter');
-      $iso8601Timestamp = $dateFormatter->format($story['editorialLastModifiedDateTime'], 'custom', 'Y-m-d\TH:i:s\Z');
+      $iso8601Timestamp = $dateFormatter->format($story['editorialLastModifiedDateTime'], 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
       $story['editorialLastModifiedDateTime'] = $iso8601Timestamp;
     }
 
