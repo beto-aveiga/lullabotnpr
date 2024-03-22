@@ -389,7 +389,7 @@ class NprCdsPushClient implements NprPushClientInterface {
             if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
               // Get the image URL.
               $image_uri = $image_file->get('uri')->getString();
-              $image_url = \file_create_url($image_uri);
+              $image_url = \Drupal::service('file_url_generator')->generateAbsoluteString($image_uri);
 
               $story['images'][] = [
                 'href' => '#/assets/' . $image_id,

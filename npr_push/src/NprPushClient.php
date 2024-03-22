@@ -219,7 +219,7 @@ class NprPushClient extends NprClient implements NprPushClientInterface {
             if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
               // Get the image URL.
               $image_uri = $image_file->get('uri')->getString();
-              $image_url = \file_create_url($image_uri);
+              $image_url = \Drupal::service('file_url_generator')->generateAbsoluteString($image_uri);
 
               // Create the primary image NPRML element.
               $element = $xml->createElement('image');
