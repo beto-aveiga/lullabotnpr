@@ -36,11 +36,32 @@ class NprCdsPullClient implements NprPullClientInterface {
   protected $client;
 
   /**
+   * The primary image field on the story.
+   *
+   * @var string
+   */
+  protected $primaryImageField;
+
+  /**
    * Entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The multimedia field on the story.
+   *
+   * @var string
+   */
+  protected $multimediaField;
+
+  /**
+   * The secondary images field on the story.
+   *
+   * @var string
+   */
+  protected $additionalImagesField;
 
   /**
    * Config factory.
@@ -104,6 +125,20 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @var \Drupal\Core\State\StateInterface
    */
   protected $state;
+
+  /**
+   * The external asset field on the story.
+   *
+   * @var string
+   */
+  protected $externalAssetField;
+
+  /**
+   * Displays error messages on the screen.
+   *
+   * @var bool
+   */
+  protected $displayMessages;
 
   /**
    * Constructor.
