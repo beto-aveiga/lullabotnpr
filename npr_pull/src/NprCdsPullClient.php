@@ -59,7 +59,7 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * The secondary images field on the story.
    *
-   * @var string
+   * @var array
    */
   protected $additionalImagesField;
 
