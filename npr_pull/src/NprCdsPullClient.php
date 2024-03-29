@@ -194,7 +194,22 @@ class NprCdsPullClient implements NprPullClientInterface {
    */
   public function getStories(array $params) {
     unset($params['fields']);
-    return $this->client->getStories($params);
+    $stories = $this->client->getStories($params);
+
+    $allowed_stories = [];
+    foreach ($stories as $story) {
+      foreach ($story['profiles'] as $profile) {
+        if (str_contains($profile['href'], 'podcast-episode')) {
+          break;
+        }
+        if (str_contains($profile['href'], 'series')) {
+          break;
+        }
+      }
+      $allowed_stories[] = $story;
+    }
+
+    return $allowed_stories;
   }
 
   /**
