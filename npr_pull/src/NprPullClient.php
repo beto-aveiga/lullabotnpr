@@ -513,7 +513,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
       if (!empty($caption_field) && $caption_field != 'unused') {
         $caption = $referenced_image->get($caption_field)->value;
         // NOTE: The API doesn't seem to send alt text, so re-using caption.
-        $alt = Unicode::truncate($caption, 512, FALSE, TRUE);
+        $alt = Unicode::truncate($caption ?? '', 512, FALSE, TRUE);
       }
       if (!empty($copyright_field) && $copyright_field != 'unused') {
         $copyright = $referenced_image->get($copyright_field)->value;
@@ -872,7 +872,7 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         // Attached the image file to the media item.
         $media_image->set($image_field, [
           'target_id' => $file->id(),
-          'alt' => Unicode::truncate($image->caption->value, 512, FALSE, TRUE),
+          'alt' => Unicode::truncate($image->caption->value ?? '', 512, FALSE, TRUE),
         ]);
 
         // Map all of the remaining fields except image_title and image_field,
