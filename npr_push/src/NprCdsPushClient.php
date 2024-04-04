@@ -261,14 +261,14 @@ class NprCdsPushClient implements NprPushClientInterface {
 
       // TODO: do this with mappings instead of a fixed field.
       // Date format example: 2009-07-31T10:45:00-04:00
-      $story['publishDateTime'] = $node->field_release_date->value;
+      $story['publishDateTime'] = \Drupal::service('date.formatter')->format($node->field_release_date->value, 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
 
       $textSummary = text_summary($body);
       $story['teaser'] = $textSummary;
     }
 
     // Story date and publication date.
-    $story_date = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', "c");
+    $story_date = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
     $story['editorialMajorUpdateDateTime'] = $story_date;
 
     // Story URL.
