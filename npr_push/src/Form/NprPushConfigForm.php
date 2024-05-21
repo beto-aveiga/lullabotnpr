@@ -66,9 +66,14 @@ class NprPushConfigForm extends ConfigFormBase {
 
     $form['org_id'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Organization ID'),
+      '#title' => $this->t('Organization IDs - Branding and Owners'),
       '#default_value' => $config->get('org_id'),
-      '#description' => $this->t('The ID of the organization (orgId) to use when pushing stories to NPR.'),
+      '#description' => $this->t('
+        The IDs to define organization owners (orgId) to use when pushing stories to NPR. <br/>
+        The first orgID will be for branding. <br/>
+        All IDs will be owners. <br/>
+        Separate multipe IDs using one space.
+      '),
     ];
     $form['ingest_url'] = [
       '#type' => 'textfield',

@@ -157,21 +157,22 @@ class NprCdsPushClient implements NprPushClientInterface {
   public function createNprmlEntity(NodeInterface $node) {
 
     $idPrefix = $this->pushConfig->get('cds_doc_id_prefix');
-    $serviceId = $this->pushConfig->get('org_id');
-    $serviceUrl = 'https://organization.api.npr.org/v4/services/' . $serviceId;
+    $owners_string = $this->pushConfig->get('org_id');
+    $owners_array = explode(' ', $owners_string);
+    $branding = $owners_array[0];
+
+    // Generating services URLs for owners and brandings.
+    $serviceUrl_prefix = 'https://organization.api.npr.org/v4/services/';
+    $owners_urls = [];
+    $branding_url = ['href' => $serviceUrl_prefix . $branding];
+    foreach ($owners_array as $owner) {
+      $owners_urls[] = ['href' => $serviceUrl_prefix . $owner];
+    }
 
     $story = [
       'id' => $idPrefix . '-' . $node->id(),
-      'owners' => [
-        [
-          'href' => $serviceUrl,
-        ],
-      ],
-      'brandings' => [
-        [
-          'href' => $serviceUrl,
-        ],
-      ],
+      'owners' => $owners_urls,
+      'brandings' => [$branding_url],
       'profiles' => [
         [
           'href' => '/v1/profiles/story',
