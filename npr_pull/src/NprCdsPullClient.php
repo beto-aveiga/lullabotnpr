@@ -198,14 +198,33 @@ class NprCdsPullClient implements NprPullClientInterface {
 
     $allowed_stories = [];
     foreach ($stories as $story) {
+
+      // Don't include series or podcasts.
       foreach ($story['profiles'] as $profile) {
         if (str_contains($profile['href'], 'podcast-episode')) {
-          break;
+          continue 2;
         }
         if (str_contains($profile['href'], 'series')) {
-          break;
+          continue 2;
         }
       }
+
+      // If the story is not series or podcasts, remove the restricted images.
+      $unrestricted_images = [];
+      foreach ($story['images'] as $image) {
+        $unrestricted_images[] = $image;
+        if (!isset($image['embed'])) {
+          continue;
+        }
+        if (!($image['embed']['isRestrictedToAuthorizedOrgServiceIds'] ?? FALSE)) {
+          continue;
+        }
+        // Removing restricted image.
+        array_pop($unrestricted_images);
+      }
+      // Updating images on the story.
+      $story['images'] = $unrestricted_images;
+
       $allowed_stories[] = $story;
     }
 
