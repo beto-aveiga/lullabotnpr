@@ -477,7 +477,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         elseif ($key == 'body') {
           // Find any image placeholders.
-          preg_match_all('(\[npr_image:\d*])', $story['body'], $image_placeholders);
+          preg_match_all('(\[npr_image:.*])', $story['body'], $image_placeholders);
 
           if (!empty($image_placeholders[0])) {
             // Get the associated <drupal-media> tags and replace the
@@ -1028,6 +1028,14 @@ class NprCdsPullClient implements NprPullClientInterface {
   }
 
   /**
+   * Generates a (likely) *unique* int from a string.
+   */
+  function stringToUniqueInt11($string) {
+    $hash = md5($string);
+    return hexdec(substr($hash, 0, 7));
+  }
+
+  /**
    * Creates an image media item based on the configured field values.
    *
    * @param array $story
@@ -1065,6 +1073,8 @@ class NprCdsPullClient implements NprPullClientInterface {
     else {
       foreach ($story['images'] as $image) {
 
+        $image['embed']['id'] = (int) $this->stringToUniqueInt11($image['embed']['id']);
+
         // Truncate and clean up the title field.
         $image_title = htmlentities($image['embed']['title'] ?? '');
         $image_title = html_entity_decode($image_title, ENT_QUOTES | ENT_XML1, 'UTF-8');
@@ -1078,7 +1088,7 @@ class NprCdsPullClient implements NprPullClientInterface {
                 '@id' => $image['embed']['id'],
                 '@title' => $image_title,
               ]));
-            return;
+            continue;
           }
           /** @var \Drupal\media\Entity\Media $media_image */
           $media_image = reset($media_image);
@@ -1132,8 +1142,6 @@ class NprCdsPullClient implements NprPullClientInterface {
             ]));
           return;
         }
-        // Strip of any parameters.
-        $image_url = strtok($image_url, '?');
         // Get the filename.
         $filename = basename($image_url);
 
@@ -1597,7 +1605,8 @@ class NprCdsPullClient implements NprPullClientInterface {
     foreach ($images as $image) {
       // Get the NPR refId and use it to retrieve the correct image out of the
       // array.
-      $ref_id = (int) filter_var($image, FILTER_SANITIZE_NUMBER_INT);
+      $npr_image_id = substr(explode('[npr_image:', $image)[1] ?? '', 0, -1);
+      $ref_id = $this->stringToUniqueInt11($npr_image_id);
       if (isset($image_refs[$ref_id])) {
         // Build the embedded media tag, using the original "token" as the
         // array key.
