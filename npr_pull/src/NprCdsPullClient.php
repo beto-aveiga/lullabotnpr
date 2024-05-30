@@ -506,7 +506,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
 
           // Find any multimedia placeholders.
-          preg_match_all('(\[npr_multimedia:\d*])', $story['body'], $multimedia_placeholders);
+          preg_match_all('(\[npr_multimedia:.*])', $story['body'], $multimedia_placeholders);
           if (!empty($multimedia_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
@@ -1690,6 +1690,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Get the NPR refId and use it to retrieve the correct multimedia item
         // out of the array.
         $ref_id = (int) filter_var($media_item, FILTER_SANITIZE_NUMBER_INT);
+        $ref_id = substr(explode('[npr_multimedia:', $media_item)[1] ?? '', 0, -1);
         if (isset($multimedia_refs[$ref_id])) {
           // Build the embedded media tag, using the original "token" as the
           // array key.
