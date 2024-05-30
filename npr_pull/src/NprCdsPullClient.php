@@ -1514,6 +1514,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       foreach ($mappings as $key => $value) {
         if (!empty($value) && $value !== 'unused'
           && !in_array($key, ['audio_title', 'remote_audio'])) {
+          $audio['embed']['id'] = (int) $this->stringToUniqueInt11($audio['embed']['id']);
           // ID doesn't have a "value" property.
           if ($key == 'audio_id') {
             $media_audio->set($value, $audio['embed']['id']);
