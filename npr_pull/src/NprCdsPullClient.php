@@ -1771,7 +1771,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     foreach ($assets as $asset) {
       // Get the NPR refId and use it to retrieve the correct asset out of the
       // array.
-      $ref_id = (int) filter_var($asset, FILTER_SANITIZE_NUMBER_INT);
+      $ref_id = substr(explode('[npr_external:', $asset)[1] ?? '', 0, -1);
       if (isset($external_refs[$ref_id])) {
         // Build the embedded media tag, using the original "token" as the
         // array key.
