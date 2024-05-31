@@ -516,7 +516,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
 
           // Find any external asset placeholders.
-          preg_match_all('(\[npr_external:\d*])', $story['body'], $external_placeholders);
+          preg_match_all('(\[npr_external:.*])', $story['body'], $external_placeholders);
           if (!empty($external_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
