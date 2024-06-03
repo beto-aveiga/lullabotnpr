@@ -496,7 +496,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
         elseif ($key == 'body') {
           // Find any image placeholders.
-          preg_match_all('(\[npr_image:.*])', $story['body'], $image_placeholders);
+          preg_match_all('/\[npr_image:[^\]]+\]/', $story['body'], $image_placeholders);
 
           if (!empty($image_placeholders[0])) {
             // Get the associated <drupal-media> tags and replace the
@@ -506,7 +506,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
 
           // Find any multimedia placeholders.
-          preg_match_all('(\[npr_multimedia:.*])', $story['body'], $multimedia_placeholders);
+          preg_match_all('/\[npr_multimedia:[^\]]+\]/', $story['body'], $multimedia_placeholders);
           if (!empty($multimedia_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
@@ -516,7 +516,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
 
           // Find any external asset placeholders.
-          preg_match_all('(\[npr_external:.*])', $story['body'], $external_placeholders);
+          preg_match_all('/\[npr_external:[^\]]+\]/', $story['body'], $external_placeholders);
           if (!empty($external_placeholders[0])) {
             // Get the associated items and replace the placeholders in the
             // body text.
