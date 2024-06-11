@@ -219,7 +219,7 @@ class NprCdsPullClient implements NprPullClientInterface {
 
       // If the story is not series or podcasts, remove the restricted images.
       $unrestricted_images = [];
-      foreach ($story['images'] as $image) {
+      foreach ($story['images'] ?? [] as $image) {
         $unrestricted_images[] = $image;
         if (!isset($image['embed'])) {
           continue;
