@@ -1263,9 +1263,11 @@ class NprCdsPullClient implements NprPullClientInterface {
               $media_image->set($value, isset($image['rels']) && in_array('primary', $image['rels']) ? 'primary' : $crop_selected);
             }
             elseif ($key == 'provider_url') {
+              $this->syncValueWithFieldStorage($media_image, $value, $image['embed']['providerLink']);
               $media_image->set($value, empty($image['embed']['providerLink']) ? NULL : $image['embed']['providerLink']);
             }
             else {
+              $this->syncValueWithFieldStorage($media_image, $value, $image['embed'][$key]);
               $media_image->set($value, empty($image['embed'][$key]) ? NULL : $image['embed'][$key]);
             }
           }
@@ -1286,7 +1288,37 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @return array|null
    *   An array of External Asset media ids or null.
    */
-  protected function addOrUpdateMediaExternalAsset($story) {
+
+   /**
+    * Avoids DB exceptions when inserting almost infinite strings from NPR.
+    */
+   private function syncValueWithFieldStorage(EntityBase $drupalEntity, string $fieldName, string|NULL &$value) {
+
+      if (empty($value)) {
+        return;
+      }
+
+      $field = $drupalEntity->{$fieldName};
+      if ($field->getFieldDefinition()->get('field_type') !== 'string') {
+        return;
+      }
+      $settings = $field->getSettings();
+      $maxl = $settings['max_length'] ?? FALSE;
+      if (!$maxl) {
+        return;
+      }
+
+      if (mb_strlen($value) < $maxl) {
+        return;
+      }
+      $value = strip_tags($value);
+      $value = mb_strimwidth($value, 0, $maxl);
+
+      // $media_image->fieldDefinitions->field_image_provider
+      // $media_image->fieldDefinitions->field_image_provider->fieldStorage->settings
+   }
+
+   protected function addOrUpdateMediaExternalAsset($story) {
 
     // Skip if there is no external asset.
     if (empty($story['externalAsset'])) {
