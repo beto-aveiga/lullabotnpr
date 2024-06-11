@@ -715,7 +715,7 @@ class NprCdsPullClient implements NprPullClientInterface {
         '@message' => $e->getMessage(),
       ];
 
-      $this->logger->error($message, $context);
+      $this->nprError($this->t($message, $context));
     }
 
   }
@@ -1222,13 +1222,12 @@ class NprCdsPullClient implements NprPullClientInterface {
           $file_data = $this->client->request('GET', $image_url);
         }
         catch (\Exception $e) {
-          if ($e->hasResponse()) {
-            $this->nprError($this->t('There is no image at @image_url for story @title (source URL: @story_url).', [
-              '@image_url' => $image_url,
-              '@title' => $story['title'],
-              '@story_url' => $story['webPages'][0]['href'],
-            ]));
-          }
+          $this->nprError($this->t('@message. Story: "@title" (source URL: @story_url).', [
+            '@message' => $e->getMessage(),
+            '@image_url' => $image_url,
+            '@title' => $story['title'],
+            '@story_url' => $story['webPages'][0]['href'],
+          ]));
           return;
         }
 
