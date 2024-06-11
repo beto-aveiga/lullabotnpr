@@ -21,6 +21,7 @@ use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprCdsClient;
 use Drupal\taxonomy\Entity\Term;
 use Psr\Log\LoggerInterface;
+use Drupal\Core\Entity\EntityBase;
 
 /**
  * Pull client for the NPR CDS API.
@@ -41,6 +42,13 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @var string
    */
   protected $primaryImageField;
+
+  /**
+   * The Story that is being imported.
+   *
+   * @var array
+   */
+  protected $storyBeingImported;
 
   /**
    * Entity type manager.
@@ -297,6 +305,8 @@ class NprCdsPullClient implements NprPullClientInterface {
    * {@inheritDoc}
    */
   public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE) {
+    $this->storyBeingImported = $story;
+
     $this->displayMessages = $display_messages;
     if (!is_array($story) && !empty($story)) {
       $this->nprError('The story could not be added or updated.');
@@ -668,7 +678,8 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
       }
     }
-    $this->node->save();
+
+    $this->tryToSave($this->node, $story, 'story');
     $nodes_affected[] = $this->node;
 
     foreach ($nodes_affected as $node_affected) {
@@ -679,6 +690,34 @@ class NprCdsPullClient implements NprPullClientInterface {
         '@operation' => $operation,
       ]));
     }
+  }
+
+  /**
+   * Tries to save, if it can't, it logs the issue.
+   */
+  private function tryToSave(EntityBase $entity, $remote_entity, $remote_type) {
+
+    try {
+      $entity->save();
+    } catch (\Exception $e) {
+
+      $message = $entity->bundle() == 'node' ?
+        "Pulling @story / node @nid failed. @message" :
+        "Pulling @remoteType with ID @remoteID from @story / node @nid failed. @message";
+
+      $context = [
+        '@nid' => $this->node->isNew() ? 'NEW' : $this->node->id(),
+        '@story' => $this->storyBeingImported['id'],
+        // The remoteID stored in our DB could be number obtained from the real remote ID.
+        // See usages of stringToUniqueInt11 on this file. Hopefully, to be fixed soon.
+        '@remoteID' => $remote_entity['id'] ?? $remote_entity['embed']['id'] ?? '-- not found --',
+        '@remoteType' => $remote_type,
+        '@message' => $e->getMessage(),
+      ];
+
+      $this->logger->error($message, $context);
+    }
+
   }
 
   /**
@@ -975,7 +1014,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
         }
       }
-      $media_multimedia->save();
+      $this->tryToSave($media_multimedia, $multimedia, 'multimedia');
       $multimedia_ids[] = $media_multimedia->id();
     }
     return $multimedia_ids;
@@ -1026,7 +1065,8 @@ class NprCdsPullClient implements NprPullClientInterface {
         'value' => $html,
         'format' => $this->config->get('npr_story.settings')->get('html_block_text_format'),
       ];
-      $html_block->save();
+
+      $this->tryToSave($html_block, $block, 'html_block');
       $blocks[] = $html_block;
     }
 
@@ -1091,7 +1131,6 @@ class NprCdsPullClient implements NprPullClientInterface {
     }
     else {
       foreach ($story['images'] as $image) {
-
         $image['embed']['id'] = (int) $this->stringToUniqueInt11($image['embed']['id']);
 
         // Truncate and clean up the title field.
@@ -1232,7 +1271,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             }
           }
         }
-        $media_image->save();
+        $this->tryToSave($media_image, $image, 'image');
         $media_images[] = $media_image;
       }
       return $media_images;
@@ -1368,7 +1407,8 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
       }
     }
-    $media_external->save();
+
+    $this->tryToSave($media_external, $external_asset, 'external_asset');
     return $media_external->id();
   }
 
@@ -1524,7 +1564,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
         }
       }
-      $media_audio->save();
+
+      $this->tryToSave($media_audio, $audio, 'audio');
       $audio_ids[] = $media_audio->id();
     }
     return $audio_ids;
