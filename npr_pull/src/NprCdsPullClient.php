@@ -217,22 +217,14 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
       }
 
-      // If the story is not series or podcasts, remove the restricted images.
-      $unrestricted_images = [];
+      // Images array using keyed by the image's ID.
+      $images_keyed_by_id = [];
       foreach ($story['images'] ?? [] as $image) {
-        $unrestricted_images[] = $image;
-        if (!isset($image['embed'])) {
-          continue;
-        }
-        if (!($image['embed']['isRestrictedToAuthorizedOrgServiceIds'] ?? FALSE)) {
-          continue;
-        }
-        // Removing restricted image.
-        array_pop($unrestricted_images);
+        $images_keyed_by_id[(string) $image['embed']['id']] = $image;
       }
-      // Updating images on the story.
-      $story['images'] = $unrestricted_images;
 
+      // Updating images on the story.
+      $story['images'] = $images_keyed_by_id;
       $allowed_stories[] = $story;
     }
 
@@ -1692,21 +1684,30 @@ class NprCdsPullClient implements NprPullClientInterface {
       ];
     }
 
-    $image_embed = [];
+    $image_embeds = [];
     // Loop through the images in the API response.
     foreach ($images as $image) {
       // Get the NPR refId and use it to retrieve the correct image out of the
       // array.
       $npr_image_id = substr(explode('[npr_image:', $image)[1] ?? '', 0, -1);
       $ref_id = $this->stringToUniqueInt11($npr_image_id);
+      $restricted = $this->storyBeingImported['images'][$npr_image_id]['embed']['isRestrictedToAuthorizedOrgServiceIds'];
+
       if (isset($image_refs[$ref_id])) {
-        // Build the embedded media tag, using the original "token" as the
-        // array key.
-        $image_embed[$image] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $image_refs[$ref_id]['uuid'] . '" data-caption="' . $image_refs[$ref_id]['caption'] . '" alt="' . $image_refs[$ref_id]['alt'] . '"></drupal-media>';
+        if (!$restricted) {
+          $image_embeds[$image] = '<drupal-media data-entity-type="media" data-entity-uuid="' . $image_refs[$ref_id]['uuid'] . '" data-caption="' . $image_refs[$ref_id]['caption'] . '" alt="' . $image_refs[$ref_id]['alt'] . '"></drupal-media>';
+        } else {
+          $image_embeds[$image] = "<p class='npr-restricted-image'>$image</p>";
+        }
+      } else {
+        $image_embeds[$image] = "";
+        $this->nprError(t("The image %npr_image_id was not replaced, and it was hidden.", [
+          "%npr_image_id" => $npr_image_id
+        ]));
       }
     }
 
-    return $image_embed;
+    return $image_embeds;
   }
 
   /**
