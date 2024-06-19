@@ -982,6 +982,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           $remote_multimedia_field => ['uri' => $multimedia_uri],
         ]);
       }
+
+      $multimedia_ids = [];
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
         if (!empty($value) && $value !== 'unused' && !in_array($key, [
@@ -1568,6 +1570,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           $remote_audio_field => ['uri' => $audio_file['href']],
         ]);
       }
+
+      $audio_ids = [];
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
         if (!empty($value) && $value !== 'unused'
