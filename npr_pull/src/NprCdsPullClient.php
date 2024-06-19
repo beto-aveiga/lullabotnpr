@@ -574,13 +574,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           foreach ($story['collections'] as $item) {
             if (in_array($key == 'primaryTopic' ? 'topic' : $key, $item['rels'] ?? []) && $parent_item_field != 'unused') {
               // Add a prefix to the term, if necessary.
-              if ($parent_item_vocabulary_prefix != '') {
-                $saved_term = $parent_item_vocabulary_prefix . $item['embed']['title'];
-              }
-              else {
-                $saved_term = $item['embed']['title'];
-              }
-              if (!empty($saved_term)) {
+              $saved_term = ($parent_item_vocabulary_prefix ?? '') . ($item['embed']['title'] ?? '');
+              if (!empty($saved_term) && !empty($item['embed']['id'])) {
                 // Get the existing referenced item or create one.
                 $tid = $this->getTermId($saved_term, $item['embed']['id'], $parent_item_vocabulary);
                 $ref_terms = $this->node->get($parent_item_field)->getValue();
