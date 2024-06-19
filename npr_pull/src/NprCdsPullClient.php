@@ -1180,7 +1180,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             break;
           }
         }
-        $image_url = $image_enclosure['href'];
+        $image_url = $image_enclosure['href'] ?? '';
         if (empty($image_url)) {
           $this->nprError(
             $this->t('There is no image of type @crop available for story @title.', [
