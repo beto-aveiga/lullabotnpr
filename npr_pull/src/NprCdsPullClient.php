@@ -712,9 +712,9 @@ class NprCdsPullClient implements NprPullClientInterface {
    */
   public function extractId($url) {
     // Handle URL formats such as /yyyy/mm/dd/id and /blogs/name/yyyy/mm/dd/id.
-    preg_match('/https\:\/\/[^\s\/]*npr\.org\/((([^\/]*\/){3,5})([0-9]{8,12}))\/.*/', $url, $matches);
-    if (!empty($matches[4])) {
-      return $matches[4];
+    preg_match('/https\:\/\/[^\s\/]*npr\.org\/[0-9]{4}\/[0-9]{2}\/[0-9]{2}\/(.*)\/.*/', $url, $matches);
+    if (!empty($matches[1])) {
+      return $matches[1];
     }
     else {
       // Handle URL format /templates/story/story.php?storyId=id.
