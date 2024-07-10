@@ -1690,7 +1690,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       // array.
       $npr_image_id = substr(explode('[npr_image:', $image)[1] ?? '', 0, -1);
       $ref_id = $this->stringToUniqueInt11($npr_image_id);
-      $restricted = $this->storyBeingImported['images'][$npr_image_id]['embed']['isRestrictedToAuthorizedOrgServiceIds'];
+      $restricted = $this->storyBeingImported['images'][$npr_image_id]['embed']['isRestrictedToAuthorizedOrgServiceIds'] ?? FALSE;
 
       if (isset($image_refs[$ref_id])) {
         if (!$restricted) {
