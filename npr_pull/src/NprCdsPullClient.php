@@ -1229,7 +1229,14 @@ class NprCdsPullClient implements NprPullClientInterface {
         }
 
         // Save the image.
-        $file = \Drupal::service('file.repository')->writeData($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
+        try {
+          $file = \Drupal::service('file.repository')->writeData($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
+        } catch (\Exception $e) {
+          $this->logger->error('File %name failed to save. Message: %message', [
+            '%name' => $filename,
+            '%message' => $e->getMessage(),
+          ]);
+        }
 
         // Attached the image file to the media item.
         $media_image->set($image_field, [
