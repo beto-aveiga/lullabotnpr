@@ -78,7 +78,13 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   public function processItem($item): void {
     // @todo Get this from config.
     $published = TRUE;
-    $this->nprPullClient->addOrUpdateNode($item, $published);
+    try {
+      $this->nprPullClient->addOrUpdateNode($item, $published);
+    } catch (\Exception $e) {
+      $this->logger->error("Importing NPR Story %id failed. This item was skipped.", [
+        '%id' => $item['id'],
+      ]);
+    }
   }
 
 }
