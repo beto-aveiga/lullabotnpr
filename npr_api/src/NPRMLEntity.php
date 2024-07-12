@@ -7,4 +7,10 @@ namespace Drupal\npr_api;
  */
 class NPRMLEntity {
 
+    /**
+     * The HTML content of the entity.
+     * @var string
+     */
+    public $body;
+
 }

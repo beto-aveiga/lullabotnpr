@@ -26,6 +26,12 @@ class NprClient implements NprClientInterface {
   // HTTP status code = OK.
   const NPRAPI_STATUS_OK = 200;
 
+  /**
+   * The fetched stories.
+   * @var array
+   */
+  public $stories;
+
   // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
   const NPRML_NAMESPACE = 'xmlns:nprml=https://api.npr.org/nprml';
