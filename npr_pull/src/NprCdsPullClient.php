@@ -1487,14 +1487,14 @@ class NprCdsPullClient implements NprPullClientInterface {
    * @param object $story
    *   A single NPRMLEntity.
    *
-   * @return array|null
+   * @return array
    *   An array of audio media ids or null.
    */
   protected function addOrUpdateMediaAudio($story) {
 
     // Skip if there is no audio.
     if (empty($story['audio'])) {
-      return;
+      return [];
     }
 
     // Get and check the configuration.
@@ -1504,7 +1504,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $audio_alt_format = $story_config->get('alternate_audio_format');
     if (empty($audio_media_type) || empty($audio_format)) {
       $this->nprError('Please configure the NPR story audio type and format.');
-      return;
+      return [];
     }
 
     // Get the entity manager.
@@ -1515,9 +1515,10 @@ class NprCdsPullClient implements NprPullClientInterface {
     $audio_id_field = $mappings['audio_id'];
     if ($audio_id_field == 'unused' || $mappings['audio_title'] == 'unused' || $mappings['remote_audio'] == 'unused') {
       $this->nprError('Please configure the audio_id, audio_title, and remote_audio settings.');
-      return NULL;
+      return [];
     }
     $remote_audio_field = $mappings['remote_audio'];
+    $audio_ids = [];
 
     // Create the audio media item(s).
     foreach ($story['audio'] as $audio) {
@@ -1528,8 +1529,25 @@ class NprCdsPullClient implements NprPullClientInterface {
         if (isset($enclosure['rels']) && in_array('premium', $enclosure['rels'])) {
           continue;
         }
+
+        // Gets the file name without query parameters.
         $audio_uri = strtok($enclosure['href'], '?');
+        // Extracts file info.
         $file_info = pathinfo($audio_uri);
+
+        if (!isset($file_info['extension'])) {
+          $this->logger->warning(
+            $this->t(
+              "'pathinfo' couldn't extract information for this audio %audio_uri @story: %story_id | JSON: %json",
+              [
+                '%audio_uri' => $audio_uri,
+                '%story_id' => $story['id'],
+                '%json' => json_encode($enclosure),
+              ]
+            ));
+          continue;
+        }
+
         if ($file_info['extension'] == $audio_format) {
           $audio_file = $enclosure;
           break;
@@ -1556,7 +1574,7 @@ class NprCdsPullClient implements NprPullClientInterface {
               '@id' => $audio['embed']['id'],
               '@title' => $story['title'],
             ]));
-          return;
+          return [];
         }
         $media_audio = reset($media_audio);
         // Replace the audio field.
@@ -1578,7 +1596,6 @@ class NprCdsPullClient implements NprPullClientInterface {
         ]);
       }
 
-      $audio_ids = [];
       // Map all of the remaining fields except title and remote_audio.
       foreach ($mappings as $key => $value) {
         if (!empty($value) && $value !== 'unused'
