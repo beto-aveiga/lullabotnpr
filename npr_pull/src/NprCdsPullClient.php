@@ -659,6 +659,22 @@ class NprCdsPullClient implements NprPullClientInterface {
         elseif ($key == 'audioRunByDate') {
           // @todo Figure out what to do here.
         }
+        elseif($key == 'primary_image') {
+
+          // If there is no primary image on the story and
+          // there is no primary image set yet
+          // and there is an image at least in the media images
+          // and we verify it is the correct class.
+          if (
+            empty($story[$key]) &&
+            !$this->node->$value->first() &&
+            isset($media_images[0]) &&
+            get_class($media_images[0]) == 'Drupal\media\Entity\Media'
+          ) {
+            $this->node->set($value, ['target_id' => $media_images[0]->id()]);
+          }
+
+        }
         // All of the other fields have a "value" property.
         elseif (!empty($story[$key]) && !is_array($story[$key])) {
           $this->node->set($value, $story[$key]);
