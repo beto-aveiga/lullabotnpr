@@ -1100,6 +1100,47 @@ class NprCdsPullClient implements NprPullClientInterface {
   }
 
   /**
+   * Decreases filename and directory uri to avoid file insert/update issues.
+   *
+   * @param mixed $directory_uri
+   * @param mixed $filename
+   * @return void
+   */
+
+  /**
+   * Decreases filename and directory uri to avoid file insert/update issues.
+   */
+  private function decreaseLengthOfFilenameAndUri(string &$directory_uri, string &$filename) {
+    $loops = 0;
+
+    // Prevent too long $filename or $directory_uri.
+    // Reduces values 10 characters per iteration.
+    while (strlen($directory_uri . '/' . $filename) > 250) {
+
+      // Avoid any potential infinite loop:
+      // Example: file with an extension str length greater than 120.
+      if ($loops++ > 50) {
+        break;
+      }
+
+      if (strlen($filename) > 120) {
+        $file_parts = explode('.', $filename);
+        $name = $file_parts[0];
+        $extension = $file_parts[1] ?? '';
+        $shorter_filename = substr($name, 0, strlen($name) - 10);
+
+        if (!empty($shorter_filename)) {
+          $filename = empty($extension) ? $shorter_filename : "$shorter_filename.$extension";
+        }
+      }
+
+      if (strlen($directory_uri) > 120) {
+        $directory_uri = substr($directory_uri, 0, strlen($directory_uri) - 10);
+      }
+    }
+  }
+
+  /**
    * Creates an image media item based on the configured field values.
    *
    * @param array $story
@@ -1244,6 +1285,8 @@ class NprCdsPullClient implements NprPullClientInterface {
           }
         }
 
+        $this->decreaseLengthOfFilenameAndUri($directory_uri, $filename);
+
         // Save the image.
         try {
           $file = \Drupal::service('file.repository')->writeData($file_data->getBody(), $directory_uri . "/" . $filename, FileSystemInterface::EXISTS_RENAME);
@@ -1252,6 +1295,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             '%name' => $filename,
             '%message' => $e->getMessage(),
           ]);
+          continue;
         }
 
         // Attached the image file to the media item.
