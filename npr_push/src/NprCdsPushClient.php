@@ -181,6 +181,12 @@ class NprCdsPushClient implements NprPushClientInterface {
           ],
         ],
         [
+          'href' => '/v1/profiles/buildout',
+          'rels' => [
+            'interface',
+          ],
+        ],
+        [
           'href' => '/v1/profiles/publishable',
           'rels' => [
             'interface',
