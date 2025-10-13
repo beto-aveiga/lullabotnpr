@@ -425,6 +425,25 @@ class NprCdsPushClient implements NprPushClientInterface {
                   ],
                 ],
               ];
+
+              // Include image credit information if available.
+              $producer_field = $image_mappings['producer'] ?? 'unused';
+              $provider_field = $image_mappings['provider'] ?? 'unused';
+
+              if ($producer_field !== 'unused' && $media_image->hasField($producer_field) && !$media_image->get($producer_field)->isEmpty()) {
+                $producer = $media_image->get($producer_field)->value;
+                if (!empty($producer)) {
+                  $story['assets'][$image_id]['producer'] = $producer;
+                }
+              }
+
+              if ($provider_field !== 'unused' && $media_image->hasField($provider_field) && !$media_image->get($provider_field)->isEmpty()) {
+                $provider = $media_image->get($provider_field)->value;
+                if (!empty($provider)) {
+                  $story['assets'][$image_id]['provider'] = $provider;
+                }
+              }
+
             }
           }
         }
