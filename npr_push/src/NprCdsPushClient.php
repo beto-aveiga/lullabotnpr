@@ -427,11 +427,13 @@ class NprCdsPushClient implements NprPushClientInterface {
               ];
 
               // Include image credit information if available.
-              // For producer, use producer if available.
-              // For provider, use provider if available
-              // and use credit as fallback.
               $producer_field = $image_mappings['producer'] ?? 'unused';
-              $provider_field = $image_mappings['provider'] ?? $image_mappings['credit'] ?? 'unused';
+              $provider_field = $image_mappings['provider'] ?? 'unused';
+              $credit_field = $image_mappings['credit'] ?? 'unused';
+
+              if ($credit_field !== 'unused' && $media_image->hasField($credit_field) && !$media_image->get($credit_field)->isEmpty()) {
+                $credit = $media_image->get($credit_field)->value;
+              }
 
               if ($producer_field !== 'unused' && $media_image->hasField($producer_field) && !$media_image->get($producer_field)->isEmpty()) {
                 $producer = $media_image->get($producer_field)->value;
@@ -440,10 +442,13 @@ class NprCdsPushClient implements NprPushClientInterface {
                 }
               }
 
-              if ($provider_field !== 'unused' && $media_image->hasField($provider_field) && !$media_image->get($provider_field)->isEmpty()) {
+              // If provider is not available, use credit.
+              if ($provider_field !== 'unused' && $media_image->hasField($provider_field)) {
                 $provider = $media_image->get($provider_field)->value;
                 if (!empty($provider)) {
                   $story['assets'][$image_id]['provider'] = $provider;
+                } else if (!empty($credit)) {
+                  $story['assets'][$image_id]['provider'] = $credit;
                 }
               }
 
