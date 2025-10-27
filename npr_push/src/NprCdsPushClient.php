@@ -446,6 +446,10 @@ class NprCdsPushClient implements NprPushClientInterface {
 
             }
           }
+
+          # Add image-wide only to the first image.
+          $story['images'][0]['rels'][] = 'image-wide';
+
         }
       }
     }
