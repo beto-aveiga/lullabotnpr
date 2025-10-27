@@ -427,8 +427,11 @@ class NprCdsPushClient implements NprPushClientInterface {
               ];
 
               // Include image credit information if available.
+              // For producer, use producer if available.
+              // For provider, use provider if available
+              // and use credit as fallback.
               $producer_field = $image_mappings['producer'] ?? 'unused';
-              $provider_field = $image_mappings['provider'] ?? 'unused';
+              $provider_field = $image_mappings['provider'] ?? $image_mappings['credit'] ?? 'unused';
 
               if ($producer_field !== 'unused' && $media_image->hasField($producer_field) && !$media_image->get($producer_field)->isEmpty()) {
                 $producer = $media_image->get($producer_field)->value;
