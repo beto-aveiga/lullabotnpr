@@ -421,7 +421,7 @@ class NprCdsPushClient implements NprPushClientInterface {
                 'enclosures' => [
                   [
                     'href' => $image_url,
-                    'rels' => ['primary'],
+                    'rels' => ['image-wide'],
                   ],
                 ],
               ];
