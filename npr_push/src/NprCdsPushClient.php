@@ -271,6 +271,9 @@ class NprCdsPushClient implements NprPushClientInterface {
       $story['publishDateTime'] = \Drupal::service('date.formatter')->format($node->field_release_date->date->getTimestamp(), 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
 
       $textSummary = text_summary($body);
+      $textSummary = strip_tags($textSummary);
+      $textSummary = html_entity_decode($textSummary, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
       $story['teaser'] = $textSummary;
     }
 
