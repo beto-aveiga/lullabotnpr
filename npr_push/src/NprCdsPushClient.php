@@ -401,6 +401,12 @@ class NprCdsPushClient implements NprPushClientInterface {
               $image_uri = $image_file->get('uri')->getString();
               $image_url = \Drupal::service('file_url_generator')->generateAbsoluteString($image_uri);
 
+              $crop_rel = 'image-standard';
+              if ($image_reference->width && $image_reference->height) {
+                $crop_rel = $image_reference->width > $image_reference->height ? 'image-wide' : 'image-vertical';
+                $crop_rel = $image_reference->width == $image_reference->height ? 'image-square' : $crop_rel;
+              }
+
               $story['images'][] = [
                 'href' => '#/assets/' . $image_id,
                 'rels' => [
@@ -424,7 +430,7 @@ class NprCdsPushClient implements NprPushClientInterface {
                 'enclosures' => [
                   [
                     'href' => $image_url,
-                    'rels' => ['image-wide'],
+                    'rels' => [$crop_rel],
                   ],
                 ],
               ];
