@@ -29,7 +29,10 @@ class NPRCdsEntityNormalizer extends NormalizerBase implements DenormalizerInter
    */
   public function denormalize($data, $type, $format = NULL, array $context = []) {
     $body_content = [];
-    foreach ($data['layout'] as $index => $element) {
+    foreach (($data['layout'] ?? []) as $index => $element) {
+      if (empty($element['embed']) || !is_array($element['embed'])) {
+        continue;
+      }
       $element = $element['embed'];
       $type = $this->getType($element);
       switch ($type) {
