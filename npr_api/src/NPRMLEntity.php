@@ -5,6 +5,7 @@ namespace Drupal\npr_api;
 /**
  * Basic OOP container for NPR entity (story, author, etc.).
  */
+#[\AllowDynamicProperties]
 class NPRMLEntity {
 
     /**
