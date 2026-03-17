@@ -30,7 +30,7 @@ class NprClient implements NprClientInterface {
    * The fetched stories.
    * @var array
    */
-  public $stories;
+  public array $stories = [];
 
   // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
@@ -107,6 +107,48 @@ class NprClient implements NprClientInterface {
   protected $fileSystem;
 
   /**
+   * Request options used for the current API call.
+   *
+   * @var array
+   */
+  protected array $options = [];
+
+  /**
+   * Parameters used for the current API call.
+   *
+   * @var array
+   */
+  protected array $params = [];
+
+  /**
+   * Raw XML payload returned by the API.
+   *
+   * @var string
+   */
+  protected string $xml = '';
+
+  /**
+   * Cached response object from the API call.
+   *
+   * @var \Psr\Http\Message\ResponseInterface|null
+   */
+  protected ?ResponseInterface $response = NULL;
+
+  /**
+   * Internal notices generated while parsing.
+   *
+   * @var array
+   */
+  protected array $notices = [];
+
+  /**
+   * Controls whether user-facing status/error messages are displayed.
+   *
+   * @var bool
+   */
+  protected bool $displayMessages = FALSE;
+
+  /**
    * Constructs a NprClient object.
    *
    * @param \Psr\Log\LoggerInterface $logger
@@ -130,7 +172,7 @@ class NprClient implements NprClientInterface {
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The filesystem service.
    */
-  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, ModuleHandlerInterface $module_handler, FileSystemInterface $file_system = NULL) {
+  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, ModuleHandlerInterface $module_handler, ?FileSystemInterface $file_system = NULL) {
     $this->logger = $logger;
     $this->client = $client;
     $this->entityTypeManager = $entity_type_manager;
