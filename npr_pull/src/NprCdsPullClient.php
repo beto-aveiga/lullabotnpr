@@ -551,10 +551,7 @@ class NprCdsPullClient implements NprPullClientInterface {
           ]);
         }
         elseif ($key == 'link') {
-          $story_url = $story['webPages'][0]['href'] ?? NULL;
-          if (!empty($story_url)) {
-            $this->node->set($value, ['uri' => $story_url]);
-          }
+          $this->node->set($value, ['uri' => $story['webPages'][0]['href']]);
         }
         elseif ($key == 'imported_manually') {
           if ($manual_import) {
