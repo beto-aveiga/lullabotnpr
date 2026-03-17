@@ -145,7 +145,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     // NPR ID field.
     $id_field = $story_mappings['id'];
     if ($id = $node->{$id_field}->value) {
-      return $this->client->request('DELETE', '/v1/document/' . $id);
+      return $this->client->request('DELETE', '/v1/documents/' . $id);
     }
 
     return NULL;
