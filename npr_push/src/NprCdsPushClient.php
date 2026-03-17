@@ -101,7 +101,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     // To return a response as it was originally.
     $response->getBody()->rewind();
 
-    if ($response->getStatusCode() == 200) {
+    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
       $sent_message = new FormattableMarkup(
         'Story sent to the NPR story API at the URL @url with the following data: <pre>@xml</pre>',
         [
@@ -145,7 +145,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     // NPR ID field.
     $id_field = $story_mappings['id'];
     if ($id = $node->{$id_field}->value) {
-      return $this->client->request('DELETE', '/v1/document/' . $id);
+      return $this->client->request('DELETE', '/v1/documents/' . $id);
     }
 
     return NULL;
