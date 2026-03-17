@@ -101,7 +101,7 @@ class NprCdsPushClient implements NprPushClientInterface {
     // To return a response as it was originally.
     $response->getBody()->rewind();
 
-    if ($response->getStatusCode() == 200) {
+    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
       $sent_message = new FormattableMarkup(
         'Story sent to the NPR story API at the URL @url with the following data: <pre>@xml</pre>',
         [
