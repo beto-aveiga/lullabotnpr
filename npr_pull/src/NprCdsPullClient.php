@@ -578,13 +578,25 @@ class NprCdsPullClient implements NprPullClientInterface {
               if (!empty($saved_term) && !empty($item['embed']['id'])) {
                 // Get the existing referenced item or create one.
                 $tid = $this->getTermId($saved_term, $item['embed']['id'], $parent_item_vocabulary);
+
+                if ($tid == -1) {
+                  $this->logger->warning(
+                    $this->t('The story @id has an invalid term [@term_id: @term_name]', [
+                      '@id' => $story['id'],
+                      '@term_id' => $item['embed']['id'],
+                      '@term_name' => $saved_term,
+                    ]));
+
+                  continue;
+                }
+
                 $ref_terms = $this->node->get($parent_item_field)->getValue();
                 // Get a list of all items already referenced in the field.
                 $referenced_ids = array_column($ref_terms, 'target_id');
                 // If the item is not already referenced, add a reference.
                 if ($tid > 0 && !in_array($tid, $referenced_ids)) {
                   $this->node->{$parent_item_field}[] = ['target_id' => $tid];
-                }
+                  }
               }
               if ($key == 'primaryTopic') {
                 break;
@@ -1516,10 +1528,28 @@ class NprCdsPullClient implements NprPullClientInterface {
     if (empty($term_name)) {
       return 0;
     }
+
+    if ($id == 'g-s1-141') {
+      // This is Apple News collection term name.
+      // Skipping, we already know this case.
+      return 0;
+    }
+
+    if (intval($id) == 0) {
+
+      $this->logger->warning(
+        $this->t('The term @title has an invalid ID @id.', [
+          '@title' => $term_name,
+          '@id' => $id,
+        ]));
+
+      return -1;
+    }
+
     $term = $this->entityTypeManager->getStorage('taxonomy_term')
       ->loadByProperties(['field_npr_news_id' => $id]);
-    $term = reset($term);
-    if (empty($term)) {
+      $term = reset($term);
+    if (empty($term)) {   
       $term = Term::create([
         'name' => $term_name,
         'vid' => $vid,
