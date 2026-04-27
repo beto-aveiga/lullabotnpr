@@ -11,3 +11,32 @@
 function npr_story_uninstall() {
   \Drupal::configFactory()->reset('npr_story.settings');
 }
+
+/**
+ * Set up html block migration location.
+ */
+function npr_story_update_9101() {
+  $config_factory = \Drupal::configFactory();
+  $settings = $config_factory->getEditable('npr_story.settings');
+  $settings->set('html_block_media_type', 'npr_html_block')
+    ->set('html_block_field_mappings', [
+      'html_block_id' => 'name',
+      'html_block_body' => 'field_media_npr_html_block',
+    ])
+    ->set('html_block_text_format', 'full_html')
+    ->save(TRUE);
+  $config_path = Drupal::moduleHandler()->getModule('npr_story')->getPath();
+  $files = [
+    'media.type.npr_html_block',
+    'core.entity_view_display.media.npr_html_block.default',
+    'core.entity_form_display.media.npr_html_block.default',
+  ];
+  foreach ($files as $file) {
+    $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/' . $file . '.yml');
+    $config_factory->getEditable($file)->setData($data)->save(TRUE);
+  }
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.storage.media.field_media_npr_html_block.yml');
+  \Drupal\field\Entity\FieldStorageConfig::create($data)->save();
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($config_path . '/config/optional/field.field.media.npr_html_block.field_media_npr_html_block.yml');
+  \Drupal\field\Entity\FieldConfig::create($data)->save();
+}

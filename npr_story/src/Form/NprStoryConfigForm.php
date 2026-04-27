@@ -92,28 +92,28 @@ class NprStoryConfigForm extends ConfigFormBase {
 
     // Text format configuration.
     foreach (filter_formats() as $format) {
-      $formats[$format->get('format')] = $format->get('name');
+      $body_formats[$format->get('format')] = $format->get('name');
     }
     $form['node_settings]']['body_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Body text format'),
       '#description' => $this->t('The body field is selected below'),
       '#default_value' => $config->get('body_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
     $form['node_settings]']['teaser_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Teaser text format'),
       '#description' => $this->t('The teaser field is selected below'),
       '#default_value' => $config->get('teaser_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
     $form['node_settings]']['correction_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Correction text format'),
       '#description' => $this->t('The correction field is selected below'),
       '#default_value' => $config->get('correction_text_format'),
-      '#options' => $formats,
+      '#options' => $body_formats,
     ];
 
     // Story node field mappings.
@@ -137,15 +137,15 @@ class NprStoryConfigForm extends ConfigFormBase {
           '#default_value' => $npr_story_fields[$field_name],
         ];
         // Make some fields required fields.
-        // TODO: Add form validation so required fields cannot be "unused".
+        // @todo Add form validation so required fields cannot be "unused".
         $form['story_field_mappings']['id']['#required'] = TRUE;
         $form['story_field_mappings']['audio']['#required'] = TRUE;
         $form['story_field_mappings']['audio']['#description'] = $this->t('This must be a media reference field to a media type with a source of "NPR Remote Audio".');
         $form['story_field_mappings']['primary_image']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add an entity (media) reference to the primary image from the story node, configure this field.');
         $form['story_field_mappings']['additional_images']['#description'] = $this->t('All images will be downloaded and inserted in the body field, regardless of whether or not this field is configured. To add entity (media) references to the additional media image(s) from the story node, configure this field.');
         $form['story_field_mappings']['multimedia']['#required'] = TRUE;
-        $form['story_field_mappings']['multimedia']['#description'] = $this->t
-        ('This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
+        $form['story_field_mappings']['multimedia']['#description'] = $this->t(
+          'This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
         $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
       }
@@ -358,8 +358,7 @@ class NprStoryConfigForm extends ConfigFormBase {
       }
     }
     else {
-      $form['multimedia_settings']['multimedia_field_mappings']['mappings_required']
-        = [
+      $form['multimedia_settings']['multimedia_field_mappings']['mappings_required'] = [
         '#type' => 'item',
         '#markup' => 'Select and save the Drupal multimedia media type to choose field mappings.',
       ];
@@ -410,6 +409,55 @@ class NprStoryConfigForm extends ConfigFormBase {
       ];
     }
 
+    // External asset media type configuration.
+    $form['html_block_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('HTML Block Settings'),
+      '#open' => FALSE,
+    ];
+    $html_block_media_type = $config->get('html_block_media_type');
+    $form['html_block_settings']['html_block_media_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Drupal html block media type'),
+      '#default_value' => $html_block_media_type,
+      '#description' => $this->t('Probably just use the Drupal "Remote video" media type.'),
+      '#options' => $media_type_options,
+    ];
+    $form['html_block_settings']['html_block_text_format'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Body text format'),
+      '#description' => $this->t('The body field is selected below'),
+      '#default_value' => $config->get('html_block_text_format'),
+      '#options' => $body_formats,
+    ];
+    $form['html_block_settings']['html_block_field_mappings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('html_block field mappings'),
+      '#open' => TRUE,
+    ];
+    if (!empty($html_block_media_type)) {
+      $html_block_media_fields = array_keys($this
+        ->entityFieldManager
+        ->getFieldDefinitions('media', $html_block_media_type));
+      $html_block_field_options = ['unused' => 'unused'] +
+        array_combine($html_block_media_fields, $html_block_media_fields);
+      $html_block_field_mappings = $config->get('html_block_field_mappings');
+      foreach ($html_block_field_mappings as $npr_html_block_field => $html_block_field_value) {
+        $form['html_block_settings']['html_block_field_mappings'][$npr_html_block_field] = [
+          '#type' => 'select',
+          '#title' => $npr_html_block_field,
+          '#options' => $html_block_field_options,
+          '#default_value' => $html_block_field_value,
+        ];
+      }
+    }
+    else {
+      $form['html_block_settings']['html_block_field_mappings']['mappings_required'] = [
+        '#type' => 'item',
+        '#markup' => 'Select and save the Drupal html_block media type to choose field mappings.',
+      ];
+    }
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -428,6 +476,8 @@ class NprStoryConfigForm extends ConfigFormBase {
     $config->set('audio_media_type', $values['audio_media_type']);
     $config->set('audio_format', $values['audio_format']);
     $config->set('external_asset_media_type', $values['external_asset_media_type']);
+    $config->set('html_block_media_type', $values['html_block_media_type']);
+    $config->set('html_block_text_format', $values['html_block_text_format']);
 
     $parent_fields = $config->get('parent_vocabulary');
     foreach (array_keys($parent_fields) as $field) {
@@ -457,6 +507,13 @@ class NprStoryConfigForm extends ConfigFormBase {
     foreach ($external_asset_fields as $field_name => $field_value) {
       if (isset($values[$field_name])) {
         $config->set('external_asset_field_mappings.' . $field_name, $values[$field_name]);
+      }
+    }
+
+    $html_block_fields = $config->get('html_block_field_mappings');
+    foreach ($html_block_fields as $field_name => $field_value) {
+      if (isset($values[$field_name])) {
+        $config->set('html_block_field_mappings.' . $field_name, $values[$field_name]);
       }
     }
 

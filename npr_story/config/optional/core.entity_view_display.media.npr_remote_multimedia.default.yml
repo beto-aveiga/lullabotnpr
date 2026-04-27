@@ -3,6 +3,8 @@ status: true
 dependencies:
   config:
     - field.field.media.npr_remote_multimedia.field_media_npr_multimedia
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_caption
+    - field.field.media.npr_remote_multimedia.field_npr_multimedia_credit
     - field.field.media.npr_remote_multimedia.field_npr_multimedia_duration
     - field.field.media.npr_remote_multimedia.field_npr_multimedia_height
     - field.field.media.npr_remote_multimedia.field_npr_multimedia_id
@@ -24,6 +26,8 @@ content:
     region: content
 hidden:
   created: true
+  field_npr_multimedia_caption: true
+  field_npr_multimedia_credit: true
   field_npr_multimedia_duration: true
   field_npr_multimedia_height: true
   field_npr_multimedia_id: true

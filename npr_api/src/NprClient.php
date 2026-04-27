@@ -12,17 +12,25 @@ use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Retrieves and parses NPRML.
  */
-class NprClient implements ClientInterface {
+class NprClient implements NprClientInterface {
 
   // HTTP status code = OK.
   const NPRAPI_STATUS_OK = 200;
+
+  /**
+   * The fetched stories.
+   * @var array
+   */
+  public $stories;
 
   // NPRML constants.
   const NPRML_DATA = '<?xml version="1.0" encoding="UTF-8"?><nprml></nprml>';
@@ -156,28 +164,28 @@ class NprClient implements ClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function request($method = 'GET', $url = '', array $options = []) {
+  public function request($method = 'GET', $url = '', array $options = []): ResponseInterface {
     return $this->client->request($method, $url, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function send(RequestInterface $request, array $options = []) {
+  public function send(RequestInterface $request, array $options = []): ResponseInterface {
     return $this->client->send($request, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function sendAsync(RequestInterface $request, array $options = []) {
+  public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface {
     return $this->client->sendAsync($request, $options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function requestAsync($method, $uri, array $options = []) {
+  public function requestAsync($method, $uri, array $options = []): PromiseInterface {
     return $this->client->requestAsync($method, $uri, $options);
   }
 
@@ -194,16 +202,95 @@ class NprClient implements ClientInterface {
    * @param array $params
    *   An array of query-type parameters.
    *
-   * @return object|null
-   *   A parsed object of NPRML stories.
+   * @return array|null
+   *   An array of parsed object of NPRML stories.
    */
-  public function getStories(array $params) {
+  public function getStories(array $params): array|null {
     $this->getXmlStories($params);
     $this->parse();
     if (!empty($this->stories)) {
       return $this->stories;
     }
     return NULL;
+  }
+
+  /**
+   * Get story by organization.
+   *
+   * @param int $id
+   *   The organization id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array|object
+   *   The api response.
+   */
+  public function getStoriesByOrgId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'start_date' => '',
+    'end_date' => '',
+  ]): array|object {
+    $params = [
+      'orgId' => $id,
+      'fields' => 'all',
+      'dateType' => 'story',
+    ];
+    if (!empty($options['start_date'])) {
+      $params['startDate'] = $options['start_date'];
+    }
+    if (!empty($options['end_date'])) {
+      $params['endDate'] = $options['end_date'];
+    }
+
+    $params['startNum'] = $options['start_num'];
+    $params['numResults'] = $options['num_results'];
+
+    return $this->getStories($params);
+  }
+
+  /**
+   * Get story by topic.
+   *
+   * @param int $id
+   *   The topic id.
+   * @param array $options
+   *   Additional query parameters.
+   *
+   * @return array|object
+   *   The api response.
+   */
+  public function getStoriesByTopicId(int $id, array $options = [
+    'num_results' => 1,
+    'start_num' => 0,
+    'sort' => 'dateDesc',
+    'start_date' => '',
+    'end_date' => '',
+  ]): array|object {
+    if ($options['num_results'] > 50) {
+      throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
+    }
+
+    $params = [
+      'numResults' => $options['num_results'],
+      'id' => $id,
+      'sort' => $options['sort'],
+      'fields' => 'all',
+    ];
+
+    if ($options['start_num'] > 0) {
+      $params['startNum'] = $options['start_num'];
+    }
+
+    // Add start and end dates, if included.
+    if (!empty($options['start_date'])) {
+      $params['startDate'] = $options['start_date'];
+    }
+    if (!empty($options['end_date'])) {
+      $params['endDate'] = $options['end_date'];
+    }
+
+    return $this->getStories($params);
   }
 
   /**
@@ -231,10 +318,10 @@ class NprClient implements ClientInterface {
 
     // Add the API key to the parameters.
     $options['apiKey'] = $key;
-    // TODO: Which way should we be sorting?
+    // @todo Which way should we be sorting?
     $options['sort'] = 'dateDesc';
 
-    // TODO: Store these for the report function.
+    // @todo Store these for the report function.
     $this->response = $this->request('GET', $base_uri, ['query' => $options]);
     // Log any errors.
     if ($this->response->getStatusCode() != '200') {
@@ -412,7 +499,7 @@ class NprClient implements ClientInterface {
           // Sort it back into the correct order.
           ksort($body_content);
           // Stitch it together.
-          $body = implode(NULL, $body_content);
+          $body = implode('', $body_content);
         }
         elseif (!empty($parsed->textWithHtml->paragraphs)) {
           foreach ($parsed->textWithHtml->paragraphs as $paragraph) {

@@ -36,7 +36,7 @@ class NprClientTest extends BrowserTestBase {
     parent::setUp();
 
     // Create a mock and queue two responses.
-    // TODO: This is just dummy code for now.
+    // @todo This is just dummy code for now.
     $mock = new MockHandler([
       new Response(200, ['X-Foo' => 'Bar'], 'Hello, World'),
       new Response(202, ['Content-Length' => 0]),

@@ -81,6 +81,8 @@ multimedia_field_mappings:
   multimedia_title: name
   remote_multimedia: field_media_npr_multimedia
   multimedia_duration: field_npr_multimedia_duration
+  multimedia_caption: field_npr_multimedia_caption
+  multimedia_credit: field_npr_multimedia_credit
   width: field_npr_multimedia_width
   height: field_npr_multimedia_height
 external_asset_media_type: npr_external_asset
@@ -92,3 +94,8 @@ external_asset_field_mappings:
   externalId: field_external_id
   external_asset_caption: field_external_asset_caption
   external_asset_credit: field_external_asset_credit
+html_block_media_type: npr_html_block
+html_block_text_format: full_html
+html_block_field_mappings:
+  html_block_id: name
+  html_block_body: field_media_npr_html_block

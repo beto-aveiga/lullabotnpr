@@ -2,20 +2,14 @@
 
 namespace Drupal\npr_push;
 
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Language\Language;
-use Drupal\Core\Link;
 use Drupal\node\NodeInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Url;
-use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
-use Drupal\taxonomy\Entity\Term;
 
 /**
  * Push data from Drupal nodes to the NPR API.
  */
-class NprPushClient extends NprClient {
+class NprPushClient extends NprClient implements NprPushClientInterface {
 
   use StringTranslationTrait;
 
@@ -27,17 +21,10 @@ class NprPushClient extends NprClient {
   protected $node;
 
   /**
-   * Converts Drupal story node into an NPRMLEntity story object.
-   *
-   * @param Drupal\node\NodeInterface $node
-   *   A Drupal storynode.
-   *
-   * @return object|null
-   *   An NPRMLEntity story object.
+   * {@inheritDoc}
    */
   public function createNprmlEntity(NodeInterface $node) {
 
-    $language = $node->language;
     $xml = new \DOMDocument();
     $xml->version = '1.0';
     $xml->encoding = 'UTF-8';
@@ -232,7 +219,7 @@ class NprPushClient extends NprClient {
             if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
               // Get the image URL.
               $image_uri = $image_file->get('uri')->getString();
-              $image_url = \file_create_url($image_uri);
+              $image_url = \Drupal::service('file_url_generator')->generateAbsoluteString($image_uri);
 
               // Create the primary image NPRML element.
               $element = $xml->createElement('image');
@@ -251,6 +238,22 @@ class NprPushClient extends NprClient {
 
     $list->appendChild($story);
     return $xml->saveXML();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function createOrUpdateStory(array $node) {
+    // Function meant for new cds api interface.
+    // This class will be depreciated before this needs to be implemented.
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function deleteStory(NodeInterface $node) {
+    // Function meant for new cds api interface.
+    // This class will be depreciated before this needs to be implemented.
   }
 
   /**

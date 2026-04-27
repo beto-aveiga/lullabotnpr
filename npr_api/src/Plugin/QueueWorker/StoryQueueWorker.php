@@ -4,7 +4,6 @@ namespace Drupal\npr_api\Plugin\QueueWorker;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
-use Drupal\npr_pull\NprPullClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,7 +34,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
   /**
    * NPR API pull client.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var mixed
    */
   private $nprPullClient;
 
@@ -46,11 +45,13 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
     $plugin_id,
     $plugin_definition,
     LoggerInterface $logger,
-    NprPullClient $npr_pull_client
+    mixed $npr_pull_client
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->logger = $logger;
-    $this->nprPullClient = $npr_pull_client;
+    $this->nprPullClient =
+      method_exists($npr_pull_client, 'build') ?
+        $npr_pull_client->build() : $npr_pull_client;
   }
 
   /**
@@ -67,7 +68,7 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
       $plugin_id,
       $plugin_definition,
       $container->get('logger.channel.npr_api'),
-      $container->get('npr_pull.client')
+      $container->get('npr_pull.cds_client')
     );
   }
 
@@ -75,9 +76,15 @@ class StoryQueueWorker extends QueueWorkerBase implements ContainerFactoryPlugin
    * {@inheritdoc}
    */
   public function processItem($item): void {
-    // TODO: Get this from config.
+    // @todo Get this from config.
     $published = TRUE;
-    $this->nprPullClient->addOrUpdateNode($item, $published);
+    try {
+      $this->nprPullClient->addOrUpdateNode($item, $published);
+    } catch (\Exception $e) {
+      $this->logger->error("Importing NPR Story %id failed. This item was skipped.", [
+        '%id' => $item['id'],
+      ]);
+    }
   }
 
 }

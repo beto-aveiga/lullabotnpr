@@ -8,7 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -35,7 +35,7 @@ class NprPullConfigForm extends ConfigFormBase {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_pull\NprPullClientInterface
    */
   protected $client;
 
@@ -46,13 +46,13 @@ class NprPullConfigForm extends ConfigFormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date Formatter service.
-   * @param \Drupal\npr_pull\NprPullClient $client
+   * @param \Drupal\npr_pull\NprPullClientFactory $client
    *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, NprPullClient $client) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, NprPullClientFactory $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->dateFormatter = $date_formatter;
-    $this->client = $client;
+    $this->client = $client->build();
   }
 
   /**
@@ -97,8 +97,17 @@ class NprPullConfigForm extends ConfigFormBase {
       '#title' => $this->t('NPR Pull URL'),
       '#default_value' => $config->get('npr_pull_url'),
       '#options' => [
-        'staging' => 'Staging',
-        'production' => 'Production',
+        'staging' => $this->t('Staging'),
+        'production' => $this->t('Production'),
+      ],
+    ];
+    $form['npr_pull_config']['npr_pull_service'] = [
+      '#type' => 'select',
+      '#title' => $this->t('NPR Pull Service'),
+      '#default_value' => $config->get('npr_pull_service'),
+      '#options' => [
+        'xml' => 'XML',
+        'cds' => 'CDS',
       ],
     ];
 
@@ -148,6 +157,7 @@ class NprPullConfigForm extends ConfigFormBase {
       '#title' => $this->t('Number of stories to retrieve per cron run per topic'),
       '#default_value' => $config->get('num_results'),
       '#options' => [
+        5 => 5,
         10 => 10,
         25 => 25,
         50 => 50,
@@ -190,8 +200,8 @@ class NprPullConfigForm extends ConfigFormBase {
       '#description' => $this->t('Both methods produce a list of NPR tag and topic IDs to query. One method allows selecting terms for a list, while the other method is more flexible and uses data from a configurable taxonomy vocabulary.'),
       '#default_value' => $config->get('subscribe_method'),
       '#options' => [
-        'checkbox' => 'Checkbox',
-        'taxonomy' => 'Taxonomy',
+        'checkbox' => $this->t('Checkbox'),
+        'taxonomy' => $this->t('Taxonomy'),
       ],
       '#states' => [
         'visible' => [
@@ -270,6 +280,7 @@ class NprPullConfigForm extends ConfigFormBase {
     $config = $this->config('npr_pull.settings');
 
     $config->set('npr_pull_url', $values['npr_pull_url']);
+    $config->set('npr_pull_service', $values['npr_pull_service']);
     $config->set('npr_pull_author', $values['npr_pull_author']);
     $config->set('queue_interval', $values['queue_interval']);
     $config->set('queue_enable', $values['queue_enable']);

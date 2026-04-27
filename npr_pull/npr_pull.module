@@ -24,8 +24,8 @@ function npr_pull_cron(): void {
     return;
   }
 
-  /** @var \Drupal\npr_pull\NprPullClient $nprPullClient */
-  $nprPullClient = Drupal::service('npr_pull.client');
+  /** @var \Drupal\npr_pull\NprPullClientInterface $nprPullClient */
+  $nprPullClient = Drupal::service('npr_pull.client')->build();
 
   // Get the current time.
   $request_time = \Drupal::time()->getRequestTime();

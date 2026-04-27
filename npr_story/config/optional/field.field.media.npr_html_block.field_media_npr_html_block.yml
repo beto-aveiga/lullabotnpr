@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_media_npr_html_block
+    - media.type.npr_html_block
+  module:
+    - text
+id: media.npr_html_block.field_media_npr_html_block
+field_name: field_media_npr_html_block
+entity_type: media
+bundle: npr_html_block
+label: 'NPR HTML Block'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: text_long

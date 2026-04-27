@@ -6,6 +6,8 @@ npr_pull.settings:
       type: integer
     npr_pull_url:
       type: string
+    npr_pull_service:
+      type: string
     npr_pull_cron_publish_flag:
       type: integer
     queue_enable:

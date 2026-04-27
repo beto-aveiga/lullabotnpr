@@ -1,0 +1,492 @@
+<?php
+
+namespace Drupal\npr_push;
+
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\node\NodeInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\npr_api\NprCdsClient;
+use GuzzleHttp\RequestOptions;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Push data from Drupal nodes to the NPR API.
+ */
+class NprCdsPushClient implements NprPushClientInterface {
+
+  use StringTranslationTrait;
+  use MessengerTrait;
+
+  /**
+   * Npr Api Client.
+   *
+   * @var \Drupal\npr_api\NprCdsClient
+   */
+  protected $client;
+
+  /**
+   * Config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * Push config.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $pushConfig;
+
+  /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
+   * Entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   Config factory.
+   * @param \Drupal\npr_api\NprCdsClient $client
+   *   NPR Client.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager.
+   */
+  public function __construct(ConfigFactoryInterface $configFactory, NprCdsClient $client, MessengerInterface $messenger, LoggerInterface $logger, EntityTypeManagerInterface $entityTypeManager) {
+    $this->config = $configFactory;
+    $this->pushConfig = $configFactory->get('npr_push.settings');
+    $this->client = $client;
+    $client->setUrl($this->pushConfig->get('cds_ingest_url'));
+    $this->messenger = $messenger;
+    $this->logger = $logger;
+    $this->entityTypeManager = $entityTypeManager;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function createOrUpdateStory(array $story) {
+    // Get the story field mappings and send the data.
+    $options = [
+      RequestOptions::JSON => $story,
+    ];
+
+    $response = $this->client->request('PUT', '/v1/documents/' . $story['id'], $options);
+    $message = $response->getBody()->getContents();
+    // To return a response as it was originally.
+    $response->getBody()->rewind();
+
+    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+      $sent_message = new FormattableMarkup(
+        'Story sent to the NPR story API at the URL @url with the following data: <pre>@xml</pre>',
+        [
+          '@url' => '/v1/documents/' . $story['id'],
+          '@xml' => print_r($options, TRUE),
+        ]
+      );
+      $this->logger->info($sent_message);
+    }
+    else {
+      $this->nprError('Error sending story: ' . $message);
+    }
+
+    if ($this->pushConfig->get('npr_cds_push_verbose_logging')) {
+      $this->logger->info('NPR Push Request (what we sent) #@npr_id: @data',
+        [
+          '@data' => json_encode($story),
+          '@npr_id' => $story['id'],
+        ]
+      );
+
+      $this->logger->info('NPR Push Response (what we receive) #@npr_id: @data',
+        [
+          '@data' => json_encode($message),
+          '@npr_id' => $story['id'],
+        ]
+      );
+    }
+
+    return $response;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function deleteStory(NodeInterface $node) {
+    // Get the story field mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+
+    // NPR ID field.
+    $id_field = $story_mappings['id'];
+    if ($id = $node->{$id_field}->value) {
+      return $this->client->request('DELETE', '/v1/documents/' . $id);
+    }
+
+    return NULL;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function createNprmlEntity(NodeInterface $node) {
+
+    $idPrefix = $this->pushConfig->get('cds_doc_id_prefix');
+    $owners_string = $this->pushConfig->get('org_id');
+    $owners_array = explode(' ', $owners_string);
+    $branding = $owners_array[0];
+
+    // Generating services URLs for owners and brandings.
+    $serviceUrl_prefix = 'https://organization.api.npr.org/v4/services/';
+    $owners_urls = [];
+    $branding_url = ['href' => $serviceUrl_prefix . $branding];
+    foreach ($owners_array as $owner) {
+      $owners_urls[] = ['href' => $serviceUrl_prefix . $owner];
+    }
+
+    $story = [
+      'id' => $idPrefix . '-' . $node->id(),
+      'owners' => $owners_urls,
+      'brandings' => [$branding_url],
+      'profiles' => [
+        [
+          'href' => '/v1/profiles/story',
+          'rels' => [
+            'type',
+          ],
+        ],
+        [
+          'href' => '/v1/profiles/buildout',
+          'rels' => [
+            'interface',
+          ],
+        ],
+        [
+          'href' => '/v1/profiles/publishable',
+          'rels' => [
+            'interface',
+          ],
+        ],
+        [
+          'href' => '/v1/profiles/renderable',
+          'rels' => [
+            'interface',
+          ],
+        ],
+        [
+          'href' => '/v1/profiles/document',
+        ],
+      ],
+    ];
+
+    // Get the story field mappings.
+    $story_config = $this->config->get('npr_story.settings');
+    $story_mappings = $story_config->get('story_field_mappings');
+
+    // NPR ID field.
+    $id_field = $story_mappings['id'];
+    if ($id_field == 'unused') {
+      $this->nprError('Please configure the story id field.');
+      return [];
+    }
+    if ($id_value = $node->{$id_field}->value) {
+      $story['id'] = $id_value;
+    }
+
+    // Story title.
+    if ($title = substr($node->getTitle(), 0, 100)) {
+      $story['title'] = $title;
+    }
+
+
+    $story['editorialLastModifiedDateTime'] = $node->get('changed')->value ?? NULL;
+
+    if ($story['editorialLastModifiedDateTime']) {
+      // Get the DateFormatter service.
+      /** @var \Drupal\Core\Datetime\DateFormatter */
+      $dateFormatter = \Drupal::service('date.formatter');
+      $iso8601Timestamp = $dateFormatter->format($story['editorialLastModifiedDateTime'], 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
+      $story['editorialLastModifiedDateTime'] = $iso8601Timestamp;
+    }
+
+    // Story body.
+    $body_field = $story_mappings['body'];
+    if ($body_field == 'unused') {
+      $this->nprError('Please configure the body field.');
+      return NULL;
+    }
+    if ($body = $node->{$body_field}->value) {
+      $push_format = $this->pushConfig->get('npr_cds_push_body_format') ?:
+        $node->{$body_field}->format;
+      $body = check_markup($body, $push_format);
+      /** @var \Drupal\filter\FilterPluginManager $filter_plugin_manager */
+      $filter_plugin_manager = \Drupal::service('plugin.manager.filter');
+      /** @var \Drupal\npr_push\Plugin\Filter\RelToAbs $rel_to_abs */
+      $rel_to_abs = $filter_plugin_manager->createInstance('npr_rel_to_abs');
+      $body = $rel_to_abs->process($body, 'en')->getProcessedText();
+      $story['layout'][] = [
+        'href' => '#/assets/' . $idPrefix . '-body',
+      ];
+      $story['assets'][$idPrefix . '-body'] = [
+        'id' => $idPrefix . '-body',
+        'text' => $body,
+        'profiles' => [
+          [
+            'href' => '/v1/profiles/text',
+            'rels' => ['type'],
+          ],
+          [
+            'href' => '/v1/profiles/document',
+          ],
+        ],
+      ];
+
+      // TODO: do this with mappings instead of a fixed field.
+      // Date format example: 2009-07-31T10:45:00-04:00
+      $story['publishDateTime'] = \Drupal::service('date.formatter')->format($node->field_release_date->date->getTimestamp(), 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
+
+      $textSummary = text_summary($body);
+      $textSummary = strip_tags($textSummary);
+      $textSummary = html_entity_decode($textSummary, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+      $story['teaser'] = $textSummary;
+    }
+
+    // Story date and publication date.
+    $story_date = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'Y-m-d\TH:i:s\Z', 'UTC');
+    $story['editorialMajorUpdateDateTime'] = $story_date;
+
+    // Story URL.
+    $url = $node->toUrl()->setAbsolute()->toString();
+    $story['webPages'][] = [
+      'href' => $url,
+      'rels' => [
+        'canonical',
+      ],
+    ];
+
+    // Primary topic.
+    $story['collections'] = [];
+    $primary_topic_field = $story_mappings['primaryTopic'];
+    $primary_topic = $primary_topic_field != 'unused' ? $node->get($primary_topic_field)->referencedEntities() : NULL;
+    $primary_topic = is_array($primary_topic) ? reset($primary_topic) : NULL;
+    $slug_field = $story_mappings['slug'];
+    $slug_value = $slug_field != 'unused' ? $node->{$slug_field}->value ?? NULL : NULL;
+    $slug_value = is_array($slug_value) ? reset($slug_value) : NULL;
+    if ($primary_topic && $topic_id = $primary_topic->field_npr_news_id->value) {
+      $story['collections'][$topic_id] = [
+        'href' => '/v1/documents/' . $topic_id,
+        'rels' => [
+          'topic',
+        ],
+      ];
+      if ($slug_value && $primary_topic->getName() == $slug_value->getName()) {
+        $story['collections'][$topic_id]['rels'][] = 'slug';
+      }
+    }
+    $secondary_topic_field = $story_mappings['topic'];
+    $secondary_topics = $secondary_topic_field != 'unused' ? $node->get($secondary_topic_field)->referencedEntities() : NULL;
+    if (is_array($secondary_topics)) {
+      foreach ($secondary_topics as $topic) {
+        $topic_id = $topic->field_npr_news_id->value;
+        if (empty($topic_id) || isset($story['collections'][$topic_id])) {
+          continue;
+        }
+        $collection = [
+          'href' => '/v1/documents/' . $topic_id,
+          'rels' => [
+            'topic',
+          ],
+        ];
+        if ($slug_value && $slug_value->getName() == $topic->getName()) {
+          $collection['rels'][] = 'slug';
+        }
+        $story['collections'][$topic_id] = $collection;
+      }
+    }
+    if (!empty($story['collections'])) {
+      $story['collections'] = array_values($story['collections']);
+    }
+
+    // Subtitle.
+    if ($subtitle_field = $story_mappings['subtitle']) {
+      if (!empty($node->{$subtitle_field}->value) &&
+        !empty($subtitle_field)
+        && $subtitle_field !== 'unused'
+      ) {
+        $subtitle = $node->{$subtitle_field}->value;
+        $story['subtitle'] = $subtitle;
+      }
+    }
+
+    $textfields = ['subtitle', 'shortTitle', 'miniTeaser'];
+    foreach ($textfields as $field) {
+      if ($drupal_field = $story_mappings[$field]) {
+        if (!empty($drupal_field) && $drupal_field !== 'unused') {
+          if ($value = $node->{$drupal_field}->value) {
+            switch ($field) {
+              case 'subtitle':
+                $story['subTitle'] = $value;
+                break;
+
+              case 'shortTitle':
+                $story['socialTitle'] = $value;
+                break;
+
+              case 'miniTeaser':
+                $story['shortTeaser'] = $value;
+                break;
+
+              default:
+                $story[$field] = $value;
+            }
+          }
+        }
+      }
+    }
+
+    // Images.
+    if ($image_field = $story_mappings['primary_image']) {
+      if (!empty($image_field) && $image_field !== 'unused') {
+
+        // Verify required image field mappings.
+        $image_mappings = $story_config->get('image_field_mappings');
+        $image_image_field = $image_mappings['image_field'];
+        if ($image_image_field == 'unused') {
+          $this->nprError('In order to push media images to NPR, please configure the image_field mappings in the "Image Field Mappings" section of the "Story Settings" tab.');
+          return;
+        }
+
+        $media_image = $node->get($image_field)->referencedEntities();
+        $media_image = reset($media_image);
+        if (!empty($media_image->{$image_image_field}) &&
+          $image_references = $media_image->{$image_image_field}
+        ) {
+          $image_id = $idPrefix . '-media-' . $media_image->id();
+          $story['profiles'][] = [
+            'href' => '/v1/profiles/has-images',
+            'rels' => [
+              'interface',
+            ],
+          ];
+          foreach ($image_references as $image_reference) {
+            $file_id = $image_reference->get('target_id')->getValue();
+            if ($image_file = $this->entityTypeManager->getStorage('file')->load($file_id)) {
+              // Get the image URL.
+              $image_uri = $image_file->get('uri')->getString();
+              $image_url = \Drupal::service('file_url_generator')->generateAbsoluteString($image_uri);
+
+              $crop_rel = 'image-standard';
+              if ($image_reference->width && $image_reference->height) {
+                $crop_rel = $image_reference->width > $image_reference->height ? 'image-wide' : 'image-vertical';
+                $crop_rel = $image_reference->width == $image_reference->height ? 'image-square' : $crop_rel;
+              }
+
+              $story['images'][] = [
+                'href' => '#/assets/' . $image_id,
+                'rels' => [
+                  'primary',
+                ],
+              ];
+
+              $story['assets'][$image_id] = [
+                'id' => $image_id,
+                'profiles' => [
+                  [
+                    'href' => '/v1/profiles/image',
+                    'rels' => [
+                      'type',
+                    ],
+                  ],
+                  [
+                    'href' => '/v1/profiles/document',
+                  ],
+                ],
+                'enclosures' => [
+                  [
+                    'href' => $image_url,
+                    'rels' => [$crop_rel],
+                  ],
+                ],
+              ];
+
+              $credit = '';
+              // Include image credit information if available.
+              $producer_field = $image_mappings['producer'] ?? 'unused';
+              $provider_field = $image_mappings['provider'] ?? 'unused';
+              $credit_field = $image_mappings['credit'] ?? 'unused';
+
+              if ($producer_field !== 'unused' && $media_image->hasField($producer_field) && !$media_image->get($producer_field)->isEmpty()) {
+                $producer = $media_image->get($producer_field)->value;
+                if (!empty($producer)) {
+                  $story['assets'][$image_id]['producer'] = $producer;
+                }
+              }
+
+              // If provider is not available, use credit.
+              if ($provider_field !== 'unused' && $media_image->hasField($provider_field)) {
+                $provider = $media_image->get($provider_field)->value;
+                if (!empty($provider)) {
+                  $story['assets'][$image_id]['provider'] = $provider;
+                }
+              }
+
+              // Fallback to credit value if the provider value is empty
+              if (empty($story['assets'][$image_id]['provider'])) {
+                if ($credit_field !== 'unused' && $media_image->hasField($credit_field) && !$media_image->get($credit_field)->isEmpty()) {
+                  $credit = $media_image->get($credit_field)->value;
+                  $story['assets'][$image_id]['provider'] = $credit;
+                }
+              }
+
+            }
+          }
+
+          # Add image-wide only to the first image.
+          $story['images'][0]['rels'][] = 'promo-image-wide';
+
+        }
+      }
+    }
+    return $story;
+  }
+
+  /**
+   * Helper function for error messages.
+   *
+   * @param string $text
+   *   The message to log or display.
+   */
+  private function nprError($text) {
+    $this->logger->error($text);
+    if (!empty($this->displayMessages)) {
+      $this->messenger->addError($text);
+    }
+  }
+
+}

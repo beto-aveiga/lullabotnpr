@@ -70,7 +70,7 @@ class NprApiHelpForm extends FormBase {
       foreach ($field['accepted_types'] as $value) {
         $accepted_types .= $value;
       }
-      $description = isset($field['description']) ? $field['description'] : '';
+      $description = $field['description'] ?? '';
       $new_row = [$name, $description, $field['type'], $accepted_types];
       array_push($rows, $new_row);
     }

@@ -11,3 +11,9 @@ npr_api.settings:
     npr_api_stage_url:
       type: text
       label: 'Staging URL'
+    npr_api_cds_api_key:
+      type: text
+      label: 'NPR CDS API key'
+    npr_api_url:
+      type: text
+      label: 'API URL'

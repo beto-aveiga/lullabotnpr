@@ -7,8 +7,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\npr_pull\NprPullClient;
+use Drupal\npr_pull\NprPullClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\npr_api\NprClientInterface;
 
 /**
  * Retrieves NPR stories and creates Drupal story nodes.
@@ -32,7 +33,7 @@ class NprPullGetStory extends ConfigFormBase {
   /**
    * The NPR Pull service.
    *
-   * @var \Drupal\npr_pull\NprPullClient
+   * @var \Drupal\npr_api\NprClientInterface
    */
   protected $client;
 
@@ -43,10 +44,10 @@ class NprPullGetStory extends ConfigFormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
-   * @param \Drupal\npr_pull\NprPullClient $client
+   * @param \Drupal\npr_pull\NprPullClientInterface $client
    *   The NPR client.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClient $client) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, NprPullClientInterface $client) {
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
     $this->client = $client;
@@ -59,7 +60,7 @@ class NprPullGetStory extends ConfigFormBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('messenger'),
-      $container->get('npr_pull.client')
+      $container->get('npr_pull.cds_client')
     );
   }
 
@@ -84,8 +85,9 @@ class NprPullGetStory extends ConfigFormBase {
 
     $author_id = $this->config('npr_pull.settings')->get('npr_pull_author');
     $username = 'Anonymous';
+    /** @var \Drupal\user\Entity\User $user */
     if ($user = $this->entityTypeManager->getStorage('user')->load($author_id)) {
-      $username = $user->getUsername();
+      $username = $user->getAccountName();
     }
 
     $form['retrieval_method'] = [
@@ -183,8 +185,8 @@ class NprPullGetStory extends ConfigFormBase {
     // If the retrieval method is URL, validate the URL before submitting.
     else {
       $story_id = $values['story_id'];
-      if (!is_numeric($story_id)) {
-        $form_state->setErrorByName('id', $this->t('The NPR ID must be an integer.'));
+      if (!preg_match('/^([1-9]+[0-9]*(-[a-z0-9-]+)?|[a-z]+[a-z0-9]*-[a-z0-9-]+)$/', $story_id)) {
+        $form_state->setErrorByName('id', $this->t('The NPR ID is not formatted correctly.'));
       }
     }
   }
