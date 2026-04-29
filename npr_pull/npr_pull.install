@@ -18,6 +18,18 @@ function npr_pull_uninstall() {
 function npr_pull_update_8001() {
   $schema = \Drupal::database()->schema();
 
+  /** @var \Drupal\field\Entity\FieldStorageConfig|null $field_storage */
+  $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('taxonomy_term', 'field_npr_news_id');
+  if ($field_storage && $field_storage->getType() !== 'string') {
+    // Make the active storage definition match the intended string storage so
+    // definition updates are not sensitive to config import order.
+    $field_storage->set('type', 'string');
+    $settings = $field_storage->getSettings();
+    $settings['max_length'] = $settings['max_length'] ?? 255;
+    $field_storage->set('settings', $settings);
+    $field_storage->save();
+  }
+
   $tables = [
     'taxonomy_term__field_npr_news_id',
     'taxonomy_term_revision__field_npr_news_id',
@@ -37,8 +49,6 @@ function npr_pull_update_8001() {
   }
 
   // Ensure Drupal's stored schema metadata matches the updated field storage.
-  /** @var \Drupal\field\Entity\FieldStorageConfig|null $field_storage */
-  $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('taxonomy_term', 'field_npr_news_id');
   if ($field_storage) {
     $update_manager = \Drupal::service('entity.definition_update_manager');
     try {
