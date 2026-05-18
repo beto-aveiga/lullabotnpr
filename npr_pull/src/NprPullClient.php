@@ -2,18 +2,27 @@
 
 namespace Drupal\npr_pull;
 
-use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\media\Entity\Media;
 use Drupal\npr_api\NprClient;
 use Drupal\npr_api\NPRMLElement;
 use Drupal\taxonomy\Entity\Term;
-use Drupal\Component\Utility\Unicode;
+use GuzzleHttp\ClientInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Performs CRUD operations on Drupal nodes using data from the NPR API.
@@ -63,6 +72,21 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    * @var string
    */
   protected $externalAssetField;
+
+  /**
+   * Resolves story date field values to Unix timestamps.
+   *
+   * @var \Drupal\npr_pull\StoryDateTimestampResolver
+   */
+  protected StoryDateTimestampResolver $storyDateResolver;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(LoggerInterface $logger, ClientInterface $client, EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, AccountInterface $current_user, MessengerInterface $messenger, QueueFactory $queue_factory, StateInterface $state, ModuleHandlerInterface $module_handler, ?FileSystemInterface $file_system = NULL, ?StoryDateTimestampResolver $story_date_resolver = NULL) {
+    parent::__construct($logger, $client, $entity_type_manager, $config_factory, $current_user, $messenger, $queue_factory, $state, $module_handler, $file_system);
+    $this->storyDateResolver = $story_date_resolver ?? new StoryDateTimestampResolver();
+  }
 
   /**
    * Create a story node.
@@ -1394,17 +1418,11 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         // Determine if the manually-imported story was already checked.
         if (!in_array($story_id, $update_stories)) {
 
-          // Get a timestamp of the story.
-          $story_date_field = $story_mappings['storyDate'];
-          if (!empty($story_date_field) && $story_date_field !== 'unused') {
-            if ($story_date = $story->{$story_date_field}->value) {
-              $story_date = substr($story_date, 0, 10);
-              $story_date_ts = strtotime($story_date);
-            }
-          }
+          $story_date_field = $story_mappings['storyDate'] ?? '';
+          $story_date_ts = $this->storyDateResolver->resolve($story, $story_date_field);
 
           // If the story is within the "Days back" range add it to the queue.
-          if (!empty($story_date_ts) && $story_date_ts >= $start_ts) {
+          if ($story_date_ts !== NULL && $story_date_ts >= $start_ts) {
             $params = [
               'id' => $story_id,
               'fields' => 'all',

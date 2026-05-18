@@ -2,9 +2,11 @@ services:
   npr_pull.client:
     class: Drupal\npr_pull\NprPullClientFactory
     arguments: ['@config.factory']
+  npr_pull.story_date_timestamp_resolver:
+    class: Drupal\npr_pull\StoryDateTimestampResolver
   npr_pull.xml_client:
     class: Drupal\npr_pull\NprPullClient
-    arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system']
+    arguments: ['@logger.channel.npr_api', '@http_client', '@entity_type.manager', '@config.factory', '@current_user', '@messenger', '@queue', '@state', '@module_handler', '@file_system', '@npr_pull.story_date_timestamp_resolver']
   npr_pull.cds_client:
     class: Drupal\npr_pull\NprCdsPullClient
-    arguments: ['@npr_api.cds_client', '@entity_type.manager', '@config.factory', '@logger.channel.npr_api', '@file_system', '@module_handler', '@messenger', '@queue', '@state']
+    arguments: ['@npr_api.cds_client', '@entity_type.manager', '@config.factory', '@logger.channel.npr_api', '@file_system', '@module_handler', '@messenger', '@queue', '@state', '@npr_pull.story_date_timestamp_resolver']

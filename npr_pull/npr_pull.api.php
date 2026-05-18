@@ -8,6 +8,22 @@
 use Drupal\Core\Entity\EntityInterface;
 
 /**
+ * Skip updating an existing story during NPR CDS pull.
+ *
+ * @param \Drupal\node\NodeInterface $node
+ *   The existing Drupal story node.
+ * @param array $story
+ *   The CDS story payload from the API.
+ * @param bool $force
+ *   TRUE when the import is forced and skip hooks should not run.
+ *
+ * @return bool|string|null
+ *   TRUE or a status message string to skip the update, NULL to continue.
+ */
+function hook_npr_pull_story_skip(\Drupal\node\NodeInterface $node, array $story, bool $force) {
+}
+
+/**
  * Perform alterations on a media URL.
  *
  * @param string $image_url

@@ -148,6 +148,7 @@ class NprStoryConfigForm extends ConfigFormBase {
           'This must be a media reference field to a media type with a source of "NPR Remote Multimedia".');
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
         $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
+        $form['story_field_mappings']['storyDate']['#description'] = $this->t('Prefer a datetime or date field (default: field_npr_story_date). Base fields created and changed are supported. Manually imported stories are re-fetched within the configured Days back window based on this field only.');
       }
     }
     else {

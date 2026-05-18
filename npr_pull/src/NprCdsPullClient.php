@@ -149,6 +149,13 @@ class NprCdsPullClient implements NprPullClientInterface {
   protected $displayMessages;
 
   /**
+   * Resolves story date field values to Unix timestamps.
+   *
+   * @var \Drupal\npr_pull\StoryDateTimestampResolver
+   */
+  protected StoryDateTimestampResolver $storyDateResolver;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\npr_api\NprCdsClient $client
@@ -169,6 +176,8 @@ class NprCdsPullClient implements NprPullClientInterface {
    *   Queue factory.
    * @param \Drupal\Core\State\StateInterface $state
    *   State.
+   * @param \Drupal\npr_pull\StoryDateTimestampResolver $story_date_resolver
+   *   Story date timestamp resolver.
    */
   public function __construct(
     NprCdsClient $client,
@@ -179,7 +188,8 @@ class NprCdsPullClient implements NprPullClientInterface {
     ModuleHandlerInterface $moduleHandler,
     MessengerInterface $messenger,
     QueueFactory $queue,
-    StateInterface $state
+    StateInterface $state,
+    StoryDateTimestampResolver $story_date_resolver,
   ) {
     $this->client = $client;
     $this->entityTypeManager = $entityTypeManager;
@@ -190,6 +200,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $this->messenger = $messenger;
     $this->queueFactory = $queue;
     $this->state = $state;
+    $this->storyDateResolver = $story_date_resolver;
 
     $pull_url = $this->config->get('npr_pull.settings')->get('npr_pull_url');
     if (!empty($pull_url)) {
@@ -294,6 +305,32 @@ class NprCdsPullClient implements NprPullClientInterface {
   }
 
   /**
+   * Returns Unix timestamp for NPR editorial change detection, or NULL.
+   */
+  protected function getNprEditorialComparisonTimestamp(array $story): ?int {
+    $source = NULL;
+    foreach (['editorialMajorUpdateDateTime', 'editorialLastModifiedDateTime'] as $key) {
+      if (!empty($story[$key])) {
+        $source = $story[$key];
+        break;
+      }
+    }
+
+    if ($source === NULL) {
+      return NULL;
+    }
+
+    try {
+      $dt = new DrupalDateTime($source);
+      $dt->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+      return (int) strtotime($dt->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT));
+    }
+    catch (\Exception) {
+      return NULL;
+    }
+  }
+
+  /**
    * {@inheritDoc}
    */
   public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE) {
@@ -357,34 +394,27 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
       $this->node = reset($this->node);
 
-      if ($this->node->field_news_type->entity->label() == "GPB News") {
-
-        $link = Link::fromTextAndUrl($this->node->label(),
-        $this->node->toUrl())->toString();
-        $operation = "skipped";
-
-        $this->nprStatus($this->t('Story @link was @operation because it belongs to "GPB News".', [
-          '@link' => $link,
-          '@operation' => $operation,
-        ]));
-
-        return;
+      if (!$force) {
+        foreach ($this->moduleHandler->invokeAll('npr_pull_story_skip', [$this->node, $story, $force]) as $skip) {
+          if ($skip === TRUE) {
+            $link = Link::fromTextAndUrl($this->node->label(), $this->node->toUrl())->toString();
+            $this->nprStatus($this->t('Story @link was skipped.', ['@link' => $link]));
+            return;
+          }
+          if (is_string($skip) && $skip !== '') {
+            $this->nprStatus($skip);
+            return;
+          }
+        }
       }
 
       // Don't update stories that have not been updated.
-      $drupal_story_last_modified = $this->node->getChangedTime();
+      $npr_story_last_modified = $this->getNprEditorialComparisonTimestamp($story);
 
-      // Convert the NPR item's last modified date to the form used in Drupal.
-      $dt_npr =
-        isset($story['editorialMajorUpdateDateTime']) ?
-          new DrupalDateTime($story['editorialMajorUpdateDateTime']): NULL;
+      if ($npr_story_last_modified !== NULL && !$force) {
+        $drupal_story_last_modified = $this->node->getChangedTime();
 
-      if ($dt_npr) {
-        $dt_npr->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
-        $story_last_modified = $dt_npr->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
-        $npr_story_last_modified = strtotime($story_last_modified);
-
-        if ($drupal_story_last_modified >= $npr_story_last_modified && !$force) {
+        if ($drupal_story_last_modified >= $npr_story_last_modified) {
           $this->nprStatus(
             $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
               '@id' => $story['id'],
@@ -871,17 +901,11 @@ class NprCdsPullClient implements NprPullClientInterface {
         // Determine if the manually-imported story was already checked.
         if (!in_array($story_id, $stories_updated)) {
 
-          // Get a timestamp of the story.
-          $story_date_field = $story_mappings['storyDate'];
-          if (!empty($story_date_field) && $story_date_field !== 'unused') {
-            if ($story_date = $story->{$story_date_field}->value) {
-              $story_date = substr($story_date, 0, 10);
-              $story_date_ts = strtotime($story_date);
-            }
-          }
+          $story_date_field = $story_mappings['storyDate'] ?? '';
+          $story_date_ts = $this->storyDateResolver->resolve($story, $story_date_field);
 
           // If the story is within the "Days back" range add it to the queue.
-          if (!empty($story_date_ts) && $story_date_ts >= $start_ts) {
+          if ($story_date_ts !== NULL && $story_date_ts >= $start_ts) {
             $params = [
               'id' => $story_id,
               'fields' => 'all',
