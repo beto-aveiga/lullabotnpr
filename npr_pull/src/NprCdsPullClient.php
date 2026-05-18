@@ -377,13 +377,14 @@ class NprCdsPullClient implements NprPullClientInterface {
   /**
    * {@inheritDoc}
    */
-  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE) {
+  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE): NprPullStoryImportResult {
     $this->storyBeingImported = $story;
 
     $this->displayMessages = $display_messages;
+    $npr_id = is_array($story) && isset($story['id']) ? (string) $story['id'] : NULL;
     if (!is_array($story) && !empty($story)) {
       $this->nprError('The story could not be added or updated.');
-      return;
+      return NprPullStoryImportResult::invalidStory($npr_id);
     }
 
     $this->node = NULL;
@@ -397,29 +398,29 @@ class NprCdsPullClient implements NprPullClientInterface {
     $id_field = $story_mappings['id'];
     if (empty($id_field) || $id_field == 'unused') {
       $this->nprError('Please configure the story id field.');
-      return NULL;
+      return NprPullStoryImportResult::configError($npr_id, 'story id field');
     }
     $node_last_modified = $story_mappings['lastModifiedDate'];
     if (empty($node_last_modified) || $node_last_modified == 'unused') {
       $this->nprError('Please configure the story last modified date field.');
-      return;
+      return NprPullStoryImportResult::configError($npr_id, 'lastModifiedDate field');
     }
     $text_format = $story_config->get('body_text_format');
     if (empty($text_format)) {
       $this->nprError('Please configure the story body text format.');
-      return;
+      return NprPullStoryImportResult::configError($npr_id, 'body text format');
     }
     $teaser_text_format = $story_config->get('teaser_text_format');
     $teaser = $story_mappings['teaser'];
     if (empty($teaser) || $teaser == 'unused' || empty($teaser_text_format)) {
       $this->nprError('Please configure the story teaser text format.');
-      return;
+      return NprPullStoryImportResult::configError($npr_id, 'teaser text format');
     }
     $correction_text_format = $story_config->get('correction_text_format');
     $correctionText = $story_mappings['correctionText'];
     if (empty($correctionText) || $correctionText == 'unused' || empty($correction_text_format)) {
       $this->nprError('Please configure the story correction text format.');
-      return;
+      return NprPullStoryImportResult::configError($npr_id, 'correction text format');
     }
     $pull_author = $this->config->get('npr_pull.settings')->get('npr_pull_author');
 
@@ -434,20 +435,21 @@ class NprCdsPullClient implements NprPullClientInterface {
             '@id' => $story['id'],
           ])
         );
-        return;
+        return NprPullStoryImportResult::duplicateNodes((string) $story['id']);
       }
       $this->node = reset($this->node);
+      $nid = (int) $this->node->id();
 
       if (!$force) {
         foreach ($this->moduleHandler->invokeAll('npr_pull_story_skip', [$this->node, $story, $force]) as $skip) {
           if ($skip === TRUE) {
             $link = Link::fromTextAndUrl($this->node->label(), $this->node->toUrl())->toString();
             $this->nprStatus($this->t('Story @link was skipped.', ['@link' => $link]));
-            return;
+            return NprPullStoryImportResult::skippedHook((string) $story['id'], $nid);
           }
           if (is_string($skip) && $skip !== '') {
             $this->nprStatus($skip);
-            return;
+            return NprPullStoryImportResult::skippedHook((string) $story['id'], $nid, $skip);
           }
         }
       }
@@ -463,7 +465,7 @@ class NprCdsPullClient implements NprPullClientInterface {
             $this->t('The NPR story with the NPR ID @id has not been updated in the NPR API so it was not updated in Drupal.', [
               '@id' => $story['id'],
             ]));
-          return;
+          return NprPullStoryImportResult::skippedUnchanged((string) $story['id'], $nid);
         }
       }
 
@@ -768,8 +770,12 @@ class NprCdsPullClient implements NprPullClientInterface {
       }
     }
 
-    $this->tryToSave($this->node, $story, 'story');
+    if (!$this->tryToSave($this->node, $story, 'story')) {
+      $nid = $this->node->isNew() ? NULL : (int) $this->node->id();
+      return NprPullStoryImportResult::saveFailed((string) $story['id'], $nid);
+    }
     $nodes_affected[] = $this->node;
+    $nid = (int) $this->node->id();
 
     foreach ($nodes_affected as $node_affected) {
       $link = Link::fromTextAndUrl($node_affected->label(),
@@ -779,16 +785,25 @@ class NprCdsPullClient implements NprPullClientInterface {
         '@operation' => $operation,
       ]));
     }
+
+    return $operation === 'created'
+      ? NprPullStoryImportResult::created((string) $story['id'], $nid)
+      : NprPullStoryImportResult::updated((string) $story['id'], $nid);
   }
 
   /**
    * Tries to save, if it can't, it logs the issue.
+   *
+   * @return bool
+   *   TRUE if the entity was saved, FALSE on failure.
    */
-  private function tryToSave(EntityBase $entity, $remote_entity, $remote_type) {
+  private function tryToSave(EntityBase $entity, $remote_entity, $remote_type): bool {
 
     try {
       $entity->save();
-    } catch (\Exception $e) {
+      return TRUE;
+    }
+    catch (\Exception $e) {
 
       $message = $entity->bundle() == 'node' ?
         "Pulling @story / node @nid failed. @message" :
@@ -805,6 +820,7 @@ class NprCdsPullClient implements NprPullClientInterface {
       ];
 
       $this->nprError($this->t($message, $context));
+      return FALSE;
     }
 
   }

@@ -46,8 +46,11 @@ interface NprPullClientInterface {
    *   Story should be marked as "Imported Manually".
    * @param bool $force
    *   Force an update the story.
+   *
+   * @return \Drupal\npr_pull\NprPullStoryImportResult
+   *   Structured outcome of the import attempt.
    */
-  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE);
+  public function addOrUpdateNode($story, $published, $display_messages = FALSE, $manual_import = FALSE, $force = FALSE): NprPullStoryImportResult;
 
   /**
    * Get taxonomy terms subscribed to.
