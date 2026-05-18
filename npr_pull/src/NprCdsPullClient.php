@@ -255,12 +255,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     $params = [
       'ownerHrefs=' => 'https://organization.api.npr.org/v4/services/' . $id,
     ];
-    if (!empty($options['start_date'])) {
-      $params['publishDateTime'] = $options['start_date'];
-      if (!empty($options['end_date'])) {
-        $params['publishDateTime'] .= '...' . $options['end_date'];
-      }
-    }
+    $this->applyListingDateFilters($params, $options);
 
     $params['offset'] = $options['start_num'];
     $params['limit'] = $options['num_results'];
@@ -275,33 +270,82 @@ class NprCdsPullClient implements NprPullClientInterface {
     $options += [
       'num_results' => 1,
       'start_num' => 0,
-      'sort' => 'dateDesc',
+      'sort' => '',
       'start_date' => '',
       'end_date' => '',
+      'editorial_last_modified_start' => '',
+      'editorial_last_modified_end' => '',
     ];
     if ($options['num_results'] > 50) {
       throw new \Exception(dt('Because this command accepts a date range, and due to the way the NPR API works, this command cannot process more than 50 stories at one time.'));
     }
 
+    if (empty($options['sort'])) {
+      $options['sort'] = !empty($options['editorial_last_modified_start']) ? 'modifiedDesc' : 'dateDesc';
+    }
+
     $params = [
       'limit' => $options['num_results'],
       'collectionIds' => $id,
-      'sort' => 'publishDateTime:' . ($options['sort'] == 'dateDesc' ? 'desc' : 'asc'),
+      'sort' => $this->resolveListingSort($options['sort']),
     ];
 
     if ($options['start_num'] > 0) {
       $params['offset'] = $options['start_num'];
     }
 
-    // Add start and end dates, if included.
+    $this->applyListingDateFilters($params, $options);
+
+    return $this->getStories($params);
+  }
+
+  /**
+   * Maps listing sort options to CDS sort query values.
+   */
+  protected function resolveListingSort(string $sort): string {
+    return match ($sort) {
+      'modifiedAsc' => 'editorialLastModifiedDateTime:asc',
+      'modifiedDesc' => 'editorialLastModifiedDateTime:desc',
+      'dateAsc' => 'publishDateTime:asc',
+      default => 'publishDateTime:desc',
+    };
+  }
+
+  /**
+   * Applies publish- or editorial-modified date filters to a CDS listing query.
+   */
+  protected function applyListingDateFilters(array &$params, array $options): void {
+    if (!empty($options['editorial_last_modified_start'])) {
+      $params['editorialLastModifiedDateTime'] = $options['editorial_last_modified_start'];
+      if (!empty($options['editorial_last_modified_end'])) {
+        $params['editorialLastModifiedDateTime'] .= '...' . $options['editorial_last_modified_end'];
+      }
+      return;
+    }
+
     if (!empty($options['start_date'])) {
       $params['publishDateTime'] = $options['start_date'];
       if (!empty($options['end_date'])) {
         $params['publishDateTime'] .= '...' . $options['end_date'];
       }
     }
+  }
 
-    return $this->getStories($params);
+  /**
+   * Start of the editorial-last-modified window for queue listing queries.
+   *
+   * Uses last successful queue refill minus configured overlap, floored by
+   * "Days back" so the first run does not query from epoch.
+   */
+  protected function getEditorialModifiedSinceForQueue(): string {
+    $pull_config = $this->config->get('npr_pull.settings');
+    $start_date_days = (int) $pull_config->get('start_date');
+    $overlap_hours = (int) ($pull_config->get('editorial_modified_overlap_hours') ?? 24);
+    $floor_ts = time() - ($start_date_days * 86400);
+    $since_ts = $this->getLastUpdateTime()->getTimestamp() - ($overlap_hours * 3600);
+    $since_ts = max($since_ts, $floor_ts);
+
+    return gmdate('Y-m-d\TH:i:s\Z', $since_ts);
   }
 
   /**
@@ -850,6 +894,24 @@ class NprCdsPullClient implements NprPullClientInterface {
     $start = date("Y-m-d", $start_timestamp);
     $end = date("Y-m-d");
 
+    $use_editorial_modified = (bool) $pull_config->get('queue_use_editorial_last_modified');
+    if ($use_editorial_modified) {
+      $listing_options = [
+        'num_results' => $num_results,
+        'editorial_last_modified_start' => $this->getEditorialModifiedSinceForQueue(),
+        'editorial_last_modified_end' => gmdate('Y-m-d\TH:i:s\Z'),
+        'sort' => 'modifiedDesc',
+      ];
+    }
+    else {
+      $listing_options = [
+        'num_results' => $num_results,
+        'start_date' => $start,
+        'end_date' => $end,
+        'sort' => 'dateDesc',
+      ];
+    }
+
     // Get a list of IDs subscribed to.
     $npr_ids = $this->getSubscriptionIds();
 
@@ -857,12 +919,7 @@ class NprCdsPullClient implements NprPullClientInterface {
     // selected, we may not get data for all of them.
     $update_stories = [];
     foreach ($npr_ids as $npr_id) {
-      $params = [
-        'num_results' => $num_results,
-        'start_date' => $start,
-        'end_date' => $end,
-      ];
-      $stories = $this->getStoriesByTopicId($npr_id, $params);
+      $stories = $this->getStoriesByTopicId($npr_id, $listing_options);
       foreach ($stories as $story) {
         $update_stories[] = $story;
       }

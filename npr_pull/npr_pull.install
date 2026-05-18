@@ -11,3 +11,20 @@
 function npr_pull_uninstall() {
   \Drupal::configFactory()->reset('npr_pull.settings');
 }
+
+/**
+ * Enable editorial-last-modified queue filtering for existing CDS sites.
+ */
+function npr_pull_update_10001(): void {
+  $config = \Drupal::configFactory()->getEditable('npr_pull.settings');
+  if ($config->get('npr_pull_service') !== 'cds') {
+    return;
+  }
+  if ($config->get('queue_use_editorial_last_modified') === NULL) {
+    $config->set('queue_use_editorial_last_modified', TRUE);
+  }
+  if ($config->get('editorial_modified_overlap_hours') === NULL) {
+    $config->set('editorial_modified_overlap_hours', 24);
+  }
+  $config->save();
+}

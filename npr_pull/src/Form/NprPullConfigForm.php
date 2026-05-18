@@ -173,12 +173,39 @@ class NprPullConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Days back'),
       '#default_value' => $config->get('start_date'),
-      '#description' => $this->t('The numbers of days back (from today) to query for stories.'),
+      '#description' => $this->t('Minimum lookback (days) for queue refill and manually imported stories. When editorial-last-modified filtering is enabled, also caps how far back the first refill queries.'),
       '#required' => TRUE,
       '#size' => 3,
       '#states' => [
         'visible' => [
           'input[name="queue_enable"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $form['queue_use_editorial_last_modified'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Filter queue refill by editorial last modified (CDS)'),
+      '#default_value' => $config->get('queue_use_editorial_last_modified'),
+      '#description' => $this->t('When enabled, topic listing queries use editorialLastModifiedDateTime since the last queue refill (minus overlap) instead of publishDateTime. Use Drush or publish-date options to backfill older stories.'),
+      '#states' => [
+        'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
+          ':input[name="npr_pull_service"]' => ['value' => 'cds'],
+        ],
+      ],
+    ];
+    $form['editorial_modified_overlap_hours'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Editorial modified overlap (hours)'),
+      '#default_value' => $config->get('editorial_modified_overlap_hours') ?? 24,
+      '#min' => 0,
+      '#max' => 168,
+      '#description' => $this->t('Subtract this many hours from the last queue refill time when building the editorialLastModifiedDateTime filter (re-processes recent stories to catch missed runs).'),
+      '#states' => [
+        'visible' => [
+          'input[name="queue_enable"]' => ['checked' => TRUE],
+          ':input[name="npr_pull_service"]' => ['value' => 'cds'],
+          'input[name="queue_use_editorial_last_modified"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -286,6 +313,8 @@ class NprPullConfigForm extends ConfigFormBase {
     $config->set('queue_enable', $values['queue_enable']);
     $config->set('num_results', $values['num_results']);
     $config->set('start_date', $values['start_date']);
+    $config->set('queue_use_editorial_last_modified', (bool) $values['queue_use_editorial_last_modified']);
+    $config->set('editorial_modified_overlap_hours', (int) $values['editorial_modified_overlap_hours']);
     $config->set('org_id', $values['org_id']);
     $config->set('subscribe_method', $values['subscribe_method']);
     $config->set('topic_vocabularies', array_filter($values['topic_vocabularies']));

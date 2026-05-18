@@ -16,6 +16,12 @@ npr_pull.settings:
       type: integer
     num_results:
       type: integer
+    start_date:
+      type: string
+    queue_use_editorial_last_modified:
+      type: boolean
+    editorial_modified_overlap_hours:
+      type: integer
     ord_id:
       type: integer
     topic_ids:
