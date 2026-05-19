@@ -13,6 +13,63 @@ function npr_pull_uninstall() {
 }
 
 /**
+ * Convert taxonomy term NPR ID field storage from int to string.
+ */
+function npr_pull_update_8001() {
+  $schema = \Drupal::database()->schema();
+
+  /** @var \Drupal\field\Entity\FieldStorageConfig|null $field_storage */
+  $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('taxonomy_term', 'field_npr_news_id');
+  if ($field_storage && $field_storage->getType() !== 'string') {
+    // Make the active storage definition match the intended string storage so
+    // definition updates are not sensitive to config import order.
+    $field_storage->set('type', 'string');
+    $settings = $field_storage->getSettings();
+    $settings['max_length'] = $settings['max_length'] ?? 255;
+    $field_storage->set('settings', $settings);
+    $field_storage->save();
+  }
+
+  $tables = [
+    'taxonomy_term__field_npr_news_id',
+    'taxonomy_term_revision__field_npr_news_id',
+  ];
+  $column = 'field_npr_news_id_value';
+
+  foreach ($tables as $table) {
+    if (!$schema->tableExists($table) || !$schema->fieldExists($table, $column)) {
+      continue;
+    }
+
+    $schema->changeField($table, $column, $column, [
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+    ]);
+  }
+
+  // Ensure Drupal's stored schema metadata matches the updated field storage.
+  if ($field_storage) {
+    $update_manager = \Drupal::service('entity.definition_update_manager');
+    try {
+      $update_manager->updateFieldStorageDefinition($field_storage);
+    }
+    catch (\Throwable $e) {
+      // If the definition update fails for any reason, still record the last
+      // installed schema so subsequent updates/config imports can proceed.
+    }
+
+    try {
+      \Drupal::service('entity.last_installed_schema.repository')
+        ->setLastInstalledFieldStorageDefinition($field_storage);
+    }
+    catch (\Throwable $e) {
+      // Best-effort: site will still have the DB column type updated.
+    }
+  }
+}
+
+/**
  * Enable editorial-last-modified queue filtering for existing CDS sites.
  */
 function npr_pull_update_10001(): void {

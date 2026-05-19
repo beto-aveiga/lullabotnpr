@@ -1459,8 +1459,8 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
    *
    * @param string $term_name
    *   The name of the term.
-   * @param int $id
-   *   The NPR ID of the term.
+   * @param string|int $id
+   *   The NPR ID of the term (string or integer).
    * @param string $vid
    *   The vocabulary id.
    *
@@ -1471,8 +1471,28 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
     if (empty($term_name)) {
       return 0;
     }
+
+    $id = trim((string) $id);
+    if ($id === '') {
+      $this->logger->warning(
+        $this->t('The term @title has an invalid ID @id.', [
+          '@title' => $term_name,
+          '@id' => $id,
+        ]));
+      return -1;
+    }
+
     $term = $this->entityTypeManager->getStorage('taxonomy_term')
       ->loadByProperties(['field_npr_news_id' => $id]);
+
+    if (count($term) > 1) {
+      $this->nprError(
+        $this->t('Multiple terms with the id @id exist. Please delete the duplicate term(s).', [
+          '@id' => $id,
+        ]));
+      return 0;
+    }
+
     $term = reset($term);
     if (empty($term)) {
       $term = Term::create([
@@ -1485,13 +1505,6 @@ class NprPullClient extends NprClient implements NprPullClientInterface {
         '@title' => $term_name,
         '@vocab' => $vid,
       ]));
-    }
-    if (is_array($term) && count($term) > 1) {
-      $this->nprError(
-        $this->t('Multiple terms with the id @id exist. Please delete the duplicate term(s).', [
-          '@id' => $id,
-        ]));
-      return 0;
     }
     return $term->id();
   }
