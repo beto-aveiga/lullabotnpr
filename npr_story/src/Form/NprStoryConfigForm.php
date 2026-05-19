@@ -149,6 +149,7 @@ class NprStoryConfigForm extends ConfigFormBase {
         $form['story_field_mappings']['lastModifiedDate']['#required'] = TRUE;
         $form['story_field_mappings']['lastModifiedDate']['#description'] = $this->t('This must be a plain text field.');
         $form['story_field_mappings']['storyDate']['#description'] = $this->t('Prefer a datetime or date field (default: field_npr_story_date). Base fields created and changed are supported. Manually imported stories are re-fetched within the configured Days back window based on this field only.');
+        $form['story_field_mappings']['correctionTitle']['#description'] = $this->t('Not provided by NPR Content Distribution Service (CDS). Use "unused" when pulling via CDS. Legacy Story API imports may map this field.');
       }
     }
     else {

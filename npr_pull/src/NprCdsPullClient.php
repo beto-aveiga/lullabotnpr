@@ -560,8 +560,8 @@ class NprCdsPullClient implements NprPullClientInterface {
         continue;
       }
 
+      // CDS corrections only provide text and dateTime (no title).
       $correction_fields = [
-        'correctionTitle',
         'correctionText',
         'correctionDate',
       ];
@@ -691,9 +691,6 @@ class NprCdsPullClient implements NprPullClientInterface {
           elseif ($key == 'correctionDate') {
             $date_value = $this->formatDate($correction['dateTime'], $value);
             $this->node->set($value, $date_value);
-          }
-          elseif ($key == 'correctionTitle') {
-            $this->node->set($value, $correction['title']);
           }
           elseif (!empty($correction[$key])) {
             $this->node->set($value, $correction[$key]);

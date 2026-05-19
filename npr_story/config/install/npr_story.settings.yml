@@ -38,7 +38,7 @@ story_field_mappings:
   subtitle: field_npr_subtitle
   teaser: field_npr_teaser
   imported_manually: field_imported_manually
-  correctionTitle: field_npr_correction_title
+  correctionTitle: unused
   correctionText: field_npr_correction_text
   correctionDate: field_npr_correction_date
   audioRunByDate: field_npr_audio_run_by_date

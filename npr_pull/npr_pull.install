@@ -85,3 +85,17 @@ function npr_pull_update_8002(): void {
   }
   $config->save();
 }
+
+/**
+ * Unmap correction title for CDS sites (CDS has no correction title field).
+ */
+function npr_pull_update_8003(): void {
+  if (\Drupal::config('npr_pull.settings')->get('npr_pull_service') !== 'cds') {
+    return;
+  }
+  $story_config = \Drupal::configFactory()->getEditable('npr_story.settings');
+  if ($story_config->get('story_field_mappings.correctionTitle') !== 'unused') {
+    $story_config->set('story_field_mappings.correctionTitle', 'unused');
+    $story_config->save();
+  }
+}
