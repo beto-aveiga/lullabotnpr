@@ -72,7 +72,7 @@ function npr_pull_update_8001() {
 /**
  * Enable editorial-last-modified queue filtering for existing CDS sites.
  */
-function npr_pull_update_10001(): void {
+function npr_pull_update_8002(): void {
   $config = \Drupal::configFactory()->getEditable('npr_pull.settings');
   if ($config->get('npr_pull_service') !== 'cds') {
     return;
