@@ -5,6 +5,8 @@
  * Install, update and uninstall functions for the npr_pull module.
  */
 
+use Drupal\field\Entity\FieldStorageConfig;
+
 /**
  * Implements hook_uninstall().
  */
@@ -13,60 +15,130 @@ function npr_pull_uninstall() {
 }
 
 /**
- * Convert taxonomy term NPR ID field storage from int to string.
+ * Checks whether taxonomy NPR ID field storage is fully migrated to string.
  */
-function npr_pull_update_8001() {
-  $schema = \Drupal::database()->schema();
+function npr_pull_field_npr_news_id_storage_is_migrated(): bool {
+  $entity_type = 'taxonomy_term';
+  $field = 'field_npr_news_id';
+  $column = 'field_npr_news_id_value';
+  $table = "{$entity_type}__{$field}";
 
-  /** @var \Drupal\field\Entity\FieldStorageConfig|null $field_storage */
-  $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('taxonomy_term', 'field_npr_news_id');
-  if ($field_storage && $field_storage->getType() !== 'string') {
-    // Make the active storage definition match the intended string storage so
-    // definition updates are not sensitive to config import order.
-    $field_storage->set('type', 'string');
-    $settings = $field_storage->getSettings();
-    $settings['max_length'] = $settings['max_length'] ?? 255;
-    $field_storage->set('settings', $settings);
-    $field_storage->save();
+  $storage_config = \Drupal::config("field.storage.$entity_type.$field");
+  if ($storage_config->get('type') !== 'string') {
+    return FALSE;
   }
 
-  $tables = [
-    'taxonomy_term__field_npr_news_id',
-    'taxonomy_term_revision__field_npr_news_id',
-  ];
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists($table) || !$schema->fieldExists($table, $column)) {
+    return TRUE;
+  }
+
+  return npr_pull_field_npr_news_id_column_is_varchar($table, $column);
+}
+
+/**
+ * Checks whether a field column is stored as a string type in the database.
+ */
+function npr_pull_field_npr_news_id_column_is_varchar(string $table, string $column): bool {
+  $connection = \Drupal::database();
+  if ($connection->databaseType() === 'mysql') {
+    $data_type = $connection->query(
+      'SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
+      [
+        ':table' => $table,
+        ':column' => $column,
+      ]
+    )->fetchField();
+    return in_array(strtolower((string) $data_type), ['varchar', 'char'], TRUE);
+  }
+
+  return TRUE;
+}
+
+/**
+ * Syncs the last installed field storage definition after migration or no-op.
+ */
+function npr_pull_sync_field_npr_news_id_last_installed_definition(): void {
+  $field_storage = FieldStorageConfig::loadByName('taxonomy_term', 'field_npr_news_id');
+  if (!$field_storage) {
+    return;
+  }
+
+  try {
+    \Drupal::service('entity.last_installed_schema.repository')
+      ->setLastInstalledFieldStorageDefinition($field_storage);
+  }
+  catch (\Throwable $e) {
+    // Best-effort: DB and config are already aligned.
+  }
+}
+
+/**
+ * Migrates taxonomy NPR ID field storage from integer to string without Field API.
+ */
+function npr_pull_migrate_field_npr_news_id_to_string(): void {
+  $entity_type = 'taxonomy_term';
+  $field = 'field_npr_news_id';
+  $length = 255;
   $column = 'field_npr_news_id_value';
 
-  foreach ($tables as $table) {
+  $storage_config = \Drupal::configFactory()->getEditable("field.storage.$entity_type.$field");
+  $storage_config
+    ->set('type', 'string')
+    ->set('settings.max_length', $length)
+    ->set('settings.is_ascii', FALSE)
+    ->set('settings.case_sensitive', FALSE);
+  $storage_config->clear('settings.unsigned');
+  $storage_config->clear('settings.size');
+  $storage_config->save(TRUE);
+
+  $database = \Drupal::database();
+  $schema = $database->schema();
+  foreach ([
+    "{$entity_type}__{$field}",
+    "{$entity_type}_revision__{$field}",
+  ] as $table) {
     if (!$schema->tableExists($table) || !$schema->fieldExists($table, $column)) {
       continue;
     }
 
-    $schema->changeField($table, $column, $column, [
-      'type' => 'varchar',
-      'length' => 255,
-      'not null' => FALSE,
-    ]);
-  }
-
-  // Ensure Drupal's stored schema metadata matches the updated field storage.
-  if ($field_storage) {
-    $update_manager = \Drupal::service('entity.definition_update_manager');
-    try {
-      $update_manager->updateFieldStorageDefinition($field_storage);
-    }
-    catch (\Throwable $e) {
-      // If the definition update fails for any reason, still record the last
-      // installed schema so subsequent updates/config imports can proceed.
-    }
-
-    try {
-      \Drupal::service('entity.last_installed_schema.repository')
-        ->setLastInstalledFieldStorageDefinition($field_storage);
-    }
-    catch (\Throwable $e) {
-      // Best-effort: site will still have the DB column type updated.
+    if (!npr_pull_field_npr_news_id_column_is_varchar($table, $column)) {
+      $database->query('ALTER TABLE {' . $table . '} MODIFY ' . $column . ' VARCHAR(' . (int) $length . ')');
     }
   }
+
+  $storage_key = "$entity_type.field_schema_data.$field";
+  $storage_schema = \Drupal::keyValue('entity.storage_schema.sql');
+  $field_schema = $storage_schema->get($storage_key) ?? [];
+  foreach ([
+    "{$entity_type}__{$field}",
+    "{$entity_type}_revision__{$field}",
+  ] as $table) {
+    if (!isset($field_schema[$table]['fields'][$column])) {
+      continue;
+    }
+    $field_schema[$table]['fields'][$column]['type'] = 'varchar';
+    $field_schema[$table]['fields'][$column]['length'] = $length;
+    unset($field_schema[$table]['fields'][$column]['unsigned']);
+    unset($field_schema[$table]['fields'][$column]['size']);
+  }
+  $storage_schema->set($storage_key, $field_schema);
+
+  npr_pull_sync_field_npr_news_id_last_installed_definition();
+}
+
+/**
+ * Convert taxonomy term NPR ID field storage from int to string.
+ */
+function npr_pull_update_8001() {
+  if (npr_pull_field_npr_news_id_storage_is_migrated()) {
+    npr_pull_sync_field_npr_news_id_last_installed_definition();
+    return t('NPR news ID field storage is already string; synced last installed definition.');
+  }
+
+  npr_pull_migrate_field_npr_news_id_to_string();
+
+  return t('Converted field_npr_news_id to string storage.');
 }
 
 /**
